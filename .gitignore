@@ -1,0 +1,4 @@
+/.bin/
+*.tgz
+/bin/
+dotnet-core-conf-cnb_*
