@@ -34,7 +34,7 @@ func (c Contributor) Contribute() error {
 	runtimeConfigFile := filepath.Base(runtimeConfigMatches[0])
 	executableFile := runtimeConfigRe.ReplaceAllString(runtimeConfigFile, "")
 
-	startCmd := fmt.Sprintf("cd %s && exec %s --server.urls http://0.0.0.0:${PORT}", c.context.Application.Root, executableFile)
+	startCmd := fmt.Sprintf("cd %s && ./%s --server.urls http://0.0.0.0:${PORT}", c.context.Application.Root, executableFile)
 
 	return c.context.Layers.WriteApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd}}})
 }

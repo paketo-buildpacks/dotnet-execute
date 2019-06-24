@@ -65,7 +65,7 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 			test.TouchFile(t, runtimeConfigFilePath)
 			defer os.RemoveAll(runtimeConfigFilePath)
 
-			startCmd := fmt.Sprintf("cd %s && exec %s --server.urls http://0.0.0.0:${PORT}", f.Build.Application.Root, executable)
+			startCmd := fmt.Sprintf("cd %s && ./%s --server.urls http://0.0.0.0:${PORT}", f.Build.Application.Root, executable)
 
 			contributor, _, err := conf.NewContributor(f.Build)
 			Expect(err).NotTo(HaveOccurred())
