@@ -3,6 +3,8 @@ package main
 import (
 	"testing"
 
+	. "github.com/onsi/gomega"
+
 	"github.com/cloudfoundry/libcfbuildpack/build"
 	"github.com/cloudfoundry/libcfbuildpack/test"
 	"github.com/google/go-cmp/cmp"

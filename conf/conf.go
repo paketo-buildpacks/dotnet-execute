@@ -1,12 +1,19 @@
-package <FILL OUT>
+package conf
 
 import (
+	"fmt"
+	"path/filepath"
+	"regexp"
+
 	"github.com/cloudfoundry/libcfbuildpack/build"
+	"github.com/cloudfoundry/libcfbuildpack/helper"
+	"github.com/cloudfoundry/libcfbuildpack/layers"
 )
 
-const Layer = "<FILL OUT>"
+const Layer = "dotnet-core-conf"
 
 type Contributor struct {
+	context build.Build
 }
 
 func NewContributor(context build.Build) (Contributor, bool, error) {
@@ -15,9 +22,19 @@ func NewContributor(context build.Build) (Contributor, bool, error) {
 		return Contributor{}, false, nil
 	}
 
-	return Contributor{}, true, nil
+	return Contributor{context: context}, true, nil
 }
 
 func (c Contributor) Contribute() error {
-	return nil
+	runtimeConfigRe := regexp.MustCompile(`\.(runtimeconfig\.json)$`)
+	runtimeConfigMatches, err := helper.FindFiles(c.context.Application.Root, runtimeConfigRe)
+	if err != nil {
+		return err
+	}
+	runtimeConfigFile := filepath.Base(runtimeConfigMatches[0])
+	executableFile := runtimeConfigRe.ReplaceAllString(runtimeConfigFile, "")
+
+	startCmd := fmt.Sprintf("cd %s && exec %s --server.urls http://0.0.0.0:${PORT}", c.context.Application.Root, executableFile)
+
+	return c.context.Layers.WriteApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd}}})
 }

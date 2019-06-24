@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
+
 	"github.com/buildpack/libbuildpack/buildplan"
 
 	"github.com/cloudfoundry/libcfbuildpack/build"
@@ -26,5 +28,16 @@ func main() {
 }
 
 func runBuild(context build.Build) (int, error) {
-	return context.Success(buildplan.BuildPlan{}) // TODO implementation
+	contributor, willContribute, err := conf.NewContributor(context)
+	if err != nil {
+		return 102, err
+	}
+
+	if willContribute {
+		if err := contributor.Contribute(); err != nil {
+			return 103, err
+		}
+	}
+
+	return context.Success(buildplan.BuildPlan{})
 }
