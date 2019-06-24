@@ -3,9 +3,19 @@ package main
 import (
 	"fmt"
 	"os"
+	"regexp"
+
+	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
+
+	"github.com/cloudfoundry/libcfbuildpack/helper"
 
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
+)
+
+const (
+	MissingRuntimeConfig  = "*.runtimeconfig.json file not found"
+	TooManyRuntimeConfigs = "multiple *.runtimeconfig.json files present"
 )
 
 func main() {
@@ -15,6 +25,7 @@ func main() {
 		os.Exit(100)
 	}
 
+	// TODO
 	// Decide if the following is needed for this CNB. This is needed if your CNB depends on the results of previous CNB contributions to the buildplan.
 	// Otherwise, don't use it as it negates parallelization.
 	//if err := context.BuildPlan.Init(); err != nil {
@@ -31,5 +42,22 @@ func main() {
 }
 
 func runDetect(context detect.Detect) (int, error) {
-	return context.Pass(buildplan.BuildPlan{}) // TODO implementation
+	runtimeConfigRe := regexp.MustCompile(`\.(runtimeconfig\.json)$`)
+	runtimeConfigMatches, err := helper.FindFiles(context.Application.Root, runtimeConfigRe)
+	if err != nil {
+		return context.Fail(), err
+	}
+
+	if len(runtimeConfigMatches) < 1 {
+		context.Logger.Info(MissingRuntimeConfig)
+		return context.Fail(), nil
+	} else if len(runtimeConfigMatches) > 1 {
+		return context.Fail(), fmt.Errorf(TooManyRuntimeConfigs)
+	} else {
+		return context.Pass(buildplan.BuildPlan{
+			conf.Layer: buildplan.Dependency{
+				Metadata: buildplan.Metadata{"build": true},
+			},
+		})
+	}
 }
