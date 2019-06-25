@@ -33,7 +33,7 @@ func testIntegration(t *testing.T, when spec.G, it spec.S) {
 		Expect = NewWithT(t).Expect
 	})
 
-	when("the app is self contained aka vendored", func() {
+	when("the app is self contained", func() {
 		it("builds successfully", func() {
 			appRoot := filepath.Join("testdata", "self_contained_2.1")
 
