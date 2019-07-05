@@ -47,6 +47,10 @@ func FindBPRoot() (string, error) {
 }
 
 func PackageBuildpack(root string) (string, error) {
+	if bpPackagedPath := os.Getenv("BP_PACKAGED_PATH"); bpPackagedPath != "" {
+		return bpPackagedPath, nil
+	}
+
 	path, err := filepath.Abs(root)
 	if err != nil {
 		return "", err
@@ -84,6 +88,13 @@ func PackageCachedBuildpack(root string) (string, string, error) {
 
 func GetLatestBuildpack(name string) (string, error) {
 	return GetLatestCommunityBuildpack("cloudfoundry", name)
+}
+
+func DeleteBuildpack(root string) error {
+	if root == os.Getenv("BP_PACKAGED_PATH") {
+		return nil
+	}
+	return os.RemoveAll(root)
 }
 
 func GetLatestCommunityBuildpack(org, name string) (string, error) {
