@@ -1,4 +1,5 @@
 /.bin/
 *.tgz
 /bin/
+/buildpack.toml
 dotnet-core-conf-cnb_*

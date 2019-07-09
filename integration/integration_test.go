@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -22,7 +21,7 @@ func TestIntegration(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	dotnetCoreConfURI, err = dagger.PackageBuildpack(bpDir)
 	Expect(err).ToNot(HaveOccurred())
-	defer os.RemoveAll(dotnetCoreConfURI)
+	defer dagger.DeleteBuildpack(dotnetCoreConfURI)
 
 	spec.Run(t, "Integration", testIntegration, spec.Report(report.Terminal{}))
 }
