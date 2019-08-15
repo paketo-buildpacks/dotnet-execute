@@ -17,8 +17,13 @@ type Contributor struct {
 }
 
 func NewContributor(context build.Build) (Contributor, bool, error) {
-	plans := context.Plans.Get(Layer)
-	if len(plans) < 1 {
+
+	_, wantLayer, err := context.Plans.GetShallowMerged(Layer)
+	if err != nil {
+		return Contributor{}, false, nil
+	}
+
+	if !wantLayer {
 		return Contributor{}, false, nil
 	}
 
