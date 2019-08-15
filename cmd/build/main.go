@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/buildpack/libbuildpack/buildpackplan"
 	"os"
 
 	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
-
-	"github.com/buildpack/libbuildpack/buildplan"
 
 	"github.com/cloudfoundry/libcfbuildpack/build"
 )
@@ -39,5 +38,5 @@ func runBuild(context build.Build) (int, error) {
 		}
 	}
 
-	return context.Success(buildplan.BuildPlan{})
+	return context.Success(buildpackplan.Plan{})
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"github.com/buildpack/libbuildpack/buildplan"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,7 +11,7 @@ import (
 
 	specLogger "github.com/buildpack/libbuildpack/logger"
 
-	"github.com/buildpack/libbuildpack/detect"
+	"github.com/cloudfoundry/libcfbuildpack/detect"
 
 	"github.com/cloudfoundry/libcfbuildpack/test"
 	. "github.com/onsi/gomega"
@@ -39,8 +40,12 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 			code, err := runDetect(factory.Detect)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(code).To(Equal(detect.PassStatusCode))
-			Expect(factory.Output).To(HaveKey(conf.Layer))
-			Expect(factory.Output[conf.Layer].Metadata).To(HaveKeyWithValue("build", true))
+			Expect(factory.Plans.Plan.Provides).To(Equal([]buildplan.Provided{{Name: conf.Layer}}))
+			Expect(factory.Plans.Plan.Requires).To(Equal([]buildplan.Required{{
+				Name: conf.Layer,
+				Metadata: buildplan.Metadata{
+					"build": true,
+				}}}))
 		})
 	})
 

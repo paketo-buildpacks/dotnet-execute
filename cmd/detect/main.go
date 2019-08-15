@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/buildpack/libbuildpack/buildplan"
+	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
 	"os"
 	"regexp"
 
-	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
-
 	"github.com/cloudfoundry/libcfbuildpack/helper"
 
-	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
 )
 
@@ -54,10 +53,13 @@ func runDetect(context detect.Detect) (int, error) {
 	} else if len(runtimeConfigMatches) > 1 {
 		return context.Fail(), fmt.Errorf(TooManyRuntimeConfigs)
 	} else {
-		return context.Pass(buildplan.BuildPlan{
-			conf.Layer: buildplan.Dependency{
-				Metadata: buildplan.Metadata{"build": true},
-			},
+		return context.Pass(buildplan.Plan{
+			Provides: []buildplan.Provided{{Name: conf.Layer}},
+			Requires: []buildplan.Required{{
+				Name: conf.Layer,
+				Metadata: buildplan.Metadata{
+					"build": true,
+				}}},
 		})
 	}
 }

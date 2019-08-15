@@ -17,8 +17,8 @@ type Contributor struct {
 }
 
 func NewContributor(context build.Build) (Contributor, bool, error) {
-	_, wantDependency := context.BuildPlan[Layer]
-	if !wantDependency {
+	plans := context.Plans.Get(Layer)
+	if len(plans) < 1 {
 		return Contributor{}, false, nil
 	}
 

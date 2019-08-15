@@ -13,7 +13,7 @@ import (
 	"github.com/cloudfoundry/libcfbuildpack/test"
 	. "github.com/onsi/gomega"
 
-	"github.com/buildpack/libbuildpack/buildplan"
+	"github.com/cloudfoundry/libcfbuildpack/buildpackplan"
 
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
@@ -32,9 +32,8 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 		RegisterTestingT(t)
 		f = test.NewBuildFactory(t)
 
-		f.AddBuildPlan(conf.Layer, buildplan.Dependency{
-			Metadata: buildplan.Metadata{"build": true, "launch": true},
-		})
+		f.AddPlan(buildpackplan.Plan{Name: conf.Layer})
+
 	})
 
 	when("conf.NewContributor", func() {
@@ -45,7 +44,7 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 		})
 
 		it("returns false if dotnet-core-conf is not in the buildplan", func() {
-			f.Build.BuildPlan = buildplan.BuildPlan{}
+			f.Build.Plans = buildpackplan.Plans{}
 
 			_, willContribute, err := conf.NewContributor(f.Build)
 			Expect(err).NotTo(HaveOccurred())
