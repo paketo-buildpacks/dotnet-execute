@@ -2,6 +2,7 @@ package conf_test
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -53,7 +54,7 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 	})
 
 	when("Contribute", func() {
-		it("sets the start command", func() {
+		it("sets the start command when only the runtime is used", func() {
 			executable := "test-executable"
 			executableFilePath := filepath.Join(f.Build.Application.Root, executable)
 			test.TouchFile(t, executableFilePath)
@@ -61,7 +62,46 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 
 			runtimeConfigFile := fmt.Sprintf("%s.runtimeconfig.json", executable)
 			runtimeConfigFilePath := filepath.Join(f.Build.Application.Root, runtimeConfigFile)
-			test.TouchFile(t, runtimeConfigFilePath)
+			Expect(ioutil.WriteFile(runtimeConfigFilePath, []byte(`
+{
+  "runtimeOptions": {
+    "tfm": "netcoreapp2.2",
+    "framework": {
+      "name": "Microsoft.NETCore.App",
+      "version": "2.1.5"
+    }
+  }
+}
+`), os.ModePerm)).To(Succeed())
+			defer os.RemoveAll(runtimeConfigFilePath)
+
+			startCmd := fmt.Sprintf("cd %s && ./%s", f.Build.Application.Root, executable)
+
+			contributor, _, err := conf.NewContributor(f.Build)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(contributor.Contribute()).To(Succeed())
+			Expect(f.Build.Layers).To(test.HaveApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd}}}))
+		})
+
+		it("sets the start command when aspnet is used", func() {
+			executable := "test-executable"
+			executableFilePath := filepath.Join(f.Build.Application.Root, executable)
+			test.TouchFile(t, executableFilePath)
+			defer os.RemoveAll(executableFilePath)
+
+			runtimeConfigFile := fmt.Sprintf("%s.runtimeconfig.json", executable)
+			runtimeConfigFilePath := filepath.Join(f.Build.Application.Root, runtimeConfigFile)
+			Expect(ioutil.WriteFile(runtimeConfigFilePath, []byte(`
+{
+  "runtimeOptions": {
+    "tfm": "netcoreapp2.2",
+    "framework": {
+      "name": "Microsoft.AspNetCore.App",
+      "version": "2.1.5"
+    }
+  }
+}
+`), os.ModePerm)).To(Succeed())
 			defer os.RemoveAll(runtimeConfigFilePath)
 
 			startCmd := fmt.Sprintf("cd %s && ./%s --server.urls http://0.0.0.0:${PORT}", f.Build.Application.Root, executable)

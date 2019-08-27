@@ -2,6 +2,7 @@ package conf
 
 import (
 	"fmt"
+	"github.com/cloudfoundry/dotnet-core-conf-cnb/utils"
 	"path/filepath"
 	"regexp"
 
@@ -39,7 +40,18 @@ func (c Contributor) Contribute() error {
 	runtimeConfigFile := filepath.Base(runtimeConfigMatches[0])
 	executableFile := runtimeConfigRe.ReplaceAllString(runtimeConfigFile, "")
 
-	startCmd := fmt.Sprintf("cd %s && ./%s --server.urls http://0.0.0.0:${PORT}", c.context.Application.Root, executableFile)
+	runtimeConfig, err:= utils.CreateRuntimeConfig(c.context.Application.Root)
+	if err != nil {
+		return err
+	}
+
+	args := fmt.Sprintf("./%s", executableFile)
+
+	if runtimeConfig.RuntimeOptions.Framework.Name != "Microsoft.NETCore.App"{
+		args = fmt.Sprintf("./%s --server.urls http://0.0.0.0:${PORT}", executableFile)
+	}
+
+	startCmd := fmt.Sprintf("cd %s && %s", c.context.Application.Root, args)
 
 	return c.context.Layers.WriteApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd}}})
 }
