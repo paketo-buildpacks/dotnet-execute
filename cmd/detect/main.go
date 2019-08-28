@@ -24,14 +24,6 @@ func main() {
 		os.Exit(100)
 	}
 
-	// TODO
-	// Decide if the following is needed for this CNB. This is needed if your CNB depends on the results of previous CNB contributions to the buildplan.
-	// Otherwise, don't use it as it negates parallelization.
-	//if err := context.BuildPlan.Init(); err != nil {
-	//	_, _ = fmt.Fprintf(os.Stderr, "Failed to initialize Build Plan: %s\n", err)
-	//	os.Exit(101)
-	//}
-
 	code, err := runDetect(context)
 	if err != nil {
 		context.Logger.Info(err.Error())

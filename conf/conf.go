@@ -3,11 +3,7 @@ package conf
 import (
 	"fmt"
 	"github.com/cloudfoundry/dotnet-core-conf-cnb/utils"
-	"path/filepath"
-	"regexp"
-
 	"github.com/cloudfoundry/libcfbuildpack/build"
-	"github.com/cloudfoundry/libcfbuildpack/helper"
 	"github.com/cloudfoundry/libcfbuildpack/layers"
 )
 
@@ -32,23 +28,15 @@ func NewContributor(context build.Build) (Contributor, bool, error) {
 }
 
 func (c Contributor) Contribute() error {
-	runtimeConfigRe := regexp.MustCompile(`\.(runtimeconfig\.json)$`)
-	runtimeConfigMatches, err := helper.FindFiles(c.context.Application.Root, runtimeConfigRe)
-	if err != nil {
-		return err
-	}
-	runtimeConfigFile := filepath.Base(runtimeConfigMatches[0])
-	executableFile := runtimeConfigRe.ReplaceAllString(runtimeConfigFile, "")
-
-	runtimeConfig, err:= utils.CreateRuntimeConfig(c.context.Application.Root)
+	runtimeConfig, err := utils.NewRuntimeConfig(c.context.Application.Root)
 	if err != nil {
 		return err
 	}
 
-	args := fmt.Sprintf("./%s", executableFile)
+	args := fmt.Sprintf("./%s", runtimeConfig.BinaryName)
 
-	if runtimeConfig.RuntimeOptions.Framework.Name != "Microsoft.NETCore.App"{
-		args = fmt.Sprintf("./%s --server.urls http://0.0.0.0:${PORT}", executableFile)
+	if !runtimeConfig.HasRuntimeDependency() {
+		args = fmt.Sprintf("./%s --server.urls http://0.0.0.0:${PORT}", runtimeConfig.BinaryName)
 	}
 
 	startCmd := fmt.Sprintf("cd %s && %s", c.context.Application.Root, args)
