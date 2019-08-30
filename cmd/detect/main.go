@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
-	"os"
-	"regexp"
-
-	"github.com/cloudfoundry/libcfbuildpack/helper"
-
+	"github.com/cloudfoundry/dotnet-core-conf-cnb/utils"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
+	"os"
 )
 
 const (
@@ -33,25 +30,23 @@ func main() {
 }
 
 func runDetect(context detect.Detect) (int, error) {
-	runtimeConfigRe := regexp.MustCompile(`\.(runtimeconfig\.json)$`)
-	runtimeConfigMatches, err := helper.FindFiles(context.Application.Root, runtimeConfigRe)
+	runtimeConfig, err := utils.NewRuntimeConfig(context.Application.Root)
 	if err != nil {
 		return context.Fail(), err
 	}
 
-	if len(runtimeConfigMatches) < 1 {
+	if !runtimeConfig.IsPresent() {
 		context.Logger.Info(MissingRuntimeConfig)
 		return context.Fail(), nil
-	} else if len(runtimeConfigMatches) > 1 {
-		return context.Fail(), fmt.Errorf(TooManyRuntimeConfigs)
-	} else {
-		return context.Pass(buildplan.Plan{
-			Provides: []buildplan.Provided{{Name: conf.Layer}},
-			Requires: []buildplan.Required{{
-				Name: conf.Layer,
-				Metadata: buildplan.Metadata{
-					"build": true,
-				}}},
-		})
 	}
+
+	return context.Pass(buildplan.Plan{
+		Provides: []buildplan.Provided{{Name: conf.Layer}},
+		Requires: []buildplan.Required{{
+			Name: conf.Layer,
+			Metadata: buildplan.Metadata{
+				"build": true,
+			}}},
+	})
+
 }

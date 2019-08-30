@@ -57,7 +57,7 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 		it("sets the start command when only the runtime is used", func() {
 			executable := "test-executable"
 			executableFilePath := filepath.Join(f.Build.Application.Root, executable)
-			test.TouchFile(t, executableFilePath)
+			test.WriteFileWithPerm(t, executableFilePath, 0500, "")
 			defer os.RemoveAll(executableFilePath)
 
 			runtimeConfigFile := fmt.Sprintf("%s.runtimeconfig.json", executable)
@@ -86,7 +86,7 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 		it("sets the start command when aspnet is used", func() {
 			executable := "test-executable"
 			executableFilePath := filepath.Join(f.Build.Application.Root, executable)
-			test.TouchFile(t, executableFilePath)
+			test.WriteFileWithPerm(t, executableFilePath, 0500, "")
 			defer os.RemoveAll(executableFilePath)
 
 			runtimeConfigFile := fmt.Sprintf("%s.runtimeconfig.json", executable)
@@ -111,6 +111,32 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 			Expect(contributor.Contribute()).To(Succeed())
 			Expect(f.Build.Layers).To(test.HaveApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd}}}))
 		})
-	})
 
+
+		it("sets the start command when sdk is used", func() {
+
+			appName := "test-fdd"
+			runtimeConfigFile := fmt.Sprintf("%s.runtimeconfig.json", appName)
+			runtimeConfigFilePath := filepath.Join(f.Build.Application.Root, runtimeConfigFile)
+			Expect(ioutil.WriteFile(runtimeConfigFilePath, []byte(`
+{
+  "runtimeOptions": {
+    "tfm": "netcoreapp2.2",
+    "framework": {
+      "name": "Microsoft.AspNetCore.App",
+      "version": "2.1.5"
+    }
+  }
+}
+`), os.ModePerm)).To(Succeed())
+			defer os.RemoveAll(runtimeConfigFilePath)
+
+			startCmd := fmt.Sprintf("cd %s && dotnet %s.dll --server.urls http://0.0.0.0:${PORT}", f.Build.Application.Root, appName)
+
+			contributor, _, err := conf.NewContributor(f.Build)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(contributor.Contribute()).To(Succeed())
+			Expect(f.Build.Layers).To(test.HaveApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd}}}))
+		})
+	})
 }

@@ -155,6 +155,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 
 			runtimeConfig, err := NewRuntimeConfig(appRoot)
 			Expect(err).ToNot(HaveOccurred())
+			Expect(runtimeConfig.IsPresent()).To(BeFalse())
 			Expect(runtimeConfig.HasRuntimeDependency()).To(BeFalse())
 			Expect(runtimeConfig.HasASPNetDependency()).To(BeFalse())
 		})

@@ -34,7 +34,16 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 	when("there is a file with suffix runtimeconfig.json", func() {
 		it("passes detect and adds dotnet-core-conf to the buildplan", func() {
 			runtimeConfigPath := filepath.Join(factory.Detect.Application.Root, "test.runtimeconfig.json")
-			test.TouchFile(t, runtimeConfigPath)
+			test.WriteFile(t, runtimeConfigPath, `
+{
+  "runtimeOptions": {
+    "tfm": "netcoreapp2.2",
+    "framework": {
+      "name": "Microsoft.NETCore.App",
+      "version": "2.2.5"
+    }
+  }
+}`)
 			defer os.RemoveAll(runtimeConfigPath)
 
 			code, err := runDetect(factory.Detect)
@@ -52,16 +61,16 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 	when("there are multiple files with suffix runtimeconfig.json", func() {
 		it("fails detect with error about multiple runtime configs", func() {
 			runtimeConfigPath1 := filepath.Join(factory.Detect.Application.Root, "test1.runtimeconfig.json")
-			test.TouchFile(t, runtimeConfigPath1)
+			test.WriteFile(t, runtimeConfigPath1, "{}")
 			defer os.RemoveAll(runtimeConfigPath1)
 
 			runtimeConfigPath2 := filepath.Join(factory.Detect.Application.Root, "test2.runtimeconfig.json")
-			test.TouchFile(t, runtimeConfigPath2)
+			test.WriteFile(t, runtimeConfigPath2, "{}")
 			defer os.RemoveAll(runtimeConfigPath2)
 
 			code, err := runDetect(factory.Detect)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(TooManyRuntimeConfigs))
+			Expect(err.Error()).To(ContainSubstring("multiple *.runtimeconfig.json files present"))
 			Expect(code).To(Equal(detect.FailStatusCode))
 		})
 	})
@@ -73,7 +82,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 
 			code, err := runDetect(factory.Detect)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buf.String()).To(ContainSubstring(MissingRuntimeConfig))
+			Expect(buf.String()).To(ContainSubstring("*.runtimeconfig.json file not found"))
 			Expect(code).To(Equal(detect.FailStatusCode))
 		})
 	})

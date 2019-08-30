@@ -33,13 +33,23 @@ func (c Contributor) Contribute() error {
 		return err
 	}
 
-	args := fmt.Sprintf("./%s", runtimeConfig.BinaryName)
+	hasFDE, err := runtimeConfig.HasFDE()
+	if err != nil {
+		return err
+	}
 
+	startCmdPrefix := fmt.Sprintf("dotnet %s.dll", runtimeConfig.BinaryName)
+	if hasFDE {
+		startCmdPrefix = fmt.Sprintf("./%s", runtimeConfig.BinaryName)
+	}
+
+	args := startCmdPrefix
 	if !runtimeConfig.HasRuntimeDependency() {
-		args = fmt.Sprintf("./%s --server.urls http://0.0.0.0:${PORT}", runtimeConfig.BinaryName)
+		args = fmt.Sprintf("%s --server.urls http://0.0.0.0:${PORT}", startCmdPrefix)
 	}
 
 	startCmd := fmt.Sprintf("cd %s && %s", c.context.Application.Root, args)
+
 
 	return c.context.Layers.WriteApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd}}})
 }
