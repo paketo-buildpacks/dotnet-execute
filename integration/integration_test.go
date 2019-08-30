@@ -14,22 +14,31 @@ var (
 	bpDir, dotnetCoreConfURI string
 )
 
+var suite = spec.New("Integration", spec.Report(report.Terminal{}))
+
+func init() {
+	suite("Integration", testIntegration)
+}
+
 func TestIntegration(t *testing.T) {
 	var err error
 	Expect := NewWithT(t).Expect
 	bpDir, err = dagger.FindBPRoot()
 	Expect(err).NotTo(HaveOccurred())
+
 	dotnetCoreConfURI, err = dagger.PackageBuildpack(bpDir)
 	Expect(err).ToNot(HaveOccurred())
 	defer dagger.DeleteBuildpack(dotnetCoreConfURI)
 
-	spec.Run(t, "Integration", testIntegration, spec.Report(report.Terminal{}))
+	suite.Run(t)
 }
 
 func testIntegration(t *testing.T, when spec.G, it spec.S) {
-	var Expect func(interface{}, ...interface{}) GomegaAssertion
+	var Expect func(interface{}, ...interface{}) Assertion
+	var Eventually func(interface{}, ...interface{}) AsyncAssertion
 	it.Before(func() {
 		Expect = NewWithT(t).Expect
+		Eventually = NewWithT(t).Eventually
 	})
 
 	when("the app is self contained", func() {
@@ -41,9 +50,11 @@ func testIntegration(t *testing.T, when spec.G, it spec.S) {
 			defer app.Destroy()
 
 			Expect(app.Start()).To(Succeed())
-			body, err := app.HTTPGetBody("/")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(body).To(ContainSubstring("Hello World!"))
+
+			Eventually(func() string {
+				body, _, _ := app.HTTPGet("/")
+				return body
+			}).Should(ContainSubstring("Hello World"))
 		})
 	})
 }
