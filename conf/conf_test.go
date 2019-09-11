@@ -80,7 +80,7 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 			contributor, _, err := conf.NewContributor(f.Build)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(contributor.Contribute()).To(Succeed())
-			Expect(f.Build.Layers).To(test.HaveApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd}}}))
+			Expect(f.Build.Layers).To(test.HaveApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd, false}}}))
 		})
 
 		it("sets the start command when aspnet is used", func() {
@@ -109,9 +109,8 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 			contributor, _, err := conf.NewContributor(f.Build)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(contributor.Contribute()).To(Succeed())
-			Expect(f.Build.Layers).To(test.HaveApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd}}}))
+			Expect(f.Build.Layers).To(test.HaveApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd, false}}}))
 		})
-
 
 		it("sets the start command when sdk is used", func() {
 
@@ -136,7 +135,7 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 			contributor, _, err := conf.NewContributor(f.Build)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(contributor.Contribute()).To(Succeed())
-			Expect(f.Build.Layers).To(test.HaveApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd}}}))
+			Expect(f.Build.Layers).To(test.HaveApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd, false}}}))
 		})
 	})
 }

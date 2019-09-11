@@ -2,6 +2,7 @@ package conf
 
 import (
 	"fmt"
+
 	"github.com/cloudfoundry/dotnet-core-conf-cnb/utils"
 	"github.com/cloudfoundry/libcfbuildpack/build"
 	"github.com/cloudfoundry/libcfbuildpack/layers"
@@ -50,6 +51,5 @@ func (c Contributor) Contribute() error {
 
 	startCmd := fmt.Sprintf("cd %s && %s", c.context.Application.Root, args)
 
-
-	return c.context.Layers.WriteApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd}}})
+	return c.context.Layers.WriteApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd, false}}})
 }
