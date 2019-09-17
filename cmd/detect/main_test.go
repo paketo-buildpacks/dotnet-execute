@@ -58,6 +58,25 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 		})
 	})
 
+	when("there is not runtimecongif.json but there is a *.csproj", func() {
+		it("passes detect and add dotnet-core-conf to the buildplan", func() {
+			csprojPath := filepath.Join(factory.Detect.Application.Root, "test.csproj")
+			test.WriteFile(t, csprojPath, `test proj`)
+
+			defer os.RemoveAll(csprojPath)
+
+			code, err := runDetect(factory.Detect)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(code).To(Equal(detect.PassStatusCode))
+			Expect(factory.Plans.Plan.Provides).To(Equal([]buildplan.Provided{{Name: conf.Layer}}))
+			Expect(factory.Plans.Plan.Requires).To(Equal([]buildplan.Required{{
+				Name: conf.Layer,
+				Metadata: buildplan.Metadata{
+					"build": true,
+				}}}))
+		})
+	})
+
 	when("there are multiple files with suffix runtimeconfig.json", func() {
 		it("fails detect with error about multiple runtime configs", func() {
 			runtimeConfigPath1 := filepath.Join(factory.Detect.Application.Root, "test1.runtimeconfig.json")
@@ -82,7 +101,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 
 			code, err := runDetect(factory.Detect)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(buf.String()).To(ContainSubstring("*.runtimeconfig.json file not found"))
+			Expect(buf.String()).To(ContainSubstring("*.runtimeconfig.json file not found and expecting only a single *.csproj file in the app directory"))
 			Expect(code).To(Equal(detect.FailStatusCode))
 		})
 	})
