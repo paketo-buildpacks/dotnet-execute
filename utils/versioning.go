@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Masterminds/semver"
 	"github.com/cloudfoundry/libcfbuildpack/build"
+	"strings"
 )
 
 func BuildpackYAMLVersionCheck(versionRuntimeConfig, versionBuildpackYAML string) error {
@@ -11,6 +12,8 @@ func BuildpackYAMLVersionCheck(versionRuntimeConfig, versionBuildpackYAML string
 	if err != nil {
 		return err
 	}
+
+	versionBuildpackYAML = strings.ReplaceAll(versionBuildpackYAML, "*", "0")
 
 	buildpackYAMLVersion, err := semver.NewVersion(versionBuildpackYAML)
 	if err != nil {

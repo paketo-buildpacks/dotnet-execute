@@ -31,10 +31,20 @@ func testVersioning(t *testing.T, when spec.G, it spec.S) {
 	})
 
 	when("checking buildpack version compatiblity", func() {
-		when("the buildpack.yml version is a compatible version with app runtime version", func() {
+		when("the buildpack.yml version is not a mask but is still compatible version with app runtime version", func() {
 			it("does not return an error", func() {
 				runtimeConfigVersion := "2.0.0"
-				buildpackYamlVersion := "2.1.0"
+				buildpackYamlVersion := "2.1.13"
+
+				err := BuildpackYAMLVersionCheck(runtimeConfigVersion, buildpackYamlVersion)
+				Expect(err).ToNot(HaveOccurred())
+			})
+		})
+
+		when("the buildpack.yml version mask is a compatible version with app runtime version", func() {
+			it("does not return an error ", func() {
+				runtimeConfigVersion := "2.0.0"
+				buildpackYamlVersion := "2.1.*"
 
 				err := BuildpackYAMLVersionCheck(runtimeConfigVersion, buildpackYamlVersion)
 				Expect(err).ToNot(HaveOccurred())
@@ -42,9 +52,9 @@ func testVersioning(t *testing.T, when spec.G, it spec.S) {
 		})
 
 		when("the buildpack.yml major and runtime major are not equal", func() {
-			it("returns an error", func() {
+			it("returns an error ", func() {
 				runtimeConfigVersion := "2.0.0"
-				buildpackYamlVersion := "3.0.0"
+				buildpackYamlVersion := "3.0.*"
 
 				err := BuildpackYAMLVersionCheck(runtimeConfigVersion, buildpackYamlVersion)
 				Expect(err).To(Equal(fmt.Errorf("major versions of runtimes do not match between buildpack.yml and runtimeconfig.json")))
@@ -54,7 +64,7 @@ func testVersioning(t *testing.T, when spec.G, it spec.S) {
 		when("the buildpack.yml minor is less than runtime minor", func() {
 			it("returns an error", func() {
 				runtimeConfigVersion := "2.2.0"
-				buildpackYamlVersion := "2.1.0"
+				buildpackYamlVersion := "2.1.*"
 
 				err := BuildpackYAMLVersionCheck(runtimeConfigVersion, buildpackYamlVersion)
 				Expect(err).To(Equal(fmt.Errorf("the minor version of the runtimeconfig.json is greater than the minor version of the buildpack.yml")))
