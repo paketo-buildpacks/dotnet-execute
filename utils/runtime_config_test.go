@@ -33,7 +33,8 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
     "framework": {
       "name": "Microsoft.AspNetCore.App",
       "version": "2.2.5"
-    }
+	},
+    "applyPatches": true	
   }
 }
 `), os.ModePerm)).To(Succeed())
@@ -41,6 +42,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 			runtimeConfig, err := NewRuntimeConfig(appRoot)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runtimeConfig.HasASPNetDependency()).To(BeTrue())
+			Expect(runtimeConfig.HasApplyPatches()).To(BeTrue())
 
 		})
 
@@ -72,6 +74,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 			runtimeConfig, err := NewRuntimeConfig(appRoot)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runtimeConfig.HasASPNetDependency()).To(BeTrue())
+			Expect(runtimeConfig.HasApplyPatches()).To(BeFalse())
 		})
 	})
 
