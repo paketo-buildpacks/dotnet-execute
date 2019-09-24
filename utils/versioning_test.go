@@ -2,13 +2,17 @@ package utils
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
 	"github.com/cloudfoundry/libcfbuildpack/test"
 	. "github.com/onsi/gomega"
-	"path/filepath"
+
+	"testing"
 
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
-	"testing"
 )
 
 func TestUnitVersioning(t *testing.T) {
@@ -17,15 +21,16 @@ func TestUnitVersioning(t *testing.T) {
 
 func testVersioning(t *testing.T, when spec.G, it spec.S) {
 	var (
-		factory     *test.BuildFactory
+		factory                    *test.BuildFactory
 		stubDotnetFrameworkFixture = filepath.Join("testdata", "stub-dotnet-framework.tar.xz")
-		framework string
-		)
+		framework                  string
+	)
 
 	it.Before(func() {
 		RegisterTestingT(t)
 		framework = "dotnet-framework"
 		factory = test.NewBuildFactory(t)
+		factory.AddDependencyWithVersion(framework, "2.2.4", stubDotnetFrameworkFixture)
 		factory.AddDependencyWithVersion(framework, "2.2.5", stubDotnetFrameworkFixture)
 		factory.AddDependencyWithVersion(framework, "2.3.0", stubDotnetFrameworkFixture)
 	})
@@ -72,42 +77,100 @@ func testVersioning(t *testing.T, when spec.G, it spec.S) {
 		})
 	})
 
-	when("getting framework roll forward version", func () {
-		it("returns a version if rollForwardVersion is found in buildpack.toml", func() {
-			rollVersion, err := FrameworkRollForward("2.2.5", framework, factory.Build)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(rollVersion).To(Equal("2.2.5"))
+	when("getting framework roll forward version", func() {
+		when("applyPatches is false", func() {
+
+			var appRoot string
+			it.Before(func() {
+				appRoot = factory.Build.Application.Root
+				runtimeConfigJSONPath := filepath.Join(appRoot, "appName.runtimeconfig.json")
+				Expect(ioutil.WriteFile(runtimeConfigJSONPath, []byte(`
+	{
+	  "runtimeOptions": {
+		"tfm": "netcoreapp2.2",
+		"framework": {
+		  "name": "Microsoft.AspNetCore.App",
+		  "version": "2.2.5"
+		},
+		"applyPatches": false	
+	  }
+	}
+	`), os.ModePerm)).To(Succeed())
+
+			})
+
+			it.After(func() {
+				os.RemoveAll(appRoot)
+			})
+
+			it("returns a version if rollForwardVersion is found in buildpack.toml", func() {
+				rollVersion, err := FrameworkRollForward("2.2.4", framework, factory.Build)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(rollVersion).To(Equal("2.2.4"))
+			})
+
+			it("returns a version if rollForwardVersion has a matching minor with a version found in buildpack.toml and the rollForwardVersion patch is lower", func() {
+				rollVersion, err := FrameworkRollForward("2.2.0", framework, factory.Build)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(rollVersion).To(Equal("2.2.5"))
+			})
+
+			// todo: this test will have to change to reflect Micorsoft's new default.
+			it("returns a version if rollForwardVersion has a matching major with a version found in buildpack.toml and the rollForwardVersion minor is lower", func() {
+				rollVersion, err := FrameworkRollForward("2.1.0", framework, factory.Build)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(rollVersion).To(Equal("2.3.0"))
+			})
+
+			it("returns an version with matching major if rollForwardVersion has a matching minor with a version found in buildpack.toml and the rollForwardVersion patch is higher", func() {
+				rollVersion, err := FrameworkRollForward("2.2.6", framework, factory.Build)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(rollVersion).To(Equal("2.3.0"))
+			})
+
+			it("returns an empty string and an error with matching major if rollForwardVersion has a matching major with a version found in buildpack.toml and the rollForwardVersion minor is higher", func() {
+				rollVersion, err := FrameworkRollForward("2.4.0", framework, factory.Build)
+				Expect(err).To(Equal(fmt.Errorf("no compatible versions found")))
+				Expect(rollVersion).To(Equal(""))
+			})
+
+			it("returns an empty string and an error when no matching major is found", func() {
+				rollVersion, err := FrameworkRollForward("3.0.0", framework, factory.Build)
+				Expect(err).To(Equal(fmt.Errorf("no compatible versions found")))
+				Expect(rollVersion).To(Equal(""))
+			})
 		})
 
-		it("returns a version if rollForwardVersion has a matching minor with a version found in buildpack.toml and the rollForwardVersion patch is lower", func() {
-			rollVersion, err := FrameworkRollForward("2.2.0", framework, factory.Build)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(rollVersion).To(Equal("2.2.5"))
-		})
+		when("applyPatches is true", func() {
 
-		it("returns a version if rollForwardVersion has a matching major with a version found in buildpack.toml and the rollForwardVersion minor is lower", func() {
-			rollVersion, err := FrameworkRollForward("2.1.0", framework, factory.Build)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(rollVersion).To(Equal("2.3.0"))
-		})
+			var appRoot string
+			it.Before(func() {
+				appRoot = factory.Build.Application.Root
+				runtimeConfigJSONPath := filepath.Join(appRoot, "appName.runtimeconfig.json")
+				Expect(ioutil.WriteFile(runtimeConfigJSONPath, []byte(`
+	{
+	  "runtimeOptions": {
+		"tfm": "netcoreapp2.2",
+		"framework": {
+		  "name": "Microsoft.AspNetCore.App",
+		  "version": "2.2.5"
+		},
+		"applyPatches": true	
+	  }
+	}
+	`), os.ModePerm)).To(Succeed())
 
-		it("returns an version with matching major if rollForwardVersion has a matching minor with a version found in buildpack.toml and the rollForwardVersion patch is higher", func() {
-			rollVersion, err := FrameworkRollForward("2.2.6", framework, factory.Build)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(rollVersion).To(Equal("2.3.0"))
-		})
+			})
 
-		it("returns an empty string and an error with matching major if rollForwardVersion has a matching major with a version found in buildpack.toml and the rollForwardVersion minor is higher", func() {
-			rollVersion, err := FrameworkRollForward("2.4.0", framework, factory.Build)
-			Expect(err).To(Equal(fmt.Errorf("no compatible versions found")))
-			Expect(rollVersion).To(Equal(""))
-		})
+			it.After(func() {
+				os.RemoveAll(appRoot)
+			})
 
-		it("returns an empty string and an error when no matching major is found", func() {
-			rollVersion, err := FrameworkRollForward("3.0.0", framework, factory.Build)
-			Expect(err).To(Equal(fmt.Errorf("no compatible versions found")))
-			Expect(rollVersion).To(Equal(""))
+			it("returns a the latest patch version if rollForwardVersion is found in buildpack.toml but apply patches is true", func() {
+				rollVersion, err := FrameworkRollForward("2.2.4", framework, factory.Build)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(rollVersion).To(Equal("2.2.5"))
+			})
 		})
-
 	})
 }

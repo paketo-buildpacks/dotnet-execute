@@ -32,6 +32,7 @@ func BuildpackYAMLVersionCheck(versionRuntimeConfig, versionBuildpackYAML string
 }
 
 func FrameworkRollForward(version, framework string, context build.Build) (string, error) {
+	var versions []string
 	splitVersion, err := semver.NewVersion(version)
 	if err != nil {
 		return "", err
@@ -39,7 +40,13 @@ func FrameworkRollForward(version, framework string, context build.Build) (strin
 	anyPatch := fmt.Sprintf("%d.%d.*", splitVersion.Major(), splitVersion.Minor())
 	anyMinor := fmt.Sprintf("%d.*.*", splitVersion.Major())
 
-	versions := []string{version, anyPatch, anyMinor}
+	runtimeConfig, err := NewRuntimeConfig(context.Application.Root)
+
+	if runtimeConfig.HasApplyPatches() {
+		versions = append(versions, anyPatch)
+	} else {
+		versions = append(versions, version, anyPatch, anyMinor)
+	}
 
 	deps, err := context.Buildpack.Dependencies()
 	if err != nil {
