@@ -46,7 +46,7 @@ func (c Contributor) Contribute() error {
 
 	args := startCmdPrefix
 	if !runtimeConfig.HasRuntimeDependency() {
-		args = fmt.Sprintf("%s --server.urls http://0.0.0.0:${PORT}", startCmdPrefix)
+		args = fmt.Sprintf("%s --urls http://0.0.0.0:${PORT}", startCmdPrefix)
 	}
 
 	startCmd := fmt.Sprintf("cd %s && %s", c.context.Application.Root, args)

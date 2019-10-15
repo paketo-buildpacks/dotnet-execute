@@ -34,20 +34,34 @@ func TestIntegration(t *testing.T) {
 }
 
 func testIntegration(t *testing.T, when spec.G, it spec.S) {
-	var Expect func(interface{}, ...interface{}) Assertion
-	var Eventually func(interface{}, ...interface{}) AsyncAssertion
+	var (
+		Expect     func(interface{}, ...interface{}) Assertion
+		Eventually func(interface{}, ...interface{}) AsyncAssertion
+		app        *dagger.App
+		err        error
+	)
+
 	it.Before(func() {
 		Expect = NewWithT(t).Expect
 		Eventually = NewWithT(t).Eventually
+	})
+
+	it.After(func() {
+		if app != nil {
+			app.Destroy()
+		}
 	})
 
 	when("the app is self contained", func() {
 		it("builds successfully", func() {
 			appRoot := filepath.Join("testdata", "self_contained_2.1")
 
-			app, err := dagger.PackBuild(appRoot, dotnetCoreConfURI)
+			app, err = dagger.NewPack(
+				appRoot,
+				dagger.RandomImage(),
+				dagger.SetBuildpacks(dotnetCoreConfURI),
+			).Build()
 			Expect(err).NotTo(HaveOccurred())
-			defer app.Destroy()
 
 			Expect(app.Start()).To(Succeed())
 

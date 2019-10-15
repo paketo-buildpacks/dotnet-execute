@@ -104,7 +104,7 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 `), os.ModePerm)).To(Succeed())
 			defer os.RemoveAll(runtimeConfigFilePath)
 
-			startCmd := fmt.Sprintf("cd %s && ./%s --server.urls http://0.0.0.0:${PORT}", f.Build.Application.Root, executable)
+			startCmd := fmt.Sprintf("cd %s && ./%s --urls http://0.0.0.0:${PORT}", f.Build.Application.Root, executable)
 
 			contributor, _, err := conf.NewContributor(f.Build)
 			Expect(err).NotTo(HaveOccurred())
@@ -130,7 +130,7 @@ func testConf(t *testing.T, when spec.G, it spec.S) {
 `), os.ModePerm)).To(Succeed())
 			defer os.RemoveAll(runtimeConfigFilePath)
 
-			startCmd := fmt.Sprintf("cd %s && dotnet %s.dll --server.urls http://0.0.0.0:${PORT}", f.Build.Application.Root, appName)
+			startCmd := fmt.Sprintf("cd %s && dotnet %s.dll --urls http://0.0.0.0:${PORT}", f.Build.Application.Root, appName)
 
 			contributor, _, err := conf.NewContributor(f.Build)
 			Expect(err).NotTo(HaveOccurred())
