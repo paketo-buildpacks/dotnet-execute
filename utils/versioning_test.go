@@ -30,6 +30,8 @@ func testVersioning(t *testing.T, when spec.G, it spec.S) {
 		RegisterTestingT(t)
 		framework = "dotnet-framework"
 		factory = test.NewBuildFactory(t)
+		factory.AddDependencyWithVersion(framework, "2.0.0", stubDotnetFrameworkFixture)
+		factory.AddDependencyWithVersion(framework, "2.0.5", stubDotnetFrameworkFixture)
 		factory.AddDependencyWithVersion(framework, "2.2.4", stubDotnetFrameworkFixture)
 		factory.AddDependencyWithVersion(framework, "2.2.5", stubDotnetFrameworkFixture)
 		factory.AddDependencyWithVersion(framework, "2.3.0", stubDotnetFrameworkFixture)
@@ -92,7 +94,7 @@ func testVersioning(t *testing.T, when spec.G, it spec.S) {
 		  "name": "Microsoft.AspNetCore.App",
 		  "version": "2.2.5"
 		},
-		"applyPatches": false	
+		"applyPatches": false
 	  }
 	}
 	`), os.ModePerm)).To(Succeed())
@@ -101,6 +103,12 @@ func testVersioning(t *testing.T, when spec.G, it spec.S) {
 
 			it.After(func() {
 				os.RemoveAll(appRoot)
+			})
+
+			it("returns a version if rollFowardVersion has a wild card in it but that constraint is still found in buildpack.toml", func() {
+				rollVersion, err := FrameworkRollForward("2.0.*", framework, factory.Build)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(rollVersion).To(Equal("2.0.5"))
 			})
 
 			it("returns a version if rollForwardVersion is found in buildpack.toml", func() {
@@ -155,7 +163,7 @@ func testVersioning(t *testing.T, when spec.G, it spec.S) {
 		  "name": "Microsoft.AspNetCore.App",
 		  "version": "2.2.5"
 		},
-		"applyPatches": true	
+		"applyPatches": true
 	  }
 	}
 	`), os.ModePerm)).To(Succeed())
@@ -170,6 +178,12 @@ func testVersioning(t *testing.T, when spec.G, it spec.S) {
 				rollVersion, err := FrameworkRollForward("2.2.4", framework, factory.Build)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rollVersion).To(Equal("2.2.5"))
+			})
+
+			it("returns a the latest minor version if rollForwardVersion is not found in buildpack.toml but apply patches is true", func() {
+				rollVersion, err := FrameworkRollForward("2.2.6", framework, factory.Build)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(rollVersion).To(Equal("2.3.0"))
 			})
 		})
 	})
