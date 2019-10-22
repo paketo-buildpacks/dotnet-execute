@@ -51,5 +51,18 @@ func (c Contributor) Contribute() error {
 
 	startCmd := fmt.Sprintf("cd %s && %s", c.context.Application.Root, args)
 
+	if c.context.Build.Stack == "io.buildpacks.stacks.bionic" {
+		err := c.context.Layers.Layer(Layer).Contribute(c.context.Buildpack, func(layer layers.Layer) error {
+			if err := layer.OverrideLaunchEnv("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "true"); err != nil {
+				return err
+			}
+			return err
+		}, []layers.Flag{layers.Launch}...)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	return c.context.Layers.WriteApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd, false}}})
 }
