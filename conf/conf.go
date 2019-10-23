@@ -15,7 +15,6 @@ type Contributor struct {
 }
 
 func NewContributor(context build.Build) (Contributor, bool, error) {
-
 	_, wantLayer, err := context.Plans.GetShallowMerged(Layer)
 	if err != nil {
 		return Contributor{}, false, nil
@@ -34,21 +33,17 @@ func (c Contributor) Contribute() error {
 		return err
 	}
 
-	hasFDE, err := runtimeConfig.HasFDE()
+	hasExecutable, err := runtimeConfig.HasExecutable()
 	if err != nil {
 		return err
 	}
 
 	startCmdPrefix := fmt.Sprintf("dotnet %s.dll", runtimeConfig.BinaryName)
-	if hasFDE {
+	if hasExecutable {
 		startCmdPrefix = fmt.Sprintf("./%s", runtimeConfig.BinaryName)
 	}
 
-	args := startCmdPrefix
-	if !runtimeConfig.HasRuntimeDependency() {
-		args = fmt.Sprintf("%s --urls http://0.0.0.0:${PORT}", startCmdPrefix)
-	}
-
+	args := fmt.Sprintf("%s --urls http://0.0.0.0:${PORT}", startCmdPrefix)
 	startCmd := fmt.Sprintf("cd %s && %s", c.context.Application.Root, args)
 
 	if c.context.Build.Stack == "io.buildpacks.stacks.bionic" {
@@ -64,5 +59,13 @@ func (c Contributor) Contribute() error {
 		}
 	}
 
-	return c.context.Layers.WriteApplicationMetadata(layers.Metadata{Processes: []layers.Process{{"web", startCmd, false}}})
+	return c.context.Layers.WriteApplicationMetadata(layers.Metadata{
+		Processes: []layers.Process{
+			{
+				Type:    "web",
+				Command: startCmd,
+				Direct:  false,
+			},
+		},
+	})
 }

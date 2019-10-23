@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/buildpack/libbuildpack/buildpackplan"
 	"os"
+
+	"github.com/buildpack/libbuildpack/buildpackplan"
 
 	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
 
@@ -27,6 +28,8 @@ func main() {
 }
 
 func runBuild(context build.Build) (int, error) {
+	context.Logger.Title(context.Buildpack)
+
 	contributor, willContribute, err := conf.NewContributor(context)
 	if err != nil {
 		return 102, err

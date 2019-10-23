@@ -34,7 +34,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
       "name": "Microsoft.AspNetCore.App",
       "version": "2.2.5"
 	},
-    "applyPatches": true	
+    "applyPatches": true
   }
 }
 `), os.ModePerm)).To(Succeed())
@@ -78,59 +78,6 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 		})
 	})
 
-	when("when there is a valid runtimeconfig.json and the framework given is the runtime only", func() {
-		it("parses", func() {
-			appRoot, err := ioutil.TempDir("", "")
-			Expect(err).ToNot(HaveOccurred())
-			runtimeConfigJSONPath := filepath.Join(appRoot, "appName.runtimeconfig.json")
-			Expect(ioutil.WriteFile(runtimeConfigJSONPath, []byte(`
-{
-  "runtimeOptions": {
-    "tfm": "netcoreapp2.2",
-    "framework": {
-      "name": "Microsoft.NETCore.App",
-      "version": "2.2.5"
-    }
-  }
-}
-`), os.ModePerm)).To(Succeed())
-			defer os.RemoveAll(appRoot)
-			runtimeConfig, err := NewRuntimeConfig(appRoot)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(runtimeConfig.HasRuntimeDependency()).To(BeTrue())
-		})
-
-		it("parses when comments are in runtime.json", func() {
-			appRoot, err := ioutil.TempDir("", "")
-			Expect(err).ToNot(HaveOccurred())
-			runtimeConfigJSONPath := filepath.Join(appRoot, "appName.runtimeconfig.json")
-
-			Expect(ioutil.WriteFile(runtimeConfigJSONPath, []byte(`
-{
-  "runtimeOptions": {
-    /*
-    Multi line
-    Comment
-    */
-    "tfm": "netcoreapp2.2",
-    "framework": {
-	  "name": "Microsoft.NETCore.App",
-	  "version": "2.2.5"
-    },
-    // comment here ok?
-    "configProperties": {
-	  "System.GC.Server": true
-    }
-  }
-}
-		`), os.ModePerm)).To(Succeed())
-			defer os.RemoveAll(appRoot)
-			runtimeConfig, err := NewRuntimeConfig(appRoot)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(runtimeConfig.HasRuntimeDependency()).To(BeTrue())
-		})
-	})
-
 	when("when there are multiple runtimeconfig.json", func() {
 		it("fails fast", func() {
 			appRoot, err := ioutil.TempDir("", "")
@@ -144,9 +91,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 			runtimeConfig, err := NewRuntimeConfig(appRoot)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("multiple *.runtimeconfig.json files present"))
-			Expect(runtimeConfig.HasRuntimeDependency()).To(BeFalse())
 			Expect(runtimeConfig.HasASPNetDependency()).To(BeFalse())
-
 		})
 	})
 
@@ -159,14 +104,13 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 			runtimeConfig, err := NewRuntimeConfig(appRoot)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(runtimeConfig.IsPresent()).To(BeFalse())
-			Expect(runtimeConfig.HasRuntimeDependency()).To(BeFalse())
 			Expect(runtimeConfig.HasASPNetDependency()).To(BeFalse())
 		})
 
 	})
 
 	when("the app is FDD and", func() {
-		it("has a FDE, the detector returns true", func() {
+		it("has an executable, the detector returns true", func() {
 			appRoot, err := ioutil.TempDir("", "")
 			Expect(err).ToNot(HaveOccurred())
 			runtimeConfigJSONPath := filepath.Join(appRoot, "appName.runtimeconfig.json")
@@ -187,12 +131,12 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 			runtimeConfig, err := NewRuntimeConfig(appRoot)
 			Expect(err).ToNot(HaveOccurred())
 
-			hasFDE, err := runtimeConfig.HasFDE()
+			hasExecutable, err := runtimeConfig.HasExecutable()
 			Expect(err).ToNot(HaveOccurred())
-			Expect(hasFDE).To(BeTrue())
+			Expect(hasExecutable).To(BeTrue())
 		})
 
-		it("does not have a FDE, the detector returns false", func() {
+		it("does not have an executable, the detector returns false", func() {
 			appRoot, err := ioutil.TempDir("", "")
 			Expect(err).ToNot(HaveOccurred())
 			runtimeConfigJSONPath := filepath.Join(appRoot, "appName.runtimeconfig.json")
@@ -212,9 +156,9 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 			runtimeConfig, err := NewRuntimeConfig(appRoot)
 			Expect(err).ToNot(HaveOccurred())
 
-			hasFDE, err := runtimeConfig.HasFDE()
+			hasExecutable, err := runtimeConfig.HasExecutable()
 			Expect(err).ToNot(HaveOccurred())
-			Expect(hasFDE).To(BeFalse())
+			Expect(hasExecutable).To(BeFalse())
 		})
 	})
 
