@@ -57,6 +57,10 @@ func (r *RuntimeConfig) IsPresent() bool {
 	return r.isPresent
 }
 
+func (r *RuntimeConfig) HasRuntimeDependency() bool {
+	return r.config.RuntimeOptions.Framework.Name == "Microsoft.NETCore.App"
+}
+
 func (r *RuntimeConfig) HasASPNetDependency() bool {
 	return r.config.RuntimeOptions.Framework.Name == "Microsoft.AspNetCore.App" ||
 		r.config.RuntimeOptions.Framework.Name == "Microsoft.AspNetCore.All"
