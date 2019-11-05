@@ -1,0 +1,7 @@
+{
+  "builder" : "cflinuxfs3",
+	"buildpackOrder" : {
+		"bionic": ["icu-cnb", "test-buildpack" ],
+		"cflinuxfs3": ["test-buildpack"]
+	}
+}

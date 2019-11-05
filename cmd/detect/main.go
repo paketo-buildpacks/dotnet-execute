@@ -2,17 +2,18 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
 	"github.com/cloudfoundry/dotnet-core-conf-cnb/utils"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
-	"os"
-	"path/filepath"
 )
 
 const (
 	MissingRuntimeConfig  = "*.runtimeconfig.json file not found"
-	NotSingleProjFile = "expecting only a single *.csproj file in the app directory"
+	NotSingleProjFile     = "expecting only a single *.csproj file in the app directory"
 	TooManyRuntimeConfigs = "multiple *.runtimeconfig.json files present"
 )
 
@@ -32,6 +33,15 @@ func main() {
 }
 
 func runDetect(context detect.Detect) (int, error) {
+	plan := buildplan.Plan{
+		Provides: []buildplan.Provided{{Name: conf.Layer}},
+		Requires: []buildplan.Required{{
+			Name: conf.Layer,
+			Metadata: buildplan.Metadata{
+				"build": true,
+			}}},
+	}
+
 	runtimeConfig, err := utils.NewRuntimeConfig(context.Application.Root)
 	if err != nil {
 		return context.Fail(), err
@@ -42,18 +52,17 @@ func runDetect(context detect.Detect) (int, error) {
 		return context.Fail(), err
 	}
 
-	if  !runtimeConfig.IsPresent() && len(projFiles) != 1 {
+	if !runtimeConfig.IsPresent() && len(projFiles) != 1 {
 		context.Logger.Info("%s and %s", MissingRuntimeConfig, NotSingleProjFile)
 		return context.Fail(), nil
 	}
 
-	return context.Pass(buildplan.Plan{
-		Provides: []buildplan.Provided{{Name: conf.Layer}},
-		Requires: []buildplan.Required{{
-			Name: conf.Layer,
-			Metadata: buildplan.Metadata{
-				"build": true,
-			}}},
-	})
+	if context.Stack == "io.buildpacks.stacks.bionic" {
+		plan.Requires = append(plan.Requires, buildplan.Required{
+			Name:     "icu",
+			Metadata: buildplan.Metadata{"launch": true},
+		})
+	}
 
+	return context.Pass(plan)
 }

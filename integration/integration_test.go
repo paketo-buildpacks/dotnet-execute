@@ -1,6 +1,9 @@
 package integration
 
 import (
+	"bytes"
+	"encoding/json"
+	"io/ioutil"
 	"path/filepath"
 	"testing"
 
@@ -11,8 +14,11 @@ import (
 )
 
 var (
-	bpDir, dotnetCoreConfURI string
+	bpDir, dotnetCoreConfURI, builder string
+	bpList                            []string
 )
+
+const testBP = "test-buildpack"
 
 var suite = spec.New("Integration", spec.Report(report.Terminal{}))
 
@@ -44,11 +50,28 @@ func testIntegration(t *testing.T, when spec.G, it spec.S) {
 	it.Before(func() {
 		Expect = NewWithT(t).Expect
 		Eventually = NewWithT(t).Eventually
+		config, err := ParseConfig()
+		Expect(err).ToNot(HaveOccurred())
+		builder = config.Builder
+
+		for _, bp := range config.BuildpackOrder[builder] {
+			if bp == testBP {
+				bpList = append(bpList, dotnetCoreConfURI)
+				continue
+			}
+			bpURI, err := dagger.GetLatestBuildpack(bp)
+			Expect(err).ToNot(HaveOccurred())
+			bpList = append(bpList, bpURI)
+		}
 	})
 
 	it.After(func() {
 		if app != nil {
 			app.Destroy()
+		}
+
+		for _, bp := range bpList {
+			Expect(dagger.DeleteBuildpack(bp))
 		}
 	})
 
@@ -59,9 +82,14 @@ func testIntegration(t *testing.T, when spec.G, it spec.S) {
 			app, err = dagger.NewPack(
 				appRoot,
 				dagger.RandomImage(),
-				dagger.SetBuildpacks(dotnetCoreConfURI),
+				dagger.SetBuildpacks(bpList...),
+				dagger.SetBuilder(builder),
 			).Build()
 			Expect(err).NotTo(HaveOccurred())
+
+			if builder == "bionic" {
+				app.SetHealthCheck("stat /workspace", "2s", "15s")
+			}
 
 			Expect(app.Start()).To(Succeed())
 
@@ -71,4 +99,23 @@ func testIntegration(t *testing.T, when spec.G, it spec.S) {
 			}).Should(ContainSubstring("Hello World"))
 		})
 	})
+}
+
+type TestConfig struct {
+	Builder        string              `json:"builder"`
+	BuildpackOrder map[string][]string `json:"buildpackOrder"`
+}
+
+func ParseConfig() (TestConfig, error) {
+	var config TestConfig
+	configData, err := ioutil.ReadFile("config.json")
+	if err != nil {
+		return config, err
+	}
+
+	jsonReader := bytes.NewReader(configData)
+	decoder := json.NewDecoder(jsonReader)
+	decoder.Decode(&config)
+
+	return config, nil
 }
