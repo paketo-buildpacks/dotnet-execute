@@ -2,10 +2,11 @@ package main
 
 import (
 	"bytes"
-	"github.com/buildpack/libbuildpack/buildplan"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/buildpack/libbuildpack/buildplan"
 
 	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
 
@@ -55,6 +56,40 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 				Metadata: buildplan.Metadata{
 					"build": true,
 				}}}))
+		})
+	})
+
+	when("there is a file with suffix runtimeconfig.json", func() {
+		it("passes detect and adds dotnet-core-conf and icu to the buildplan when the stack is bionic", func() {
+			runtimeConfigPath := filepath.Join(factory.Detect.Application.Root, "test.runtimeconfig.json")
+			test.WriteFile(t, runtimeConfigPath, `
+{
+  "runtimeOptions": {
+    "tfm": "netcoreapp2.2",
+    "framework": {
+      "name": "Microsoft.NETCore.App",
+      "version": "2.2.5"
+    }
+  }
+}`)
+			defer os.RemoveAll(runtimeConfigPath)
+
+			factory.Detect.Stack = "io.buildpacks.stacks.bionic"
+			code, err := runDetect(factory.Detect)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(code).To(Equal(detect.PassStatusCode))
+			Expect(factory.Plans.Plan.Provides).To(Equal([]buildplan.Provided{{Name: conf.Layer}}))
+			Expect(factory.Plans.Plan.Requires).To(Equal([]buildplan.Required{{
+				Name: conf.Layer,
+				Metadata: buildplan.Metadata{
+					"build": true,
+				}},
+				{
+					Name: "icu",
+					Metadata: buildplan.Metadata{
+						"launch": true,
+					}},
+			}))
 		})
 	})
 

@@ -12,11 +12,11 @@ import (
 	"github.com/sclevine/spec/report"
 )
 
-func TestUnitDetect(t *testing.T) {
-	spec.Run(t, "Detect", testDetect, spec.Report(report.Terminal{}))
+func TestUnitRuntimeConfig(t *testing.T) {
+	spec.Run(t, "Runtime Config", testRuntimeConfig, spec.Report(report.Terminal{}))
 }
 
-func testDetect(t *testing.T, when spec.G, it spec.S) {
+func testRuntimeConfig(t *testing.T, when spec.G, it spec.S) {
 	it.Before(func() {
 		RegisterTestingT(t)
 	})

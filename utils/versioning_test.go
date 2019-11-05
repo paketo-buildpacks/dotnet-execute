@@ -16,7 +16,7 @@ import (
 )
 
 func TestUnitVersioning(t *testing.T) {
-	spec.Run(t, "Detect", testVersioning, spec.Report(report.Terminal{}))
+	spec.Run(t, "Versioning", testVersioning, spec.Report(report.Terminal{}))
 }
 
 func testVersioning(t *testing.T, when spec.G, it spec.S) {
