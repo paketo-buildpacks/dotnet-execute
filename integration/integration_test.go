@@ -1,9 +1,6 @@
 package integration
 
 import (
-	"bytes"
-	"encoding/json"
-	"io/ioutil"
 	"path/filepath"
 	"testing"
 
@@ -50,7 +47,7 @@ func testIntegration(t *testing.T, when spec.G, it spec.S) {
 	it.Before(func() {
 		Expect = NewWithT(t).Expect
 		Eventually = NewWithT(t).Eventually
-		config, err := ParseConfig()
+		config, err := dagger.ParseConfig("config.json")
 		Expect(err).ToNot(HaveOccurred())
 		builder = config.Builder
 
@@ -99,23 +96,4 @@ func testIntegration(t *testing.T, when spec.G, it spec.S) {
 			}).Should(ContainSubstring("Hello World"))
 		})
 	})
-}
-
-type TestConfig struct {
-	Builder        string              `json:"builder"`
-	BuildpackOrder map[string][]string `json:"buildpackOrder"`
-}
-
-func ParseConfig() (TestConfig, error) {
-	var config TestConfig
-	configData, err := ioutil.ReadFile("config.json")
-	if err != nil {
-		return config, err
-	}
-
-	jsonReader := bytes.NewReader(configData)
-	decoder := json.NewDecoder(jsonReader)
-	decoder.Decode(&config)
-
-	return config, nil
 }
