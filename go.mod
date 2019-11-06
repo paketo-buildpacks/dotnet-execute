@@ -9,8 +9,8 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/buildpack/libbuildpack v1.25.4
 	github.com/cloudfoundry/dagger v0.0.0-20191105211753-5d1b464d63f1
+	github.com/cloudfoundry/libbuildpack v0.0.0-20191015134530-4333d9358141 // indirect
 	github.com/cloudfoundry/libcfbuildpack v1.91.4
-	github.com/cloudfoundry/packit v0.0.0-20191015134313-760041110f18 // indirect
 	github.com/creack/pty v1.1.9 // indirect
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/google/go-cmp v0.3.1

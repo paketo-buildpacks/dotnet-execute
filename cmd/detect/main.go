@@ -47,7 +47,7 @@ func runDetect(context detect.Detect) (int, error) {
 		return context.Fail(), err
 	}
 
-	projFiles, err := filepath.Glob(filepath.Join(context.Application.Root, "*.csproj"))
+	projFiles, err := filepath.Glob(filepath.Join(context.Application.Root, "*.*sproj"))
 	if err != nil {
 		return context.Fail(), err
 	}
