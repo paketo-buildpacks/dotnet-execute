@@ -8,6 +8,7 @@ import (
 	"github.com/buildpack/libbuildpack/buildplan"
 	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
 	"github.com/cloudfoundry/dotnet-core-conf-cnb/utils"
+	"github.com/cloudfoundry/icu-cnb/icu"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
 )
 
@@ -64,7 +65,7 @@ func runDetect(context detect.Detect) (int, error) {
 
 	if context.Stack == "io.buildpacks.stacks.bionic" {
 		plan.Requires = append(plan.Requires, buildplan.Required{
-			Name:     "icu",
+			Name:     icu.Dependency,
 			Metadata: buildplan.Metadata{"launch": true},
 		})
 	}
