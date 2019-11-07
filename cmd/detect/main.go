@@ -47,7 +47,12 @@ func runDetect(context detect.Detect) (int, error) {
 		return context.Fail(), err
 	}
 
-	projFiles, err := filepath.Glob(filepath.Join(context.Application.Root, "*.*sproj"))
+	sourceAppRoot, err := utils.GetAppRoot(context.Application.Root)
+	if err != nil {
+		return context.Fail(), err
+	}
+
+	projFiles, err := filepath.Glob(filepath.Join(sourceAppRoot, "*.*sproj"))
 	if err != nil {
 		return context.Fail(), err
 	}

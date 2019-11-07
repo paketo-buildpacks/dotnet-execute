@@ -94,10 +94,34 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 	})
 
 	when("there is not runtimecongif.json", func() {
+
 		when("when there is a *.csproj", func() {
 			it("passes detect and add dotnet-core-conf to the buildplan", func() {
 				csprojPath := filepath.Join(factory.Detect.Application.Root, "test.csproj")
 				test.WriteFile(t, csprojPath, `test proj`)
+
+				defer os.RemoveAll(csprojPath)
+
+				code, err := runDetect(factory.Detect)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(code).To(Equal(detect.PassStatusCode))
+				Expect(factory.Plans.Plan.Provides).To(Equal([]buildplan.Provided{{Name: conf.Layer}}))
+				Expect(factory.Plans.Plan.Requires).To(Equal([]buildplan.Required{{
+					Name: conf.Layer,
+					Metadata: buildplan.Metadata{
+						"build": true,
+					}}}))
+			})
+		})
+
+		when("when there is a project_path set in buildpack.yml", func() {
+			it("passes detect and add dotnet-core-conf to the buildplan", func() {
+				csprojPath := filepath.Join(factory.Detect.Application.Root, "src", "proj1", "test.csproj")
+				test.WriteFile(t, csprojPath, `test proj`)
+				contents := `---
+dotnet-build:
+  project-path: "src/proj1"`
+				test.WriteFile(t, filepath.Join(factory.Detect.Application.Root, "buildpack.yml"), contents)
 
 				defer os.RemoveAll(csprojPath)
 
