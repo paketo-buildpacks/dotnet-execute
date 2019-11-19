@@ -8,7 +8,7 @@ require (
 	github.com/buildpack/libbuildpack v1.25.4
 	github.com/cloudfoundry/dagger v0.0.0-20191115221041-84f32a04b8ac
 	github.com/cloudfoundry/icu-cnb v0.0.2
-	github.com/cloudfoundry/libcfbuildpack v1.91.6
+	github.com/cloudfoundry/libcfbuildpack v1.91.7
 	github.com/cloudfoundry/packit v0.0.0-20191015134313-760041110f18 // indirect
 	github.com/google/go-cmp v0.3.1
 	github.com/gravityblast/go-jsmin v0.0.0-20141027113318-a32d741b3595
