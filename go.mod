@@ -8,8 +8,8 @@ require (
 	github.com/buildpack/libbuildpack v1.25.11
 	github.com/cloudfoundry/dagger v0.0.0-20200114192520-43fb0b3ec98f
 	github.com/cloudfoundry/icu-cnb v0.0.2
-	github.com/cloudfoundry/libcfbuildpack v1.91.22
-	github.com/google/go-cmp v0.3.1
+	github.com/cloudfoundry/libcfbuildpack v1.91.23
+	github.com/google/go-cmp v0.4.0
 	github.com/gravityblast/go-jsmin v0.0.0-20141027113318-a32d741b3595
 	github.com/onsi/gomega v1.8.1
 	github.com/pilu/miniassert v0.0.0-20140522125902-bee63581261a // indirect
