@@ -6,7 +6,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/buildpack/libbuildpack v1.25.11
-	github.com/cloudfoundry/dagger v0.0.0-20200114192520-43fb0b3ec98f
+	github.com/cloudfoundry/dagger v0.0.0-20200115142400-b69a9b4eabf4
 	github.com/cloudfoundry/icu-cnb v0.0.2
 	github.com/cloudfoundry/libcfbuildpack v1.91.23
 	github.com/google/go-cmp v0.4.0
