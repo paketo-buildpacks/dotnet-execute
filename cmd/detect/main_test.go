@@ -9,7 +9,6 @@ import (
 	"github.com/buildpack/libbuildpack/buildplan"
 
 	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
-	"github.com/cloudfoundry/icu-cnb/icu"
 
 	specLogger "github.com/buildpack/libbuildpack/logger"
 
@@ -86,7 +85,7 @@ func testDetect(t *testing.T, when spec.G, it spec.S) {
 					"build": true,
 				}},
 				{
-					Name: icu.Dependency,
+					Name: "icu",
 					Metadata: buildplan.Metadata{
 						"launch": true,
 					}},

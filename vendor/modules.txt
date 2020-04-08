@@ -22,8 +22,6 @@ github.com/buildpack/libbuildpack/stack
 # github.com/cloudfoundry/dagger v0.0.0-20200115142400-b69a9b4eabf4
 github.com/cloudfoundry/dagger
 github.com/cloudfoundry/dagger/utils
-# github.com/cloudfoundry/icu-cnb v0.0.2
-github.com/cloudfoundry/icu-cnb/icu
 # github.com/cloudfoundry/libcfbuildpack v1.91.23
 github.com/cloudfoundry/libcfbuildpack/build
 github.com/cloudfoundry/libcfbuildpack/buildpack
