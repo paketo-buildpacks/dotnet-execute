@@ -1,6 +1,6 @@
-# .NET Core Conf Cloud Native Buildpack
+# Dotnet Core Conf Cloud Native Buildpack
 
-The Dotnet Core Conf CNB sets the start command for a given application once it
+The Dotnet Core Conf CNB sets the start command for a given Dotnet Core application once it
 has been built by preceding buildpacks.
 
 ## Integration
