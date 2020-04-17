@@ -19,3 +19,8 @@ To package this buildpack for consumption:
 $ ./scripts/package.sh
 ```
 This builds the buildpack's source using GOOS=linux by default. You can supply another value as the first argument to package.sh.
+
+## `buildpack.yml` Configurations
+
+There are no extra configurations for this buildpack based on `buildpack.yml`. If you would like to specify an `project-path`
+constraint for the dotnet-build buildpack, see its [README](https://github.com/paketo-buildpacks/dotnet-core-build/blob/master/README.md#buildpackyml-configurations).
