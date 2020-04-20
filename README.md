@@ -9,6 +9,11 @@ The Dotnet Core Conf CNB completes the setup of a Dotnet Core application built
 using a sequence of CNBs. As such, it will be the only non-optional CNB in that
 sequence and is not explicitly required by any CNB that precedes it.
 
+It provides `dotnet-core-conf` as a dependency, but currently there's no scenario
+we can imagine that you would use a downstream buildpack to require this
+dependency. If a user likes to include some other functionality, it can be done
+independent of the Dotnet Core Conf CNB without requiring a dependency of it.
+
 To package this buildpack for consumption:
 ```
 $ ./scripts/package.sh
