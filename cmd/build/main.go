@@ -5,10 +5,8 @@ import (
 	"os"
 
 	"github.com/buildpack/libbuildpack/buildpackplan"
-
-	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
-
 	"github.com/cloudfoundry/libcfbuildpack/build"
+	"github.com/paketo-buildpacks/dotnet-core-conf/conf"
 )
 
 func main() {

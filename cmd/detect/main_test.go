@@ -7,17 +7,14 @@ import (
 	"testing"
 
 	"github.com/buildpack/libbuildpack/buildplan"
-
-	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
-
 	specLogger "github.com/buildpack/libbuildpack/logger"
-
 	"github.com/cloudfoundry/libcfbuildpack/detect"
-
 	"github.com/cloudfoundry/libcfbuildpack/test"
-	. "github.com/onsi/gomega"
+	"github.com/paketo-buildpacks/dotnet-core-conf/conf"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
+
+	. "github.com/onsi/gomega"
 )
 
 func TestUnitDetect(t *testing.T) {

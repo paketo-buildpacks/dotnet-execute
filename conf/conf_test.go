@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
 	"github.com/cloudfoundry/libcfbuildpack/buildpackplan"
 	"github.com/cloudfoundry/libcfbuildpack/layers"
 	"github.com/cloudfoundry/libcfbuildpack/test"
+	"github.com/paketo-buildpacks/dotnet-core-conf/conf"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
