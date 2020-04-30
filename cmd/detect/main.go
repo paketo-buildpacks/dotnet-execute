@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 
 	"github.com/buildpack/libbuildpack/buildplan"
-	"github.com/cloudfoundry/dotnet-core-conf-cnb/conf"
-	"github.com/cloudfoundry/dotnet-core-conf-cnb/utils"
 	"github.com/cloudfoundry/libcfbuildpack/detect"
+	"github.com/paketo-buildpacks/dotnet-core-conf/conf"
+	"github.com/paketo-buildpacks/dotnet-core-conf/utils"
 )
 
 const (

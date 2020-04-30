@@ -3,9 +3,9 @@ package conf
 import (
 	"fmt"
 
-	"github.com/cloudfoundry/dotnet-core-conf-cnb/utils"
 	"github.com/cloudfoundry/libcfbuildpack/build"
 	"github.com/cloudfoundry/libcfbuildpack/layers"
+	"github.com/paketo-buildpacks/dotnet-core-conf/utils"
 )
 
 const Layer = "dotnet-core-conf"

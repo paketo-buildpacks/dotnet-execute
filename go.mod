@@ -1,4 +1,4 @@
-module github.com/cloudfoundry/dotnet-core-conf-cnb
+module github.com/paketo-buildpacks/dotnet-core-conf
 
 go 1.12
 
