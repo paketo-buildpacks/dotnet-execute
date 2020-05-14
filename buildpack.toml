@@ -4,6 +4,7 @@ api = "0.2"
 id = "paketo-buildpacks/dotnet-core-conf"
 name = ".NET Core Conf Buildpack"
 version = "{{ .Version }}"
+homepage = "https://github.com/paketo-buildpacks/dotnet-core-conf"
 
 [metadata]
 include_files = ["bin/build","bin/detect","buildpack.toml"]
