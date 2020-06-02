@@ -11,29 +11,52 @@ import (
 )
 
 var (
-	bpDir, dotnetCoreConfURI, builder string
-	bpList                            []string
+	dotnetCoreConfURI, builder string
+	bpList                     []string
 )
 
-const testBP = "test-buildpack"
+const testBuildpack = "test-buildpack"
 
-var suite = spec.New("Integration", spec.Report(report.Terminal{}))
+var suite = spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
 
 func init() {
 	suite("Integration", testIntegration)
 }
 
-func TestIntegration(t *testing.T) {
-	var err error
-	Expect := NewWithT(t).Expect
-	bpDir, err = dagger.FindBPRoot()
+func BeforeSuite() {
+	root, err := dagger.FindBPRoot()
+	Expect(err).ToNot(HaveOccurred())
+	dotnetCoreConfURI, err = dagger.PackageBuildpack(root)
 	Expect(err).NotTo(HaveOccurred())
 
-	dotnetCoreConfURI, err = dagger.PackageBuildpack(bpDir)
-	Expect(err).ToNot(HaveOccurred())
-	defer Expect(dagger.DeleteBuildpack(dotnetCoreConfURI)).To(Succeed())
+	config, err := dagger.ParseConfig("config.json")
+	Expect(err).NotTo(HaveOccurred())
 
+	builder = config.Builder
+
+	for _, bp := range config.BuildpackOrder[builder] {
+		var bpURI string
+		if bp == testBuildpack {
+			bpList = append(bpList, dotnetCoreConfURI)
+			continue
+		}
+		bpURI, err = dagger.GetLatestBuildpack(bp)
+		Expect(err).NotTo(HaveOccurred())
+		bpList = append(bpList, bpURI)
+	}
+}
+
+func AfterSuite() {
+	for _, bp := range bpList {
+		Expect(dagger.DeleteBuildpack(bp)).To(Succeed())
+	}
+}
+
+func TestIntegration(t *testing.T) {
+	RegisterTestingT(t)
+	BeforeSuite()
 	suite.Run(t)
+	AfterSuite()
 }
 
 func testIntegration(t *testing.T, when spec.G, it spec.S) {
@@ -47,28 +70,11 @@ func testIntegration(t *testing.T, when spec.G, it spec.S) {
 	it.Before(func() {
 		Expect = NewWithT(t).Expect
 		Eventually = NewWithT(t).Eventually
-		config, err := dagger.ParseConfig("config.json")
-		Expect(err).ToNot(HaveOccurred())
-		builder = config.Builder
-
-		for _, bp := range config.BuildpackOrder[builder] {
-			if bp == testBP {
-				bpList = append(bpList, dotnetCoreConfURI)
-				continue
-			}
-			bpURI, err := dagger.GetLatestBuildpack(bp)
-			Expect(err).ToNot(HaveOccurred())
-			bpList = append(bpList, bpURI)
-		}
 	})
 
 	it.After(func() {
 		if app != nil {
 			Expect(app.Destroy()).To(Succeed())
-		}
-
-		for _, bp := range bpList {
-			Expect(dagger.DeleteBuildpack(bp))
 		}
 	})
 
