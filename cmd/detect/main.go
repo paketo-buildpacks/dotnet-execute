@@ -12,9 +12,8 @@ import (
 )
 
 const (
-	MissingRuntimeConfig  = "*.runtimeconfig.json file not found"
-	NotSingleProjFile     = "expecting only a single *.csproj file in the app directory"
-	TooManyRuntimeConfigs = "multiple *.runtimeconfig.json files present"
+	MissingRuntimeConfig = "*.runtimeconfig.json file not found"
+	NotSingleProjFile    = "expecting only a single *.csproj file in the app directory"
 )
 
 func main() {

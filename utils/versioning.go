@@ -42,6 +42,9 @@ func FrameworkRollForward(version, framework string, context build.Build) (strin
 	anyMinor := fmt.Sprintf("%d.*", splitVersion.Major())
 
 	runtimeConfig, err := NewRuntimeConfig(context.Application.Root)
+	if err != nil {
+		return "", err
+	}
 
 	if runtimeConfig.HasApplyPatches() {
 		versions = append(versions, anyPatch, anyMinor)
