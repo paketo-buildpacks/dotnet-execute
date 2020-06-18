@@ -8,7 +8,7 @@ require (
 	github.com/buildpack/libbuildpack v1.25.11
 	github.com/cloudfoundry/dagger v0.0.0-20200115142400-b69a9b4eabf4
 	github.com/cloudfoundry/libcfbuildpack v1.91.23
-	github.com/google/go-cmp v0.4.1
+	github.com/google/go-cmp v0.5.0
 	github.com/gravityblast/go-jsmin v0.0.0-20141027113318-a32d741b3595
 	github.com/onsi/gomega v1.10.1
 	github.com/pilu/miniassert v0.0.0-20140522125902-bee63581261a // indirect
