@@ -43,7 +43,7 @@ func (c Contributor) Contribute() error {
 		startCmdPrefix = fmt.Sprintf("./%s", runtimeConfig.BinaryName)
 	}
 
-	args := fmt.Sprintf("%s --urls http://0.0.0.0:${PORT}", startCmdPrefix)
+	args := fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", startCmdPrefix)
 	startCmd := fmt.Sprintf("cd %s && %s", c.context.Application.Root, args)
 
 	return c.context.Layers.WriteApplicationMetadata(layers.Metadata{
