@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-set -eu
+
+set -e
+set -u
 set -o pipefail
 
 readonly PROGDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -8,7 +10,7 @@ readonly BUILDPACKDIR="$(cd "${PROGDIR}/.." && pwd)"
 function main() {
     mkdir -p "${BUILDPACKDIR}/bin"
 
-    if [[ -f "${BUILDPACKDIR}/main.go" ]]; then
+    if [[ -f "${BUILDPACKDIR}/run/main.go" ]]; then
         pushd "${BUILDPACKDIR}/bin" > /dev/null || return
             printf "%s" "Building run..."
 
@@ -16,7 +18,7 @@ function main() {
               go build \
                 -ldflags="-s -w" \
                 -o "run" \
-                  "${BUILDPACKDIR}"
+                  "${BUILDPACKDIR}/run"
 
             echo "Success!"
 
