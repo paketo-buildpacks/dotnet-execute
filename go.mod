@@ -10,7 +10,7 @@ require (
 	github.com/cloudfoundry/dagger v0.0.0-20200710140748-bed4cf02eaf9
 	github.com/cloudfoundry/libcfbuildpack v1.91.23
 	github.com/cloudfoundry/packit v0.0.0-20191202164725-43d6fa19d96c // indirect
-	github.com/google/go-cmp v0.5.0
+	github.com/google/go-cmp v0.5.1
 	github.com/gravityblast/go-jsmin v0.0.0-20141027113318-a32d741b3595
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mitchellh/mapstructure v1.3.2 // indirect
@@ -20,6 +20,4 @@ require (
 	github.com/sclevine/spec v1.4.0
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae // indirect
-	google.golang.org/appengine v1.6.6 // indirect
-	google.golang.org/protobuf v1.25.0 // indirect
 )
