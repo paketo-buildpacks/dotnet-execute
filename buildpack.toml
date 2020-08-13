@@ -2,7 +2,7 @@ api = "0.2"
 
 [buildpack]
 id = "paketo-buildpacks/dotnet-core-conf"
-name = ".NET Core Conf Buildpack"
+name = "Paketo .NET Core Conf Buildpack"
 version = "{{ .Version }}"
 homepage = "https://github.com/paketo-buildpacks/dotnet-core-conf"
 
