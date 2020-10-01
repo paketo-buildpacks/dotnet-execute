@@ -1,0 +1,4 @@
+{
+  "builder": "index.docker.io/paketobuildpacks/builder:base",
+  "icu": "github.com/paketo-buildpacks/icu"
+}
