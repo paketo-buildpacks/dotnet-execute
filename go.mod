@@ -13,6 +13,7 @@ require (
 	github.com/mitchellh/mapstructure v1.3.2 // indirect
 	github.com/onsi/gomega v1.10.2
 	github.com/paketo-buildpacks/occam v0.0.18
+	github.com/paketo-buildpacks/packit v0.2.7
 	github.com/pilu/miniassert v0.0.0-20140522125902-bee63581261a // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/sclevine/spec v1.4.0
