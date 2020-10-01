@@ -28,8 +28,6 @@ func main() {
 		context.Logger.Info(err.Error())
 	}
 
-	os.Exit(code)
-}
 
 func runDetect(context detect.Detect) (int, error) {
 	plan := buildplan.Plan{
