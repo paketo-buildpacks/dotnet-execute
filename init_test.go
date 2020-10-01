@@ -9,7 +9,8 @@ import (
 
 func TestUnitDotnetCoreConf(t *testing.T) {
 	suite := spec.New("dotnet-core-conf", spec.Report(report.Terminal{}), spec.Parallel())
-	suite("Build", testBuild)
+	// suite("Build", testBuild)
+	suite("BuildpackYMLParser", testBuildpackYMLParser)
 	suite("Detect", testDetect)
 	suite.Run(t)
 }
