@@ -7,5 +7,6 @@ import (
 
 func main() {
 	// logger := scribe.NewLogger(os.Stdout)
-	packit.Run(dotnetcoreconf.Detect(), dotnetcoreconf.Build())
+	buildpackYMLParser := dotnetcoreconf.NewBuildpackYMLParser()
+	packit.Run(dotnetcoreconf.Detect(buildpackYMLParser), dotnetcoreconf.Build())
 }
