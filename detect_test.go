@@ -164,23 +164,47 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 	})
-
-	context("there is no *.runtimeconfig.json or *.*sproj present", func() {
-		it.Before(func() {
-			files, err := filepath.Glob(filepath.Join(workingDir, "*.runtimeconfig.json"))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(files).To(BeEmpty())
-
-			files, err = filepath.Glob(filepath.Join(workingDir, "*.*sproj"))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(files).To(BeEmpty())
-		})
-
-		it("detection fails", func() {
-			_, err := detect(packit.DetectContext{
-				WorkingDir: workingDir,
+	context("failure cases", func() {
+		context("there are multiple *.runtimeconfig.json files", func() {
+			it.Before(func() {
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(""), os.ModePerm)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "another-app.runtimeconfig.json"), []byte(""), os.ModePerm)).To(Succeed())
 			})
-			Expect(err).To(MatchError(packit.Fail))
+
+			it.After(func() {
+				err := os.Remove(filepath.Join(workingDir, "some-app.runtimeconfig.json"))
+				Expect(err).NotTo(HaveOccurred())
+				err = os.Remove(filepath.Join(workingDir, "another-app.runtimeconfig.json"))
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			it("detection fails", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError(packit.Fail.WithMessage("multiple *.runtimeconfig.json files present")))
+			})
 		})
+
+		context("there is no *.runtimeconfig.json or *.*sproj present", func() {
+			it.Before(func() {
+				files, err := filepath.Glob(filepath.Join(workingDir, "*.runtimeconfig.json"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(files).To(BeEmpty())
+
+				files, err = filepath.Glob(filepath.Join(workingDir, "*.*sproj"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(files).To(BeEmpty())
+			})
+
+			it("detection fails", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).To(MatchError(packit.Fail))
+			})
+		})
+
 	})
 }

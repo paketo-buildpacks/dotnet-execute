@@ -31,6 +31,9 @@ func Detect(buildpackYMLParser Parser) packit.DetectFunc {
 		if err != nil {
 			return packit.DetectResult{}, fmt.Errorf("failed checking pattern *.runtimeconfig.json: %w", err)
 		}
+		if len(runtimeConfigFiles) > 1 {
+			return packit.DetectResult{}, packit.Fail.WithMessage("multiple *.runtimeconfig.json files present")
+		}
 
 		// TODO: do we care about *sproj files that might be incorrect (ex. zproj)
 		projFiles, err := filepath.Glob(filepath.Join(projRoot, "*.*sproj"))
