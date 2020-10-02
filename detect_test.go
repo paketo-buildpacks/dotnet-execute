@@ -36,12 +36,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(workingDir)).To(Succeed())
 	})
 
-	context("when *.runtimeconfig.json is present", func() {
+	context("there is a *.runtimeconfig.json file present", func() {
 		it.Before(func() {
 			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(""), os.ModePerm)).To(Succeed())
 		})
 
-		it("detects", func() {
+		it("detects successfully", func() {
 			result, err := detect(packit.DetectContext{
 				WorkingDir: workingDir,
 			})
@@ -70,12 +70,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("when *.*sproj is present", func() {
+	context("there is a *.*sproj file present", func() {
 		it.Before(func() {
 			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.csproj"), []byte(""), os.ModePerm)).To(Succeed())
 		})
 
-		it("detects", func() {
+		it("detects successfully", func() {
 			_, err := detect(packit.DetectContext{
 				WorkingDir: workingDir,
 			})
@@ -83,7 +83,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("buildpack.yml sets a custom project-path", func() {
+	context("there is a buildpack.yml sets a custom project-path", func() {
 		it.Before(func() {
 			buildpackYMLParser.ParseProjectPathCall.Returns.ProjectPath = "src/proj1"
 			err := os.MkdirAll(filepath.Join(workingDir, "src", "proj1"), os.ModePerm)
@@ -95,13 +95,47 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		context("project-path directory contains *.*sproj or *.runtimeconfig.json", func() {
+		context("project-path directory contains a *.*sproj file", func() {
 			it.Before(func() {
 				err := ioutil.WriteFile(filepath.Join(workingDir, "src", "proj1", "some-app.csproj"), []byte(""), os.ModePerm)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			it("detects", func() {
+			it("detects successfully", func() {
+				result, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Plan).To(Equal(packit.BuildPlan{
+					Provides: []packit.BuildPlanProvision{
+						{
+							Name: "dotnet-core-conf",
+						},
+					},
+					Requires: []packit.BuildPlanRequirement{
+						{
+							Name: "dotnet-core-conf",
+							Metadata: map[string]interface{}{
+								"build": true,
+							},
+						},
+						{
+							Name: "icu",
+							Metadata: map[string]interface{}{
+								"launch": true,
+							},
+						},
+					},
+				}))
+			})
+		})
+		context("project-path directory contains a *.runtimeconfig.json file", func() {
+			it.Before(func() {
+				err := ioutil.WriteFile(filepath.Join(workingDir, "src", "proj1", "some-app.runtimeconfig.json"), []byte(""), os.ModePerm)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			it("detects successfully", func() {
 				result, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
 				})
@@ -131,7 +165,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("when there is no *.runtimeconfig.json or *.*sproj present", func() {
+	context("there is no *.runtimeconfig.json or *.*sproj present", func() {
 		it.Before(func() {
 			files, err := filepath.Glob(filepath.Join(workingDir, "*.runtimeconfig.json"))
 			Expect(err).NotTo(HaveOccurred())
@@ -142,7 +176,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(files).To(BeEmpty())
 		})
 
-		it("detection should fail", func() {
+		it("detection fails", func() {
 			_, err := detect(packit.DetectContext{
 				WorkingDir: workingDir,
 			})
