@@ -1,6 +1,7 @@
 package dotnetcoreconf_test
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -226,5 +227,17 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
+		context("when the buildpack.yml parser fails", func() {
+			it.Before(func() {
+				buildpackYMLParser.ParseProjectPathCall.Returns.Err = errors.New("some-error")
+			})
+
+			it("returns an error", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: "/working-dir",
+				})
+				Expect(err).To(MatchError("failed to parse buildpack.yml: some-error"))
+			})
+		})
 	})
 }
