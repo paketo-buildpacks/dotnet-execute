@@ -1,11 +1,14 @@
 package dotnetcoreconf_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	dotnetcoreconf "github.com/paketo-buildpacks/dotnet-core-conf"
+	"github.com/paketo-buildpacks/dotnet-core-conf/fakes"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/sclevine/spec"
 
@@ -20,7 +23,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		workingDir string
 		cnbDir     string
 
-		build packit.BuildFunc
+		build     packit.BuildFunc
+		ymlParser *fakes.Parser
 	)
 
 	it.Before(func() {
@@ -34,7 +38,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = ioutil.TempDir("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
-		build = dotnetcoreconf.Build()
+		ymlParser = &fakes.Parser{}
+		build = dotnetcoreconf.Build(ymlParser)
 	})
 
 	it.After(func() {
@@ -43,28 +48,47 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(os.RemoveAll(workingDir)).To(Succeed())
 	})
 
-	it("returns a result that builds correctly", func() {
-		result, err := build(packit.BuildContext{
-			WorkingDir: workingDir,
-			CNBPath:    cnbDir,
-			Stack:      "some-stack",
-			BuildpackInfo: packit.BuildpackInfo{
-				Name:    "Some Buildpack",
-				Version: "some-version",
-			},
-			Plan: packit.BuildpackPlan{
-				Entries: []packit.BuildpackPlanEntry{},
-			},
-			Layers: packit.Layers{Path: layersDir},
+	context("the app is a framework-dependent or self-contained executable", func() {
+		it.Before(func() {
+			err := os.MkdirAll(filepath.Join(workingDir, "my", "proj1"), os.ModePerm)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(ioutil.WriteFile(filepath.Join(workingDir, "my", "proj1", "some-app.runtimeconfig.json"), nil, os.ModePerm)).To(Succeed())
+			Expect(ioutil.WriteFile(filepath.Join(workingDir, "my", "proj1", "some-app"), nil, os.ModePerm)).To(Succeed())
+			ymlParser.ParseProjectPathCall.Returns.ProjectPath = "my/proj1"
 		})
-		Expect(err).NotTo(HaveOccurred())
 
-		Expect(result).To(Equal(packit.BuildResult{
-			Plan: packit.BuildpackPlan{
-				Entries: nil,
-			},
-			Layers: nil,
-		}))
+		it.After(func() {
+			Expect(os.RemoveAll(filepath.Join(workingDir, "my"))).To(Succeed())
+		})
 
+		it("returns a result that builds correctly", func() {
+			result, err := build(packit.BuildContext{
+				WorkingDir: workingDir,
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				BuildpackInfo: packit.BuildpackInfo{
+					Name:    "Some Buildpack",
+					Version: "some-version",
+				},
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{},
+				},
+				Layers: packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result).To(Equal(packit.BuildResult{
+				Plan: packit.BuildpackPlan{
+					Entries: nil,
+				},
+				Layers: nil,
+				Processes: []packit.Process{
+					{
+						Type:    "web",
+						Command: fmt.Sprintf("%s/my/proj1/some-app --urls http://0.0.0.0:${PORT:-8080}", workingDir),
+					},
+				},
+			}))
+		})
 	})
 }
