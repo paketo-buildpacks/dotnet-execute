@@ -91,4 +91,53 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			}))
 		})
 	})
+
+	context("failure cases", func() {
+		context("buildpack yml can't be parsed", func() {
+			it.Before(func() {
+				ymlParser.ParseProjectPathCall.Returns.Err = fmt.Errorf("some-error")
+			})
+
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					WorkingDir: workingDir,
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					BuildpackInfo: packit.BuildpackInfo{
+						Name:    "Some Buildpack",
+						Version: "some-version",
+					},
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError("failed to parse buildpack.yml: some-error"))
+			})
+		})
+		context("runtime config not present", func() {
+			it.Before(func() {
+				files, err := filepath.Glob(filepath.Join(workingDir, "*.runtimeconfig.json"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(files).To(BeEmpty())
+			})
+
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					WorkingDir: workingDir,
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					BuildpackInfo: packit.BuildpackInfo{
+						Name:    "Some Buildpack",
+						Version: "some-version",
+					},
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError(ContainSubstring("failed to find *.*runtimeconfig.json")))
+			})
+		})
+	})
 }
