@@ -1,12 +1,12 @@
 package dotnetcoreconf_test
 
 import (
-	"testing"
 	"io/ioutil"
 	"os"
+	"testing"
 
-	"github.com/paketo-buildpacks/packit"
 	dotnetcoreconf "github.com/paketo-buildpacks/dotnet-core-conf"
+	"github.com/paketo-buildpacks/packit"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
