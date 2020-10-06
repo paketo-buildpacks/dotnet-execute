@@ -41,6 +41,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(""), os.ModePerm)).To(Succeed())
 		})
 
+		it.After(func() {
+			Expect(os.RemoveAll(filepath.Join(workingDir, "some-app.runtimeconfig.json"))).To(Succeed())
+		})
+
 		it("detects successfully", func() {
 			result, err := detect(packit.DetectContext{
 				WorkingDir: workingDir,
@@ -75,6 +79,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.csproj"), []byte(""), os.ModePerm)).To(Succeed())
 		})
 
+		it.After(func() {
+			Expect(os.RemoveAll(filepath.Join(workingDir, "some-app.csproj"))).To(Succeed())
+		})
+
 		it("detects successfully", func() {
 			_, err := detect(packit.DetectContext{
 				WorkingDir: workingDir,
@@ -101,6 +109,11 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
+			it.After(func() {
+				err := os.Remove(filepath.Join(workingDir, "src", "proj1", "some-app.csproj"))
+				Expect(err).NotTo(HaveOccurred())
+			})
+
 			it("detects successfully", func() {
 				result, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
@@ -129,9 +142,15 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				}))
 			})
 		})
+
 		context("project-path directory contains a *.runtimeconfig.json file", func() {
 			it.Before(func() {
 				err := ioutil.WriteFile(filepath.Join(workingDir, "src", "proj1", "some-app.runtimeconfig.json"), []byte(""), os.ModePerm)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			it.After(func() {
+				err := os.Remove(filepath.Join(workingDir, "src", "proj1", "some-app.runtimeconfig.json"))
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -164,6 +183,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 	})
+
 	context("failure cases", func() {
 		context("there are multiple *.runtimeconfig.json files", func() {
 			it.Before(func() {
