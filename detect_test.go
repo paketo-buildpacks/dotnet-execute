@@ -75,7 +75,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("there is a *.*sproj file present", func() {
+	context("there is a *.*sproj file present (and no .runtimeconfig.json)", func() {
 		it.Before(func() {
 			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.csproj"), []byte(""), os.ModePerm)).To(Succeed())
 		})

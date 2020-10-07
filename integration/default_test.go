@@ -53,7 +53,6 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 
 		it("builds and runs successfully", func() {
 			var err error
-			// todo rename testdata app
 			source, err = occam.Source(filepath.Join("testdata", "self_contained_2.1"))
 			Expect(err).NotTo(HaveOccurred())
 
@@ -81,11 +80,12 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 			Expect(string(content)).To(ContainSubstring("Hello World"))
 			Expect(response.Body.Close()).To(Succeed())
 
-			// Expect(logs).To(ContainLines(
-			// 	MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
-			// 	"  Assigning launch processes",
-			// 	`    web: <whatever>`,
-			// ))
+			Expect(logs).To(ContainLines(
+				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
+				"  Assigning launch processes",
+				`    web: /workspace/asp_dotnet2 --urls http://0.0.0.0:${PORT:-8080}`,
+				"",
+			))
 		})
 	})
 }
