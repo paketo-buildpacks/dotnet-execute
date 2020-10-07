@@ -1,4 +1,4 @@
-package dotnetcoreconf_test
+package dotnetcoreexecute_test
 
 import (
 	"bytes"
@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	dotnetcoreconf "github.com/paketo-buildpacks/dotnet-core-conf"
-	"github.com/paketo-buildpacks/dotnet-core-conf/fakes"
+	dotnetcoreexecute "github.com/paketo-buildpacks/dotnet-core-execute"
+	"github.com/paketo-buildpacks/dotnet-core-execute/fakes"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
@@ -44,7 +44,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		ymlParser = &fakes.Parser{}
 		buffer = bytes.NewBuffer(nil)
 		logger := scribe.NewLogger(buffer)
-		build = dotnetcoreconf.Build(ymlParser, logger)
+		build = dotnetcoreexecute.Build(ymlParser, logger)
 	})
 
 	it.After(func() {

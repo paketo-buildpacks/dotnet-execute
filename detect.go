@@ -1,4 +1,4 @@
-package dotnetcoreconf
+package dotnetcoreexecute
 
 import (
 	"fmt"
@@ -47,12 +47,12 @@ func Detect(buildpackYMLParser Parser) packit.DetectFunc {
 			Plan: packit.BuildPlan{
 				Provides: []packit.BuildPlanProvision{
 					{
-						Name: "dotnet-core-conf",
+						Name: "dotnet-core-execute",
 					},
 				},
 				Requires: []packit.BuildPlanRequirement{
 					{
-						Name: "dotnet-core-conf",
+						Name: "dotnet-core-execute",
 						Metadata: map[string]interface{}{
 							"build": true,
 						},

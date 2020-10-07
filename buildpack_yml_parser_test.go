@@ -1,11 +1,11 @@
-package dotnetcoreconf_test
+package dotnetcoreexecute_test
 
 import (
 	"io/ioutil"
 	"os"
 	"testing"
 
-	dotnetcoreconf "github.com/paketo-buildpacks/dotnet-core-conf"
+	dotnetcoreexecute "github.com/paketo-buildpacks/dotnet-core-execute"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -16,7 +16,7 @@ func testBuildpackYMLParser(t *testing.T, context spec.G, it spec.S) {
 		Expect = NewWithT(t).Expect
 
 		path   string
-		parser dotnetcoreconf.BuildpackYMLParser
+		parser dotnetcoreexecute.BuildpackYMLParser
 	)
 
 	it.Before(func() {
@@ -32,7 +32,7 @@ dotnet-build:
 
 		path = file.Name()
 
-		parser = dotnetcoreconf.NewBuildpackYMLParser()
+		parser = dotnetcoreexecute.NewBuildpackYMLParser()
 	})
 
 	it.After(func() {
