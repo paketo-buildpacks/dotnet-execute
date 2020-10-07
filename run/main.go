@@ -3,16 +3,16 @@ package main
 import (
 	"os"
 
-	dotnetcoreconf "github.com/paketo-buildpacks/dotnet-core-conf"
+	dotnetcoreexecute "github.com/paketo-buildpacks/dotnet-core-execute"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/scribe"
 )
 
 func main() {
 	logger := scribe.NewLogger(os.Stdout)
-	buildpackYMLParser := dotnetcoreconf.NewBuildpackYMLParser()
+	buildpackYMLParser := dotnetcoreexecute.NewBuildpackYMLParser()
 	packit.Run(
-		dotnetcoreconf.Detect(buildpackYMLParser),
-		dotnetcoreconf.Build(buildpackYMLParser, logger),
+		dotnetcoreexecute.Detect(buildpackYMLParser),
+		dotnetcoreexecute.Build(buildpackYMLParser, logger),
 	)
 }

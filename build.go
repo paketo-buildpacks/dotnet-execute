@@ -1,4 +1,4 @@
-package dotnetcoreconf
+package dotnetcoreexecute
 
 import (
 	"fmt"
@@ -75,6 +75,7 @@ func getRuntimeConfigPath(appRoot string) (string, error) {
 func getAppName(runtimeConfigPath string) string {
 	runtimeConfigFile := filepath.Base(runtimeConfigPath)
 	executableFile := strings.ReplaceAll(runtimeConfigFile, ".runtimeconfig.json", "")
+
 	return executableFile
 }
 

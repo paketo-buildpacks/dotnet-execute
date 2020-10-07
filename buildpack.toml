@@ -1,10 +1,10 @@
 api = "0.2"
 
 [buildpack]
-id = "paketo-buildpacks/dotnet-core-conf"
-name = "Paketo .NET Core Conf Buildpack"
+id = "paketo-buildpacks/dotnet-core-execute"
+name = "Paketo .NET Core Execute Buildpack"
 version = "{{ .Version }}"
-homepage = "https://github.com/paketo-buildpacks/dotnet-core-conf"
+homepage = "https://github.com/paketo-buildpacks/dotnet-core-execute"
 
 [metadata]
 include_files = ["bin/build","bin/detect","bin/run", "buildpack.toml"]

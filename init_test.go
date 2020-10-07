@@ -1,4 +1,4 @@
-package dotnetcoreconf_test
+package dotnetcoreexecute_test
 
 import (
 	"testing"
@@ -7,8 +7,8 @@ import (
 	"github.com/sclevine/spec/report"
 )
 
-func TestUnitDotnetCoreConf(t *testing.T) {
-	suite := spec.New("dotnet-core-conf", spec.Report(report.Terminal{}), spec.Parallel())
+func TestUnitDotnetCoreExecute(t *testing.T) {
+	suite := spec.New("dotnet-core-execute", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("BuildpackYMLParser", testBuildpackYMLParser)
 	suite("Detect", testDetect)
 	suite("Build", testBuild)
