@@ -2,14 +2,17 @@ package dotnetcoreconf
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/paketo-buildpacks/packit"
+	"github.com/paketo-buildpacks/packit/scribe"
 )
 
-func Build(buildpackYMLParser Parser) packit.BuildFunc {
+func Build(buildpackYMLParser Parser, logger scribe.Logger) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
+		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 		projRoot := context.WorkingDir
 
 		bpYMLProjPath, err := buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
@@ -24,9 +27,22 @@ func Build(buildpackYMLParser Parser) packit.BuildFunc {
 			return packit.BuildResult{}, fmt.Errorf("failed to find *.*runtimeconfig.json: %w", err)
 		}
 
-		binaryName := getAppBinaryName(runtimeConfigPath)
+		appName := getAppName(runtimeConfigPath)
 
-		command := fmt.Sprintf("%s/%s --urls http://0.0.0.0:${PORT:-8080}", projRoot, binaryName)
+		has, err := hasExecutable(projRoot, appName)
+		if err != nil {
+			return packit.BuildResult{}, fmt.Errorf("failed to stat app executable: %w", err)
+		}
+
+		command := fmt.Sprintf("%s/%s --urls http://0.0.0.0:${PORT:-8080}", projRoot, appName)
+		if !has {
+			// must check for the existence of <appName>.dll during rewrite
+			command = fmt.Sprintf("dotnet %s/%s.dll --urls http://0.0.0.0:${PORT:-8080}", projRoot, appName)
+		}
+
+		logger.Process("Assigning launch processes")
+		logger.Subprocess("web: %s", command)
+		logger.Break()
 
 		return packit.BuildResult{
 			Processes: []packit.Process{
@@ -56,8 +72,25 @@ func getRuntimeConfigPath(appRoot string) (string, error) {
 	return configFiles[0], nil
 }
 
-func getAppBinaryName(runtimeConfigPath string) string {
+func getAppName(runtimeConfigPath string) string {
 	runtimeConfigFile := filepath.Base(runtimeConfigPath)
 	executableFile := strings.ReplaceAll(runtimeConfigFile, ".runtimeconfig.json", "")
 	return executableFile
+}
+
+func hasExecutable(projRoot, appName string) (bool, error) {
+	info, err := os.Stat(filepath.Join(projRoot, appName))
+	if err != nil && !os.IsNotExist(err) {
+		return false, err
+	}
+
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	if info.Mode()&0111 != 0 {
+		return true, nil
+	}
+
+	return false, nil
 }
