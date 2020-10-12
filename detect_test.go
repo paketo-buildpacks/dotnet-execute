@@ -1,4 +1,4 @@
-package dotnetcoreexecute_test
+package dotnetexecute_test
 
 import (
 	"errors"
@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	dotnetcoreexecute "github.com/paketo-buildpacks/dotnet-core-execute"
-	"github.com/paketo-buildpacks/dotnet-core-execute/fakes"
+	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
+	"github.com/paketo-buildpacks/dotnet-execute/fakes"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/sclevine/spec"
 
@@ -30,7 +30,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		buildpackYMLParser = &fakes.Parser{}
-		detect = dotnetcoreexecute.Detect(buildpackYMLParser)
+		detect = dotnetexecute.Detect(buildpackYMLParser)
 	})
 
 	it.After(func() {
@@ -54,12 +54,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(result.Plan).To(Equal(packit.BuildPlan{
 				Provides: []packit.BuildPlanProvision{
 					{
-						Name: "dotnet-core-execute",
+						Name: "dotnet-execute",
 					},
 				},
 				Requires: []packit.BuildPlanRequirement{
 					{
-						Name: "dotnet-core-execute",
+						Name: "dotnet-execute",
 						Metadata: map[string]interface{}{
 							"build": true,
 						},
@@ -123,12 +123,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(result.Plan).To(Equal(packit.BuildPlan{
 					Provides: []packit.BuildPlanProvision{
 						{
-							Name: "dotnet-core-execute",
+							Name: "dotnet-execute",
 						},
 					},
 					Requires: []packit.BuildPlanRequirement{
 						{
-							Name: "dotnet-core-execute",
+							Name: "dotnet-execute",
 							Metadata: map[string]interface{}{
 								"build": true,
 							},
@@ -163,12 +163,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(result.Plan).To(Equal(packit.BuildPlan{
 					Provides: []packit.BuildPlanProvision{
 						{
-							Name: "dotnet-core-execute",
+							Name: "dotnet-execute",
 						},
 					},
 					Requires: []packit.BuildPlanRequirement{
 						{
-							Name: "dotnet-core-execute",
+							Name: "dotnet-execute",
 							Metadata: map[string]interface{}{
 								"build": true,
 							},

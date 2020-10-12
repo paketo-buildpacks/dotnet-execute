@@ -1,4 +1,4 @@
-package dotnetcoreexecute
+package dotnetexecute
 
 import (
 	"os"
