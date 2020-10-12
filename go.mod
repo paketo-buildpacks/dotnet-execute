@@ -1,4 +1,4 @@
-module github.com/paketo-buildpacks/dotnet-core-execute
+module github.com/paketo-buildpacks/dotnet-execute
 
 go 1.14
 
