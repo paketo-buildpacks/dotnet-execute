@@ -26,7 +26,7 @@ func Build(logger scribe.Logger) packit.BuildFunc {
 			return packit.BuildResult{}, fmt.Errorf("failed to stat app executable: %w", err)
 		}
 
-		command := fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", appName)
+		command := fmt.Sprintf("./%s --urls http://0.0.0.0:${PORT:-8080}", appName)
 		if !has {
 			// must check for the existence of <appName>.dll during rewrite
 			command = fmt.Sprintf("dotnet %s.dll --urls http://0.0.0.0:${PORT:-8080}", appName)

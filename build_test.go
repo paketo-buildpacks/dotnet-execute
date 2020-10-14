@@ -80,7 +80,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Processes: []packit.Process{
 					{
 						Type:    "web",
-						Command: "some-app --urls http://0.0.0.0:${PORT:-8080}",
+						Command: "./some-app --urls http://0.0.0.0:${PORT:-8080}",
 					},
 				},
 			}))
