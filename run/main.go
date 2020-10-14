@@ -13,6 +13,6 @@ func main() {
 	buildpackYMLParser := dotnetexecute.NewBuildpackYMLParser()
 	packit.Run(
 		dotnetexecute.Detect(buildpackYMLParser),
-		dotnetexecute.Build(buildpackYMLParser, logger),
+		dotnetexecute.Build(logger),
 	)
 }

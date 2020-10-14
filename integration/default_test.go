@@ -83,7 +83,7 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
 				"  Assigning launch processes",
-				`    web: /workspace/asp_dotnet2 --urls http://0.0.0.0:${PORT:-8080}`,
+				`    web: ./asp_dotnet2 --urls http://0.0.0.0:${PORT:-8080}`,
 				"",
 			))
 		})

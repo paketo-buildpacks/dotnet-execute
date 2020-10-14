@@ -10,34 +10,26 @@ import (
 	"github.com/paketo-buildpacks/packit/scribe"
 )
 
-func Build(buildpackYMLParser Parser, logger scribe.Logger) packit.BuildFunc {
+func Build(logger scribe.Logger) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
-		projRoot := context.WorkingDir
 
-		bpYMLProjPath, err := buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
+		runtimeConfigPath, err := getRuntimeConfigPath(context.WorkingDir)
 		if err != nil {
-			return packit.BuildResult{}, fmt.Errorf("failed to parse buildpack.yml: %w", err)
-		}
-
-		projRoot = filepath.Join(projRoot, bpYMLProjPath)
-
-		runtimeConfigPath, err := getRuntimeConfigPath(projRoot)
-		if err != nil {
-			return packit.BuildResult{}, fmt.Errorf("failed to find *.*runtimeconfig.json: %w", err)
+			return packit.BuildResult{}, fmt.Errorf("failed to find *.runtimeconfig.json: %w", err)
 		}
 
 		appName := getAppName(runtimeConfigPath)
 
-		has, err := hasExecutable(projRoot, appName)
+		has, err := hasExecutable(context.WorkingDir, appName)
 		if err != nil {
 			return packit.BuildResult{}, fmt.Errorf("failed to stat app executable: %w", err)
 		}
 
-		command := fmt.Sprintf("%s/%s --urls http://0.0.0.0:${PORT:-8080}", projRoot, appName)
+		command := fmt.Sprintf("./%s --urls http://0.0.0.0:${PORT:-8080}", appName)
 		if !has {
 			// must check for the existence of <appName>.dll during rewrite
-			command = fmt.Sprintf("dotnet %s/%s.dll --urls http://0.0.0.0:${PORT:-8080}", projRoot, appName)
+			command = fmt.Sprintf("dotnet %s.dll --urls http://0.0.0.0:${PORT:-8080}", appName)
 		}
 
 		logger.Process("Assigning launch processes")
