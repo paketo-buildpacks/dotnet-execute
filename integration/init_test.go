@@ -15,19 +15,27 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var (
-	buildpack     string
-	icuBuildpack  string
-	buildpackInfo struct {
-		Buildpack struct {
-			ID   string
-			Name string
-		}
+var settings struct {
+	BuildpackInfo struct {
+		ID   string
+		Name string
 	}
 	Config struct {
-		Icu string `json:"icu"`
+		ICU               string `json:"icu"`
+		DotnetCoreRuntime string `json:"dotnet-core-runtime"`
 	}
-)
+	Buildpacks struct {
+		DotnetExecute struct {
+			Online string
+		}
+		DotnetCoreRuntime struct {
+			Online string
+		}
+		ICU struct {
+			Online string
+		}
+	}
+}
 
 func TestIntegration(t *testing.T) {
 	Expect := NewWithT(t).Expect
@@ -35,13 +43,13 @@ func TestIntegration(t *testing.T) {
 	file, err := os.Open("../integration.json")
 	Expect(err).NotTo(HaveOccurred())
 
-	Expect(json.NewDecoder(file).Decode(&Config)).To(Succeed())
+	Expect(json.NewDecoder(file).Decode(&settings.Config)).To(Succeed())
 	Expect(file.Close()).To(Succeed())
 
 	file, err = os.Open("../buildpack.toml")
 	Expect(err).NotTo(HaveOccurred())
 
-	_, err = toml.DecodeReader(file, &buildpackInfo)
+	_, err = toml.DecodeReader(file, &settings.BuildpackInfo)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(file.Close()).To(Succeed())
 
@@ -50,19 +58,23 @@ func TestIntegration(t *testing.T) {
 
 	buildpackStore := occam.NewBuildpackStore()
 
-	buildpack, err = buildpackStore.Get.
+	settings.Buildpacks.DotnetExecute.Online, err = buildpackStore.Get.
 		WithVersion("1.2.3").
 		Execute(root)
 	Expect(err).ToNot(HaveOccurred())
 
-	icuBuildpack, err = buildpackStore.Get.
-		Execute(Config.Icu)
+	settings.Buildpacks.ICU.Online, err = buildpackStore.Get.
+		Execute(settings.Config.ICU)
+	Expect(err).ToNot(HaveOccurred())
+
+	settings.Buildpacks.DotnetCoreRuntime.Online, err = buildpackStore.Get.
+		Execute(settings.Config.DotnetCoreRuntime)
 	Expect(err).ToNot(HaveOccurred())
 
 	SetDefaultEventuallyTimeout(10 * time.Second)
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
-	suite("Default", testDefault)
-	// suite("FDD", testFDD)
+	suite("SelfContainedExecutable", testSelfContainedExecutable)
+	suite("FrameworkDependencyExecutable", testFrameworkDependentExecutable)
 	suite.Run(t)
 }

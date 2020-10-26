@@ -2,6 +2,7 @@ package dotnetexecute_test
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -19,9 +20,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		buildpackYMLParser *fakes.Parser
-		workingDir         string
-		detect             packit.DetectFunc
+		buildpackYMLParser  *fakes.BuildpackConfigParser
+		runtimeConfigParser *fakes.ConfigParser
+		workingDir          string
+		detect              packit.DetectFunc
 	)
 
 	it.Before(func() {
@@ -29,8 +31,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = ioutil.TempDir("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
-		buildpackYMLParser = &fakes.Parser{}
-		detect = dotnetexecute.Detect(buildpackYMLParser)
+		buildpackYMLParser = &fakes.BuildpackConfigParser{}
+		runtimeConfigParser = &fakes.ConfigParser{}
+		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser)
 	})
 
 	it.After(func() {
@@ -52,18 +55,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Plan).To(Equal(packit.BuildPlan{
-				Provides: []packit.BuildPlanProvision{
-					{
-						Name: "dotnet-execute",
-					},
-				},
 				Requires: []packit.BuildPlanRequirement{
-					{
-						Name: "dotnet-execute",
-						Metadata: map[string]interface{}{
-							"build": true,
-						},
-					},
 					{
 						Name: "icu",
 						Metadata: map[string]interface{}{
@@ -72,6 +64,42 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					},
 				},
 			}))
+
+			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
+			Expect(runtimeConfigParser.ParseCall.Receives.Path).To(Equal(filepath.Join(workingDir, "some-app.runtimeconfig.json")))
+		})
+
+		context("when the runtimeconfig.json specifies a rumtime framework", func() {
+			it.Before(func() {
+				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+					RuntimeVersion: "2.1.0",
+				}
+			})
+
+			it("requires dotnet-runtime", func() {
+				result, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Plan).To(Equal(packit.BuildPlan{
+					Requires: []packit.BuildPlanRequirement{
+						{
+							Name: "icu",
+							Metadata: map[string]interface{}{
+								"launch": true,
+							},
+						},
+						{
+							Name: "dotnet-runtime",
+							Metadata: map[string]interface{}{
+								"version":        "2.1.0",
+								"version-source": "some-app.runtimeconfig.json",
+								"launch":         true,
+							},
+						},
+					},
+				}))
+			})
 		})
 	})
 
@@ -85,13 +113,22 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it("detects successfully", func() {
-			_, err := detect(packit.DetectContext{
+			result, err := detect(packit.DetectContext{
 				WorkingDir: workingDir,
 			})
 			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Plan).To(Equal(packit.BuildPlan{
+				Requires: []packit.BuildPlanRequirement{
+					{
+						Name: "icu",
+						Metadata: map[string]interface{}{
+							"launch": true,
+						},
+					},
+				},
+			}))
 		})
 	})
-
 	context("there is a buildpack.yml sets a custom project-path", func() {
 		it.Before(func() {
 			buildpackYMLParser.ParseProjectPathCall.Returns.ProjectPath = "src/proj1"
@@ -121,18 +158,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result.Plan).To(Equal(packit.BuildPlan{
-					Provides: []packit.BuildPlanProvision{
-						{
-							Name: "dotnet-execute",
-						},
-					},
 					Requires: []packit.BuildPlanRequirement{
-						{
-							Name: "dotnet-execute",
-							Metadata: map[string]interface{}{
-								"build": true,
-							},
-						},
 						{
 							Name: "icu",
 							Metadata: map[string]interface{}{
@@ -161,18 +187,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				})
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result.Plan).To(Equal(packit.BuildPlan{
-					Provides: []packit.BuildPlanProvision{
-						{
-							Name: "dotnet-execute",
-						},
-					},
 					Requires: []packit.BuildPlanRequirement{
-						{
-							Name: "dotnet-execute",
-							Metadata: map[string]interface{}{
-								"build": true,
-							},
-						},
 						{
 							Name: "icu",
 							Metadata: map[string]interface{}{
@@ -186,6 +201,19 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("failure cases", func() {
+		context("when the buildpack.yml parser fails", func() {
+			it.Before(func() {
+				buildpackYMLParser.ParseProjectPathCall.Returns.Err = errors.New("some-error")
+			})
+
+			it("returns an error", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: "/working-dir",
+				})
+				Expect(err).To(MatchError("failed to parse buildpack.yml: some-error"))
+			})
+		})
+
 		context("there are multiple *.runtimeconfig.json files", func() {
 			it.Before(func() {
 				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(""), os.ModePerm)).To(Succeed())
@@ -208,6 +236,24 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
+		context("when the *.runtimeconfig.json parser fails", func() {
+			it.Before(func() {
+				runtimeConfigParser.ParseCall.Returns.Error = errors.New("some-error")
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(""), os.ModePerm)).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.RemoveAll(filepath.Join(workingDir, "some-app.runtimeconfig.json"))).To(Succeed())
+			})
+
+			it("returns an error", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).To(MatchError(fmt.Sprintf("failed to parse %s: some-error", filepath.Join(workingDir, "some-app.runtimeconfig.json"))))
+			})
+		})
+
 		context("there is no *.runtimeconfig.json or *.*sproj present", func() {
 			it.Before(func() {
 				files, err := filepath.Glob(filepath.Join(workingDir, "*.runtimeconfig.json"))
@@ -223,20 +269,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				_, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
 				})
-				Expect(err).To(MatchError(packit.Fail))
-			})
-		})
-
-		context("when the buildpack.yml parser fails", func() {
-			it.Before(func() {
-				buildpackYMLParser.ParseProjectPathCall.Returns.Err = errors.New("some-error")
-			})
-
-			it("returns an error", func() {
-				_, err := detect(packit.DetectContext{
-					WorkingDir: "/working-dir",
-				})
-				Expect(err).To(MatchError("failed to parse buildpack.yml: some-error"))
+				Expect(err).To(MatchError(packit.Fail.WithMessage("no *.runtimeconfig.json or project file found")))
 			})
 		})
 	})

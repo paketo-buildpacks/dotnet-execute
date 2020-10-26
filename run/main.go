@@ -11,8 +11,12 @@ import (
 func main() {
 	logger := scribe.NewLogger(os.Stdout)
 	buildpackYMLParser := dotnetexecute.NewBuildpackYMLParser()
+	configParser := dotnetexecute.NewRuntimeConfigParser()
 	packit.Run(
-		dotnetexecute.Detect(buildpackYMLParser),
+		dotnetexecute.Detect(
+			buildpackYMLParser,
+			configParser,
+		),
 		dotnetexecute.Build(logger),
 	)
 }

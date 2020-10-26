@@ -2,7 +2,7 @@ package fakes
 
 import "sync"
 
-type Parser struct {
+type BuildpackConfigParser struct {
 	ParseProjectPathCall struct {
 		sync.Mutex
 		CallCount int
@@ -17,7 +17,7 @@ type Parser struct {
 	}
 }
 
-func (f *Parser) ParseProjectPath(param1 string) (string, error) {
+func (f *BuildpackConfigParser) ParseProjectPath(param1 string) (string, error) {
 	f.ParseProjectPathCall.Lock()
 	defer f.ParseProjectPathCall.Unlock()
 	f.ParseProjectPathCall.CallCount++
