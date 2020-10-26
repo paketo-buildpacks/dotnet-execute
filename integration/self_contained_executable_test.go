@@ -15,7 +15,7 @@ import (
 	. "github.com/paketo-buildpacks/occam/matchers"
 )
 
-func testDefault(t *testing.T, context spec.G, it spec.S) {
+func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect     = NewWithT(t).Expect
 		Eventually = NewWithT(t).Eventually
@@ -53,15 +53,15 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 
 		it("builds and runs successfully", func() {
 			var err error
-			source, err = occam.Source(filepath.Join("testdata", "self_contained_2.1"))
+			source, err = occam.Source(filepath.Join("testdata", "self_contained_executable"))
 			Expect(err).NotTo(HaveOccurred())
 
 			var logs fmt.Stringer
 			image, logs, err = pack.Build.
 				WithPullPolicy("never").
 				WithBuildpacks(
-					icuBuildpack,
-					buildpack,
+					settings.Buildpacks.ICU.Online,
+					settings.Buildpacks.DotnetExecute.Online,
 				).
 				Execute(name, source)
 			Expect(err).ToNot(HaveOccurred(), logs.String)
@@ -81,7 +81,7 @@ func testDefault(t *testing.T, context spec.G, it spec.S) {
 			Expect(response.Body.Close()).To(Succeed())
 
 			Expect(logs).To(ContainLines(
-				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, buildpackInfo.Buildpack.Name)),
+				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
 				"  Assigning launch processes",
 				`    web: ./asp_dotnet2 --urls http://0.0.0.0:${PORT:-8080}`,
 				"",
