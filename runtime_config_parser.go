@@ -2,11 +2,18 @@ package dotnetexecute
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 type RuntimeConfig struct {
+	Path           string
 	RuntimeVersion string
+	AppName        string
+	Executable     bool
 }
 
 type RuntimeConfigParser struct{}
@@ -15,7 +22,24 @@ func NewRuntimeConfigParser() RuntimeConfigParser {
 	return RuntimeConfigParser{}
 }
 
-func (p RuntimeConfigParser) Parse(path string) (RuntimeConfig, error) {
+func (p RuntimeConfigParser) Parse(glob string) (RuntimeConfig, error) {
+	files, err := filepath.Glob(glob)
+	if err != nil {
+		return RuntimeConfig{}, fmt.Errorf("failed to find *.runtimeconfig.json: %w: %q", err, glob)
+	}
+
+	if len(files) > 1 {
+		return RuntimeConfig{}, fmt.Errorf("multiple *.runtimeconfig.json files present: %v", files)
+	}
+
+	if len(files) == 0 {
+		return RuntimeConfig{}, &os.PathError{Op: "open", Path: glob, Err: errors.New("no such file or directory")}
+	}
+
+	config := RuntimeConfig{
+		Path: files[0],
+	}
+
 	var data struct {
 		RuntimeOptions struct {
 			Framework struct {
@@ -25,28 +49,32 @@ func (p RuntimeConfigParser) Parse(path string) (RuntimeConfig, error) {
 		} `json:"runtimeOptions"`
 	}
 
-	file, err := os.Open(path)
+	file, err := os.Open(config.Path)
 	if err != nil {
 		return RuntimeConfig{}, err
 	}
+	defer file.Close()
 
 	err = json.NewDecoder(file).Decode(&data)
 	if err != nil {
 		return RuntimeConfig{}, err
 	}
 
-	// If there is an expected framework set with no version, default the version to *
-	if expectedFrameworkName(data.RuntimeOptions.Framework.Name) && data.RuntimeOptions.Framework.Version == "" {
-		data.RuntimeOptions.Framework.Version = "*"
+	config.RuntimeVersion = data.RuntimeOptions.Framework.Version
+	if data.RuntimeOptions.Framework.Name == "Microsoft.NETCore.App" && config.RuntimeVersion == "" {
+		config.RuntimeVersion = "*"
 	}
 
-	var config RuntimeConfig
-	config.RuntimeVersion = data.RuntimeOptions.Framework.Version
+	config.AppName = strings.TrimSuffix(filepath.Base(file.Name()), ".runtimeconfig.json")
+
+	info, err := os.Stat(strings.TrimSuffix(file.Name(), ".runtimeconfig.json"))
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return RuntimeConfig{}, err
+	}
+
+	if info != nil && info.Mode()&0111 != 0 {
+		config.Executable = true
+	}
 
 	return config, nil
-}
-
-// This check if the name of the framework is one that we expect
-func expectedFrameworkName(name string) bool {
-	return name == "Microsoft.NETCore.App"
 }

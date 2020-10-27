@@ -11,7 +11,7 @@ type ConfigParser struct {
 		sync.Mutex
 		CallCount int
 		Receives  struct {
-			Path string
+			Glob string
 		}
 		Returns struct {
 			RuntimeConfig dotnetexecute.RuntimeConfig
@@ -25,7 +25,7 @@ func (f *ConfigParser) Parse(param1 string) (dotnetexecute.RuntimeConfig, error)
 	f.ParseCall.Lock()
 	defer f.ParseCall.Unlock()
 	f.ParseCall.CallCount++
-	f.ParseCall.Receives.Path = param1
+	f.ParseCall.Receives.Glob = param1
 	if f.ParseCall.Stub != nil {
 		return f.ParseCall.Stub(param1)
 	}
