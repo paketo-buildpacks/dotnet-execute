@@ -23,12 +23,16 @@ var settings struct {
 	Config struct {
 		ICU               string `json:"icu"`
 		DotnetCoreRuntime string `json:"dotnet-core-runtime"`
+		DotnetCoreSDK     string `json:"dotnet-core-sdk"`
 	}
 	Buildpacks struct {
 		DotnetExecute struct {
 			Online string
 		}
 		DotnetCoreRuntime struct {
+			Online string
+		}
+		DotnetCoreSDK struct {
 			Online string
 		}
 		ICU struct {
@@ -71,10 +75,15 @@ func TestIntegration(t *testing.T) {
 		Execute(settings.Config.DotnetCoreRuntime)
 	Expect(err).ToNot(HaveOccurred())
 
+	settings.Buildpacks.DotnetCoreSDK.Online, err = buildpackStore.Get.
+		Execute(settings.Config.DotnetCoreSDK)
+	Expect(err).ToNot(HaveOccurred())
+
 	SetDefaultEventuallyTimeout(10 * time.Second)
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("SelfContainedExecutable", testSelfContainedExecutable)
-	suite("FrameworkDependencyExecutable", testFrameworkDependentExecutable)
+	suite("FrameworkDependentDeployment", testFrameworkDependentDeployment)
+	suite("FrameworkDependentExecutable", testFrameworkDependentExecutable)
 	suite.Run(t)
 }

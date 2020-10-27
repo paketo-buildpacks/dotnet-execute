@@ -1,4 +1,5 @@
 {
-  "icu": "github.com/paketo-buildpacks/icu",
-  "dotnet-core-runtime": "github.com/paketo-buildpacks/dotnet-core-runtime"
+  "dotnet-core-runtime": "github.com/paketo-buildpacks/dotnet-core-runtime",
+  "dotnet-core-sdk": "github.com/paketo-buildpacks/dotnet-core-sdk",
+  "icu": "github.com/paketo-buildpacks/icu"
 }

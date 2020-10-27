@@ -2,7 +2,6 @@ package dotnetexecute_test
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -33,6 +32,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		buildpackYMLParser = &fakes.BuildpackConfigParser{}
 		runtimeConfigParser = &fakes.ConfigParser{}
+		runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+			Path: filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+		}
+
 		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser)
 	})
 
@@ -42,11 +45,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	context("there is a *.runtimeconfig.json file present", func() {
 		it.Before(func() {
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(""), os.ModePerm)).To(Succeed())
-		})
-
-		it.After(func() {
-			Expect(os.RemoveAll(filepath.Join(workingDir, "some-app.runtimeconfig.json"))).To(Succeed())
+			runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+				Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+				Executable: true,
+			}
 		})
 
 		it("detects successfully", func() {
@@ -66,13 +68,15 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			}))
 
 			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
-			Expect(runtimeConfigParser.ParseCall.Receives.Path).To(Equal(filepath.Join(workingDir, "some-app.runtimeconfig.json")))
+			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 		})
 
-		context("when the runtimeconfig.json specifies a rumtime framework", func() {
+		context("when the runtimeconfig.json specifies a runtime framework", func() {
 			it.Before(func() {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+					Path:           filepath.Join(workingDir, "some-app.runtimeconfig.json"),
 					RuntimeVersion: "2.1.0",
+					Executable:     true,
 				}
 			})
 
@@ -95,6 +99,47 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 								"version":        "2.1.0",
 								"version-source": "some-app.runtimeconfig.json",
 								"launch":         true,
+							},
+						},
+					},
+				}))
+			})
+		})
+
+		context("when there is no executable", func() {
+			it.Before(func() {
+				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+					Path:           filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+					RuntimeVersion: "2.1.0",
+					Executable:     false,
+				}
+			})
+
+			it("requires dotnet-sdk", func() {
+				result, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Plan).To(Equal(packit.BuildPlan{
+					Requires: []packit.BuildPlanRequirement{
+						{
+							Name: "icu",
+							Metadata: map[string]interface{}{
+								"launch": true,
+							},
+						},
+						{
+							Name: "dotnet-runtime",
+							Metadata: map[string]interface{}{
+								"version":        "2.1.0",
+								"version-source": "some-app.runtimeconfig.json",
+								"launch":         true,
+							},
+						},
+						{
+							Name: "dotnet-sdk",
+							Metadata: map[string]interface{}{
+								"launch": true,
 							},
 						},
 					},
@@ -129,6 +174,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			}))
 		})
 	})
+
 	context("there is a buildpack.yml sets a custom project-path", func() {
 		it.Before(func() {
 			buildpackYMLParser.ParseProjectPathCall.Returns.ProjectPath = "src/proj1"
@@ -172,15 +218,8 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		context("project-path directory contains a *.runtimeconfig.json file", func() {
 			it.Before(func() {
-				err := ioutil.WriteFile(filepath.Join(workingDir, "src", "proj1", "some-app.runtimeconfig.json"), []byte(""), os.ModePerm)
-				Expect(err).NotTo(HaveOccurred())
+				buildpackYMLParser.ParseProjectPathCall.Returns.ProjectPath = "./sub-dir"
 			})
-
-			it.After(func() {
-				err := os.Remove(filepath.Join(workingDir, "src", "proj1", "some-app.runtimeconfig.json"))
-				Expect(err).NotTo(HaveOccurred())
-			})
-
 			it("detects successfully", func() {
 				result, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
@@ -196,6 +235,8 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 				}))
+
+				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "sub-dir", "*.runtimeconfig.json")))
 			})
 		})
 	})
@@ -214,55 +255,23 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
-		context("there are multiple *.runtimeconfig.json files", func() {
+		context("when the runtime config parsing fails", func() {
 			it.Before(func() {
-				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(""), os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(workingDir, "another-app.runtimeconfig.json"), []byte(""), os.ModePerm)).To(Succeed())
+				runtimeConfigParser.ParseCall.Returns.Error = errors.New("failed to parse runtime config")
 			})
 
-			it.After(func() {
-				err := os.Remove(filepath.Join(workingDir, "some-app.runtimeconfig.json"))
-				Expect(err).NotTo(HaveOccurred())
-				err = os.Remove(filepath.Join(workingDir, "another-app.runtimeconfig.json"))
-				Expect(err).NotTo(HaveOccurred())
-			})
-
-			it("detection fails", func() {
+			it("fails", func() {
 				_, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
 				})
 				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError(packit.Fail.WithMessage("multiple *.runtimeconfig.json files present")))
-			})
-		})
-
-		context("when the *.runtimeconfig.json parser fails", func() {
-			it.Before(func() {
-				runtimeConfigParser.ParseCall.Returns.Error = errors.New("some-error")
-				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(""), os.ModePerm)).To(Succeed())
-			})
-
-			it.After(func() {
-				Expect(os.RemoveAll(filepath.Join(workingDir, "some-app.runtimeconfig.json"))).To(Succeed())
-			})
-
-			it("returns an error", func() {
-				_, err := detect(packit.DetectContext{
-					WorkingDir: workingDir,
-				})
-				Expect(err).To(MatchError(fmt.Sprintf("failed to parse %s: some-error", filepath.Join(workingDir, "some-app.runtimeconfig.json"))))
+				Expect(err).To(MatchError("failed to parse runtime config"))
 			})
 		})
 
 		context("there is no *.runtimeconfig.json or *.*sproj present", func() {
 			it.Before(func() {
-				files, err := filepath.Glob(filepath.Join(workingDir, "*.runtimeconfig.json"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(files).To(BeEmpty())
-
-				files, err = filepath.Glob(filepath.Join(workingDir, "*.*sproj"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(files).To(BeEmpty())
+				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{}
 			})
 
 			it("detection fails", func() {

@@ -52,7 +52,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	context("the app is a framework-dependent or self-contained executable", func() {
 		it.Before(func() {
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), nil, os.ModePerm)).To(Succeed())
+			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{}`), os.ModePerm)).To(Succeed())
 			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app"), nil, os.ModePerm)).To(Succeed())
 		})
 
@@ -89,7 +89,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	context("the app is a framework dependent deployment", func() {
 		it.Before(func() {
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), nil, os.ModePerm)).To(Succeed())
+			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{}`), os.ModePerm)).To(Succeed())
 			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.dll"), nil, os.ModePerm)).To(Succeed())
 		})
 
