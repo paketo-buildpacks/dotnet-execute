@@ -12,6 +12,7 @@ import (
 type RuntimeConfig struct {
 	Path           string
 	RuntimeVersion string
+	SDKVersion     string
 	AppName        string
 	Executable     bool
 }
@@ -63,6 +64,28 @@ func (p RuntimeConfigParser) Parse(glob string) (RuntimeConfig, error) {
 	config.RuntimeVersion = data.RuntimeOptions.Framework.Version
 	if data.RuntimeOptions.Framework.Name == "Microsoft.NETCore.App" && config.RuntimeVersion == "" {
 		config.RuntimeVersion = "*"
+	}
+
+	if config.RuntimeVersion != "" {
+		pieces := strings.SplitN(config.RuntimeVersion, ".", 3)
+		if len(pieces) < 3 {
+			pieces = append(pieces, "*")
+		}
+
+		var parts []string
+		for i, part := range pieces {
+			if i+1 == len(pieces) {
+				part = "*"
+			}
+
+			parts = append(parts, part)
+
+			if part == "*" {
+				break
+			}
+		}
+
+		config.SDKVersion = strings.Join(parts, ".")
 	}
 
 	config.AppName = strings.TrimSuffix(filepath.Base(file.Name()), ".runtimeconfig.json")

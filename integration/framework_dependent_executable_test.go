@@ -60,6 +60,7 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 				WithBuildpacks(
 					settings.Buildpacks.ICU.Online,
 					settings.Buildpacks.DotnetCoreRuntime.Online,
+					settings.Buildpacks.DotnetCoreSDK.Online,
 					settings.Buildpacks.DotnetExecute.Online,
 				).
 				Execute(name, source)
