@@ -76,11 +76,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 					Path:           filepath.Join(workingDir, "some-app.runtimeconfig.json"),
 					RuntimeVersion: "2.1.0",
+					SDKVersion:     "2.1.*",
 					Executable:     true,
 				}
 			})
 
-			it("requires dotnet-runtime", func() {
+			it("requires dotnet-runtime and dotnet-sdk", func() {
 				result, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
 				})
@@ -101,6 +102,14 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 								"launch":         true,
 							},
 						},
+						{
+							Name: "dotnet-sdk",
+							Metadata: map[string]interface{}{
+								"version":        "2.1.*",
+								"version-source": "some-app.runtimeconfig.json",
+								"launch":         false,
+							},
+						},
 					},
 				}))
 			})
@@ -111,6 +120,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 					Path:           filepath.Join(workingDir, "some-app.runtimeconfig.json"),
 					RuntimeVersion: "2.1.0",
+					SDKVersion:     "2.1.*",
 					Executable:     false,
 				}
 			})
@@ -139,7 +149,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						{
 							Name: "dotnet-sdk",
 							Metadata: map[string]interface{}{
-								"launch": true,
+								"version":        "2.1.*",
+								"version-source": "some-app.runtimeconfig.json",
+								"launch":         true,
 							},
 						},
 					},

@@ -56,14 +56,14 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser)
 				},
 			})
 
-			if !config.Executable {
-				requirements = append(requirements, packit.BuildPlanRequirement{
-					Name: "dotnet-sdk",
-					Metadata: map[string]interface{}{
-						"launch": true,
-					},
-				})
-			}
+			requirements = append(requirements, packit.BuildPlanRequirement{
+				Name: "dotnet-sdk",
+				Metadata: map[string]interface{}{
+					"version":        config.SDKVersion,
+					"version-source": filepath.Base(config.Path),
+					"launch":         !config.Executable,
+				},
+			})
 		}
 
 		projectFiles, err := filepath.Glob(filepath.Join(root, "*.*sproj"))

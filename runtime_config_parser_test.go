@@ -36,22 +36,13 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("Parse", func() {
-		it("parses the path of the file", func() {
+		it("parses the runtime config", func() {
 			config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
 			Expect(err).NotTo(HaveOccurred())
-			Expect(config.Path).To(Equal(filepath.Join(workingDir, "some-app.runtimeconfig.json")))
-		})
-
-		it("parses the runtime version", func() {
-			config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(config.RuntimeVersion).To(Equal(""))
-		})
-
-		it("parses the name of the app", func() {
-			config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(config.AppName).To(Equal("some-app"))
+			Expect(config).To(Equal(dotnetexecute.RuntimeConfig{
+				Path:    filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+				AppName: "some-app",
+			}))
 		})
 
 		context("when the app includes an executable", func() {
@@ -85,10 +76,11 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 				}`), 0600)).To(Succeed())
 			})
 
-			it("returns that version", func() {
+			it("returns the runtime and sdk versions", func() {
 				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(config.RuntimeVersion).To(Equal("2.1.3"))
+				Expect(config.SDKVersion).To(Equal("2.1.*"))
 			})
 		})
 
@@ -107,6 +99,7 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(config.RuntimeVersion).To(Equal("*"))
+				Expect(config.SDKVersion).To(Equal("*"))
 			})
 		})
 
