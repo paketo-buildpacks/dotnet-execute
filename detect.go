@@ -46,16 +46,18 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser)
 			return packit.DetectResult{}, err
 		}
 
-		if config.RuntimeVersion != "" {
+		// FDE + FDD cases
+		if config.Version != "" {
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-runtime",
 				Metadata: map[string]interface{}{
-					"version":        config.RuntimeVersion,
+					"version":        config.Version,
 					"version-source": filepath.Base(config.Path),
 					"launch":         true,
 				},
 			})
 
+			// Only make SDK available at launch if there is no executable (FDD case only)
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-sdk",
 				Metadata: map[string]interface{}{
@@ -64,6 +66,18 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser)
 					"launch":         !config.Executable,
 				},
 			})
+
+			if config.UsesASPNet {
+				requirements = append(requirements, packit.BuildPlanRequirement{
+					// When aspnet buildpack is rewritten per RFC0001, change to "dotnet-aspnet"
+					Name: "dotnet-aspnetcore",
+					Metadata: map[string]interface{}{
+						"version":        config.Version,
+						"version-source": filepath.Base(config.Path),
+						"launch":         true,
+					},
+				})
+			}
 		}
 
 		projectFiles, err := filepath.Glob(filepath.Join(root, "*.*sproj"))

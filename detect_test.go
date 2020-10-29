@@ -74,10 +74,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		context("when the runtimeconfig.json specifies a runtime framework", func() {
 			it.Before(func() {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-					Path:           filepath.Join(workingDir, "some-app.runtimeconfig.json"),
-					RuntimeVersion: "2.1.0",
-					SDKVersion:     "2.1.*",
-					Executable:     true,
+					Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+					Version:    "2.1.0",
+					SDKVersion: "2.1.*",
+					Executable: true,
 				}
 			})
 
@@ -118,10 +118,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		context("when there is no executable", func() {
 			it.Before(func() {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-					Path:           filepath.Join(workingDir, "some-app.runtimeconfig.json"),
-					RuntimeVersion: "2.1.0",
-					SDKVersion:     "2.1.*",
-					Executable:     false,
+					Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+					Version:    "2.1.0",
+					SDKVersion: "2.1.*",
+					Executable: false,
 				}
 			})
 
@@ -150,6 +150,112 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "dotnet-sdk",
 							Metadata: map[string]interface{}{
 								"version":        "2.1.*",
+								"version-source": "some-app.runtimeconfig.json",
+								"launch":         true,
+							},
+						},
+					},
+				}))
+			})
+		})
+
+		context("when the runtimeconfig.json specifies an ASP.NET framework", func() {
+			it.Before(func() {
+				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+					Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+					Version:    "2.1.0",
+					SDKVersion: "2.1.*",
+					Executable: true,
+					UsesASPNet: true,
+				}
+			})
+
+			it("requires dotnet-runtime, dotnet-sdk (launch = false), and dotnet-aspnetcore", func() {
+				result, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Plan).To(Equal(packit.BuildPlan{
+					Requires: []packit.BuildPlanRequirement{
+						{
+							Name: "icu",
+							Metadata: map[string]interface{}{
+								"launch": true,
+							},
+						},
+						{
+							Name: "dotnet-runtime",
+							Metadata: map[string]interface{}{
+								"version":        "2.1.0",
+								"version-source": "some-app.runtimeconfig.json",
+								"launch":         true,
+							},
+						},
+						{
+							Name: "dotnet-sdk",
+							Metadata: map[string]interface{}{
+								"version":        "2.1.*",
+								"version-source": "some-app.runtimeconfig.json",
+								"launch":         false,
+							},
+						},
+						{
+							Name: "dotnet-aspnetcore",
+							Metadata: map[string]interface{}{
+								"version":        "2.1.0",
+								"version-source": "some-app.runtimeconfig.json",
+								"launch":         true,
+							},
+						},
+					},
+				}))
+			})
+		})
+
+		context("when there is no executable and runtimeconfig.json specifies an ASP.NET framework", func() {
+			it.Before(func() {
+				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+					Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+					Version:    "2.1.0",
+					SDKVersion: "2.1.*",
+					Executable: false,
+					UsesASPNet: true,
+				}
+			})
+
+			it("requires dotnet-runtime, dotnet-sdk (launch = true), and dotnet-aspnetcore", func() {
+				result, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Plan).To(Equal(packit.BuildPlan{
+					Requires: []packit.BuildPlanRequirement{
+						{
+							Name: "icu",
+							Metadata: map[string]interface{}{
+								"launch": true,
+							},
+						},
+						{
+							Name: "dotnet-runtime",
+							Metadata: map[string]interface{}{
+								"version":        "2.1.0",
+								"version-source": "some-app.runtimeconfig.json",
+								"launch":         true,
+							},
+						},
+						{
+							Name: "dotnet-sdk",
+							Metadata: map[string]interface{}{
+								"version":        "2.1.*",
+								"version-source": "some-app.runtimeconfig.json",
+								"launch":         true,
+							},
+						},
+						{
+							Name: "dotnet-aspnetcore",
+							Metadata: map[string]interface{}{
+								"version":        "2.1.0",
 								"version-source": "some-app.runtimeconfig.json",
 								"launch":         true,
 							},

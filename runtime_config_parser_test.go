@@ -70,6 +70,7 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{
 					"runtimeOptions": {
 						"framework": {
+							"name": "Microsoft.NETCore.App",
 							"version": "2.1.3"
 						}
 					}
@@ -79,7 +80,7 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 			it("returns the runtime and sdk versions", func() {
 				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
 				Expect(err).NotTo(HaveOccurred())
-				Expect(config.RuntimeVersion).To(Equal("2.1.3"))
+				Expect(config.Version).To(Equal("2.1.3"))
 				Expect(config.SDKVersion).To(Equal("2.1.*"))
 			})
 		})
@@ -98,8 +99,50 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 			it("returns that version", func() {
 				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
 				Expect(err).NotTo(HaveOccurred())
-				Expect(config.RuntimeVersion).To(Equal("*"))
+				Expect(config.Version).To(Equal("*"))
 				Expect(config.SDKVersion).To(Equal("*"))
+			})
+		})
+
+		context("when the app requires ASP.Net via Microsoft.AspNetCore.App", func() {
+			it.Before(func() {
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{
+					"runtimeOptions": {
+						"framework": {
+							"name": "Microsoft.AspNetCore.App",
+							"version": "2.1.0"
+						}
+					}
+				}`), 0600)).To(Succeed())
+			})
+
+			it("reports that the app requires ASP.Net", func() {
+				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(config.Version).To(Equal("2.1.0"))
+				Expect(config.UsesASPNet).To(BeTrue())
+				Expect(config.SDKVersion).To(Equal("2.1.*"))
+			})
+		})
+
+		context("when the app requires ASP.Net via Microsoft.AspNetCore.All", func() {
+			it.Before(func() {
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{
+					"runtimeOptions": {
+						"framework": {
+							"name": "Microsoft.AspNetCore.All",
+							"version": "2.1.1"
+						}
+					}
+				}`), 0600)).To(Succeed())
+			})
+
+			it("reports that the app requires ASP.Net", func() {
+				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(config.Version).To(Equal("2.1.1"))
+				Expect(config.UsesASPNet).To(BeTrue())
+				Expect(config.SDKVersion).To(Equal("2.1.*"))
 			})
 		})
 
