@@ -10,11 +10,12 @@ import (
 )
 
 type RuntimeConfig struct {
-	Path           string
-	RuntimeVersion string
-	SDKVersion     string
-	AppName        string
-	Executable     bool
+	Path       string
+	Version    string
+	SDKVersion string
+	AppName    string
+	Executable bool
+	UsesASPNet bool
 }
 
 type RuntimeConfigParser struct{}
@@ -61,13 +62,21 @@ func (p RuntimeConfigParser) Parse(glob string) (RuntimeConfig, error) {
 		return RuntimeConfig{}, err
 	}
 
-	config.RuntimeVersion = data.RuntimeOptions.Framework.Version
-	if data.RuntimeOptions.Framework.Name == "Microsoft.NETCore.App" && config.RuntimeVersion == "" {
-		config.RuntimeVersion = "*"
+	config.Version = data.RuntimeOptions.Framework.Version
+	if data.RuntimeOptions.Framework.Name == "Microsoft.NETCore.App" && config.Version == "" {
+		config.Version = "*"
 	}
 
-	if config.RuntimeVersion != "" {
-		pieces := strings.SplitN(config.RuntimeVersion, ".", 3)
+	if data.RuntimeOptions.Framework.Name == "Microsoft.AspNetCore.App" ||
+		data.RuntimeOptions.Framework.Name == "Microsoft.AspNetCore.All" {
+		config.UsesASPNet = true
+		if config.Version == "" {
+			config.Version = "*"
+		}
+	}
+
+	if config.Version != "" {
+		pieces := strings.SplitN(config.Version, ".", 3)
 		if len(pieces) < 3 {
 			pieces = append(pieces, "*")
 		}
