@@ -12,7 +12,6 @@ import (
 type RuntimeConfig struct {
 	Path       string
 	Version    string
-	SDKVersion string
 	AppName    string
 	Executable bool
 	UsesASPNet bool
@@ -35,7 +34,7 @@ func (p RuntimeConfigParser) Parse(glob string) (RuntimeConfig, error) {
 	}
 
 	if len(files) == 0 {
-		return RuntimeConfig{}, &os.PathError{Op: "open", Path: glob, Err: errors.New("no such file or directory")}
+		return RuntimeConfig{}, fmt.Errorf("no *.runtimeconfig.json found: %w", os.ErrNotExist)
 	}
 
 	config := RuntimeConfig{
@@ -73,28 +72,6 @@ func (p RuntimeConfigParser) Parse(glob string) (RuntimeConfig, error) {
 		if config.Version == "" {
 			config.Version = "*"
 		}
-	}
-
-	if config.Version != "" {
-		pieces := strings.SplitN(config.Version, ".", 3)
-		if len(pieces) < 3 {
-			pieces = append(pieces, "*")
-		}
-
-		var parts []string
-		for i, part := range pieces {
-			if i+1 == len(pieces) {
-				part = "*"
-			}
-
-			parts = append(parts, part)
-
-			if part == "*" {
-				break
-			}
-		}
-
-		config.SDKVersion = strings.Join(parts, ".")
 	}
 
 	config.AppName = strings.TrimSuffix(filepath.Base(file.Name()), ".runtimeconfig.json")

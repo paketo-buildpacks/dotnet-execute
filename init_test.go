@@ -13,5 +13,6 @@ func TestUnitDotnetExecute(t *testing.T) {
 	suite("BuildpackYMLParser", testBuildpackYMLParser)
 	suite("Detect", testDetect)
 	suite("RuntimeConfigParser", testRuntimeConfigParser)
+	suite("ProjectFileParser", testProjectFileParser)
 	suite.Run(t)
 }

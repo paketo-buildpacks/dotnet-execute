@@ -21,6 +21,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		buildpackYMLParser  *fakes.BuildpackConfigParser
 		runtimeConfigParser *fakes.ConfigParser
+		projectParser       *fakes.ProjectParser
 		workingDir          string
 		detect              packit.DetectFunc
 	)
@@ -35,8 +36,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 			Path: filepath.Join(workingDir, "some-app.runtimeconfig.json"),
 		}
+		projectParser = &fakes.ProjectParser{}
 
-		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser)
+		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser, projectParser)
 	})
 
 	it.After(func() {
@@ -76,7 +78,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 					Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
 					Version:    "2.1.0",
-					SDKVersion: "2.1.*",
 					Executable: true,
 				}
 			})
@@ -120,7 +121,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 					Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
 					Version:    "2.1.0",
-					SDKVersion: "2.1.*",
 					Executable: false,
 				}
 			})
@@ -164,7 +164,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 					Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
 					Version:    "2.1.0",
-					SDKVersion: "2.1.*",
 					Executable: true,
 					UsesASPNet: true,
 				}
@@ -217,7 +216,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 					Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
 					Version:    "2.1.0",
-					SDKVersion: "2.1.*",
 					Executable: false,
 					UsesASPNet: true,
 				}
@@ -269,6 +267,8 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	context("there is a *.*sproj file present (and no .runtimeconfig.json)", func() {
 		it.Before(func() {
 			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.csproj"), []byte(""), os.ModePerm)).To(Succeed())
+
+			projectParser.ParseVersionCall.Returns.String = "*"
 		})
 
 		it.After(func() {
@@ -286,6 +286,142 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "icu",
 						Metadata: map[string]interface{}{
 							"launch": true,
+						},
+					},
+					{
+						Name: "build",
+						Metadata: map[string]interface{}{
+							"launch": true,
+						},
+					},
+					{
+						Name: "dotnet-runtime",
+						Metadata: map[string]interface{}{
+							"version":        "*",
+							"version-source": "some-app.csproj",
+							"launch":         true,
+						},
+					},
+					{
+						Name: "dotnet-sdk",
+						Metadata: map[string]interface{}{
+							"version":        "*",
+							"version-source": "some-app.csproj",
+							"launch":         true,
+						},
+					},
+				},
+			}))
+		})
+	})
+
+	context("the *.*sproj file specifies a version of dotnet-runtime", func() {
+		it.Before(func() {
+			projectParser.ParseVersionCall.Returns.String = "3.1.*"
+			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.csproj"), []byte(`
+<Project>
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+</Project>
+			`), os.ModePerm)).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(filepath.Join(workingDir, "some-app.csproj"))).To(Succeed())
+		})
+
+		it("requires that version for dotnet-runtime and dotnet-sdk and detects successfully", func() {
+			result, err := detect(packit.DetectContext{
+				WorkingDir: workingDir,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Plan).To(Equal(packit.BuildPlan{
+				Requires: []packit.BuildPlanRequirement{
+					{
+						Name: "icu",
+						Metadata: map[string]interface{}{
+							"launch": true,
+						},
+					},
+					{
+						Name: "build",
+						Metadata: map[string]interface{}{
+							"launch": true,
+						},
+					},
+					{
+						Name: "dotnet-runtime",
+						Metadata: map[string]interface{}{
+							"version":        "3.1.*",
+							"version-source": "some-app.csproj",
+							"launch":         true,
+						},
+					},
+					{
+						Name: "dotnet-sdk",
+						Metadata: map[string]interface{}{
+							"version":        "3.1.*",
+							"version-source": "some-app.csproj",
+							"launch":         true,
+						},
+					},
+				},
+			}))
+		})
+	})
+
+	context("the *.*sproj file requires ASPNet", func() {
+		it.Before(func() {
+			projectParser.ParseVersionCall.Returns.String = "3.1.*"
+			projectParser.NodeIsRequiredCall.Returns.Bool = true
+			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.csproj"), []byte(""), os.ModePerm)).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(filepath.Join(workingDir, "some-app.csproj"))).To(Succeed())
+		})
+
+		it("requires that version for dotnet-runtime and dotnet-sdk and dotnet-aspnet correctly", func() {
+			result, err := detect(packit.DetectContext{
+				WorkingDir: workingDir,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Plan).To(Equal(packit.BuildPlan{
+				Requires: []packit.BuildPlanRequirement{
+					{
+						Name: "icu",
+						Metadata: map[string]interface{}{
+							"launch": true,
+						},
+					},
+					{
+						Name: "build",
+						Metadata: map[string]interface{}{
+							"launch": true,
+						},
+					},
+					{
+						Name: "dotnet-runtime",
+						Metadata: map[string]interface{}{
+							"version":        "3.1.*",
+							"version-source": "some-app.csproj",
+							"launch":         true,
+						},
+					},
+					{
+						Name: "dotnet-sdk",
+						Metadata: map[string]interface{}{
+							"version":        "3.1.*",
+							"version-source": "some-app.csproj",
+							"launch":         true,
+						},
+					},
+					{
+						Name: "node",
+						Metadata: map[string]interface{}{
+							"version-source": "some-app.csproj",
+							"launch":         true,
 						},
 					},
 				},
@@ -309,6 +445,8 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			it.Before(func() {
 				err := ioutil.WriteFile(filepath.Join(workingDir, "src", "proj1", "some-app.csproj"), []byte(""), os.ModePerm)
 				Expect(err).NotTo(HaveOccurred())
+
+				projectParser.ParseVersionCall.Returns.String = "*"
 			})
 
 			it.After(func() {
@@ -329,32 +467,30 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 								"launch": true,
 							},
 						},
-					},
-				}))
-			})
-		})
-
-		context("project-path directory contains a *.runtimeconfig.json file", func() {
-			it.Before(func() {
-				buildpackYMLParser.ParseProjectPathCall.Returns.ProjectPath = "./sub-dir"
-			})
-			it("detects successfully", func() {
-				result, err := detect(packit.DetectContext{
-					WorkingDir: workingDir,
-				})
-				Expect(err).NotTo(HaveOccurred())
-				Expect(result.Plan).To(Equal(packit.BuildPlan{
-					Requires: []packit.BuildPlanRequirement{
 						{
-							Name: "icu",
+							Name: "build",
 							Metadata: map[string]interface{}{
 								"launch": true,
 							},
 						},
+						{
+							Name: "dotnet-runtime",
+							Metadata: map[string]interface{}{
+								"version":        "*",
+								"version-source": "some-app.csproj",
+								"launch":         true,
+							},
+						},
+						{
+							Name: "dotnet-sdk",
+							Metadata: map[string]interface{}{
+								"version":        "*",
+								"version-source": "some-app.csproj",
+								"launch":         true,
+							},
+						},
 					},
 				}))
-
-				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "sub-dir", "*.runtimeconfig.json")))
 			})
 		})
 	})
@@ -397,6 +533,51 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					WorkingDir: workingDir,
 				})
 				Expect(err).To(MatchError(packit.Fail.WithMessage("no *.runtimeconfig.json or project file found")))
+			})
+		})
+
+		context("parsing the version from the project file fails", func() {
+			it.Before(func() {
+				projectParser.ParseVersionCall.Returns.Error = errors.New("some-error")
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.csproj"), []byte(""), os.ModePerm)).To(Succeed())
+			})
+
+			it("fails", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError("some-error"))
+			})
+		})
+
+		context("parsing the aspnet requirement from the project file fails", func() {
+			it.Before(func() {
+				projectParser.ASPNetIsRequiredCall.Returns.Error = errors.New("some-error")
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.csproj"), []byte(""), os.ModePerm)).To(Succeed())
+			})
+
+			it("fails", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError("some-error"))
+			})
+		})
+
+		context("parsing the node requirement from the project file fails", func() {
+			it.Before(func() {
+				projectParser.NodeIsRequiredCall.Returns.Error = errors.New("some-error")
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.csproj"), []byte(""), os.ModePerm)).To(Succeed())
+			})
+
+			it("fails", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError("some-error"))
 			})
 		})
 	})
