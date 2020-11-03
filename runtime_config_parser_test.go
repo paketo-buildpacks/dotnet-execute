@@ -1,6 +1,7 @@
 package dotnetexecute_test
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -77,11 +78,10 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 				}`), 0600)).To(Succeed())
 			})
 
-			it("returns the runtime and sdk versions", func() {
+			it("returns the runtime version", func() {
 				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(config.Version).To(Equal("2.1.3"))
-				Expect(config.SDKVersion).To(Equal("2.1.*"))
 			})
 		})
 
@@ -100,7 +100,6 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(config.Version).To(Equal("*"))
-				Expect(config.SDKVersion).To(Equal("*"))
 			})
 		})
 
@@ -121,7 +120,6 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(config.Version).To(Equal("2.1.0"))
 				Expect(config.UsesASPNet).To(BeTrue())
-				Expect(config.SDKVersion).To(Equal("2.1.*"))
 			})
 		})
 
@@ -142,7 +140,17 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(config.Version).To(Equal("2.1.1"))
 				Expect(config.UsesASPNet).To(BeTrue())
-				Expect(config.SDKVersion).To(Equal("2.1.*"))
+			})
+		})
+
+		context("the runtimeconfig.json does not exist", func() {
+			it.Before(func() {
+				Expect(os.RemoveAll(filepath.Join(workingDir, "some-app.runtimeconfig.json"))).NotTo(HaveOccurred())
+			})
+
+			it("returns the os.ErrNotExist", func() {
+				_, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
+				Expect(errors.Is(err, os.ErrNotExist)).To(BeTrue())
 			})
 		})
 
@@ -160,7 +168,7 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
-			context("the runtimeconfig.json file cannot be opened", func() {
+			context("when there are multiple runtimeconfig.json files", func() {
 				it.Before(func() {
 					Expect(ioutil.WriteFile(filepath.Join(workingDir, "other-app.runtimeconfig.json"), []byte(`{}`), 0600)).To(Succeed())
 				})
@@ -170,17 +178,6 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).To(MatchError(ContainSubstring("multiple *.runtimeconfig.json files present")))
 					Expect(err).To(MatchError(ContainSubstring("some-app.runtimeconfig.json")))
 					Expect(err).To(MatchError(ContainSubstring("other-app.runtimeconfig.json")))
-				})
-			})
-
-			context("when there are multiple runtimeconfig.json files", func() {
-				it.Before(func() {
-					Expect(os.RemoveAll(filepath.Join(workingDir, "some-app.runtimeconfig.json"))).To(Succeed())
-				})
-
-				it("returns an error", func() {
-					_, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
-					Expect(err).To(MatchError(ContainSubstring("no such file or directory")))
 				})
 			})
 
@@ -194,6 +191,7 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).To(MatchError(ContainSubstring("invalid character")))
 				})
 			})
+
 		})
 	})
 }

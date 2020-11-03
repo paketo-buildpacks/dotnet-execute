@@ -2,5 +2,7 @@
   "dotnet-core-runtime": "github.com/paketo-buildpacks/dotnet-core-runtime",
   "dotnet-core-sdk": "github.com/paketo-buildpacks/dotnet-core-sdk",
   "dotnet-core-aspnet": "github.com/paketo-buildpacks/dotnet-core-aspnet",
-  "icu": "github.com/paketo-buildpacks/icu"
+  "dotnet-publish": "github.com/paketo-buildpacks/dotnet-publish",
+  "icu": "github.com/paketo-buildpacks/icu",
+  "node-engine": "github.com/paketo-buildpacks/node-engine"
 }

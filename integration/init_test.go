@@ -25,6 +25,8 @@ var settings struct {
 		DotnetCoreRuntime string `json:"dotnet-core-runtime"`
 		DotnetCoreSDK     string `json:"dotnet-core-sdk"`
 		DotnetCoreASPNet  string `json:"dotnet-core-aspnet"`
+		DotnetPublish     string `json:"dotnet-publish"`
+		NodeEngine        string `json:"node-engine"`
 	}
 	Buildpacks struct {
 		DotnetExecute struct {
@@ -39,7 +41,13 @@ var settings struct {
 		DotnetCoreASPNet struct {
 			Online string
 		}
+		DotnetPublish struct {
+			Online string
+		}
 		ICU struct {
+			Online string
+		}
+		NodeEngine struct {
 			Online string
 		}
 	}
@@ -87,6 +95,14 @@ func TestIntegration(t *testing.T) {
 		Execute(settings.Config.DotnetCoreASPNet)
 	Expect(err).ToNot(HaveOccurred())
 
+	settings.Buildpacks.DotnetPublish.Online, err = buildpackStore.Get.
+		Execute(settings.Config.DotnetPublish)
+	Expect(err).ToNot(HaveOccurred())
+
+	settings.Buildpacks.NodeEngine.Online, err = buildpackStore.Get.
+		Execute(settings.Config.NodeEngine)
+	Expect(err).ToNot(HaveOccurred())
+
 	SetDefaultEventuallyTimeout(10 * time.Second)
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
@@ -95,5 +111,7 @@ func TestIntegration(t *testing.T) {
 	suite("FrameworkDependentExecutable", testFrameworkDependentExecutable)
 	suite("FdeASPNet", testFdeASPNet)
 	suite("FddASPNet", testFddASPNet)
+	suite("SourceApp", testSourceApp)
+	suite("NodeApp", testNodeApp)
 	suite.Run(t)
 }
