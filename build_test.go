@@ -77,10 +77,12 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Entries: nil,
 				},
 				Layers: nil,
-				Processes: []packit.Process{
-					{
-						Type:    "web",
-						Command: "./some-app --urls http://0.0.0.0:${PORT:-8080}",
+				Launch: packit.LaunchMetadata{
+					Processes: []packit.Process{
+						{
+							Type:    "web",
+							Command: "./some-app --urls http://0.0.0.0:${PORT:-8080}",
+						},
 					},
 				},
 			}))
@@ -114,10 +116,12 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Entries: nil,
 				},
 				Layers: nil,
-				Processes: []packit.Process{
-					{
-						Type:    "web",
-						Command: "dotnet some-app.dll --urls http://0.0.0.0:${PORT:-8080}",
+				Launch: packit.LaunchMetadata{
+					Processes: []packit.Process{
+						{
+							Type:    "web",
+							Command: "dotnet some-app.dll --urls http://0.0.0.0:${PORT:-8080}",
+						},
 					},
 				},
 			}))
