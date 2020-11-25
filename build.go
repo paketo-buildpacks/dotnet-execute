@@ -2,6 +2,7 @@ package dotnetexecute
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/paketo-buildpacks/packit"
@@ -13,17 +14,26 @@ func Build(logger scribe.Logger) packit.BuildFunc {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
 		configParser := NewRuntimeConfigParser()
-		config, err := configParser.Parse(filepath.Join(context.WorkingDir, "*.runtimeconfig.json"))
+		var command string
+		builtAppPath := context.WorkingDir
+
+		_, publishOutputLocationSet := os.LookupEnv("PUBLISH_OUTPUT_LOCATION")
+
+		if publishOutputLocationSet {
+			builtAppPath, _ = os.LookupEnv("PUBLISH_OUTPUT_LOCATION")
+		}
+
+		config, err := configParser.Parse(filepath.Join(builtAppPath, "*.runtimeconfig.json"))
+
 		if err != nil {
 			return packit.BuildResult{}, fmt.Errorf("failed to find *.runtimeconfig.json: %w", err)
 		}
 
-		command := fmt.Sprintf("./%s --urls http://0.0.0.0:${PORT:-8080}", config.AppName)
+		command = fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(builtAppPath, config.AppName))
 		if !config.Executable {
 			// must check for the existence of <appName>.dll during rewrite
-			command = fmt.Sprintf("dotnet %s.dll --urls http://0.0.0.0:${PORT:-8080}", config.AppName)
+			command = fmt.Sprintf("dotnet %s.dll --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(builtAppPath, config.AppName))
 		}
-
 		logger.Process("Assigning launch processes")
 		logger.Subprocess("web: %s", command)
 		logger.Break()

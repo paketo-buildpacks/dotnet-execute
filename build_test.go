@@ -2,6 +2,7 @@ package dotnetexecute_test
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -81,7 +82,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Processes: []packit.Process{
 						{
 							Type:    "web",
-							Command: "./some-app --urls http://0.0.0.0:${PORT:-8080}",
+							Command: fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "some-app")),
 						},
 					},
 				},
@@ -120,11 +121,99 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Processes: []packit.Process{
 						{
 							Type:    "web",
-							Command: "dotnet some-app.dll --urls http://0.0.0.0:${PORT:-8080}",
+							Command: fmt.Sprintf("dotnet %s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "some-app.dll")),
 						},
 					},
 				},
 			}))
+		})
+	})
+
+	context("the app is source code", func() {
+		context("the built app in the layers dir is an FDE", func() {
+			it.Before(func() {
+				Expect(os.Mkdir(filepath.Join(layersDir, "publish-output-location"), os.ModePerm)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(layersDir, "publish-output-location", "some-app.runtimeconfig.json"), []byte(`{}`), os.ModePerm)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(layersDir, "publish-output-location", "some-app"), nil, os.ModePerm)).To(Succeed())
+				os.Setenv("PUBLISH_OUTPUT_LOCATION", filepath.Join(layersDir, "publish-output-location"))
+			})
+			it.After(func() {
+				os.Unsetenv("PUBLISH_OUTPUT_LOCATION")
+			})
+			it("returns a result that builds correctly", func() {
+				result, err := build(packit.BuildContext{
+					WorkingDir: workingDir,
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					BuildpackInfo: packit.BuildpackInfo{
+						Name:    "Some Buildpack",
+						Version: "some-version",
+					},
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(result).To(Equal(packit.BuildResult{
+					Plan: packit.BuildpackPlan{
+						Entries: nil,
+					},
+					Layers: nil,
+					Launch: packit.LaunchMetadata{
+						Processes: []packit.Process{
+							{
+								Type:    "web",
+								Command: fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(layersDir, "publish-output-location", "some-app")),
+							},
+						},
+					},
+				}))
+			})
+		})
+
+		context("the built app in the layers dir is an FDD", func() {
+			it.Before(func() {
+				Expect(os.Mkdir(filepath.Join(layersDir, "publish-output-location"), os.ModePerm)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(layersDir, "publish-output-location", "some-app.runtimeconfig.json"), []byte(`{}`), os.ModePerm)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(layersDir, "publish-output-location", "some-app.dll"), nil, os.ModePerm)).To(Succeed())
+				os.Setenv("PUBLISH_OUTPUT_LOCATION", filepath.Join(layersDir, "publish-output-location"))
+			})
+			it.After(func() {
+				os.Unsetenv("PUBLISH_OUTPUT_LOCATION")
+			})
+			it("returns a result that builds correctly", func() {
+				result, err := build(packit.BuildContext{
+					WorkingDir: workingDir,
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					BuildpackInfo: packit.BuildpackInfo{
+						Name:    "Some Buildpack",
+						Version: "some-version",
+					},
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(result).To(Equal(packit.BuildResult{
+					Plan: packit.BuildpackPlan{
+						Entries: nil,
+					},
+					Layers: nil,
+					Launch: packit.LaunchMetadata{
+						Processes: []packit.Process{
+							{
+								Type:    "web",
+								Command: fmt.Sprintf("dotnet %s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(layersDir, "publish-output-location", "some-app.dll")),
+							},
+						},
+					},
+				}))
+			})
 		})
 	})
 
