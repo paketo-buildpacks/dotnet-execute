@@ -14,13 +14,12 @@ func Build(logger scribe.Logger) packit.BuildFunc {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
 		configParser := NewRuntimeConfigParser()
-		var command string
 		builtAppPath := context.WorkingDir
 
-		_, publishOutputLocationSet := os.LookupEnv("PUBLISH_OUTPUT_LOCATION")
-
+		// if the PUBLISH_OUTPUT_LOCATION environment variable is set, use it as the lookup location for the built app instead of workingDir
+		publishOutputLocation, publishOutputLocationSet := os.LookupEnv("PUBLISH_OUTPUT_LOCATION")
 		if publishOutputLocationSet {
-			builtAppPath, _ = os.LookupEnv("PUBLISH_OUTPUT_LOCATION")
+			builtAppPath = publishOutputLocation
 		}
 
 		config, err := configParser.Parse(filepath.Join(builtAppPath, "*.runtimeconfig.json"))
@@ -29,7 +28,7 @@ func Build(logger scribe.Logger) packit.BuildFunc {
 			return packit.BuildResult{}, fmt.Errorf("failed to find *.runtimeconfig.json: %w", err)
 		}
 
-		command = fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(builtAppPath, config.AppName))
+		command := fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(builtAppPath, config.AppName))
 		if !config.Executable {
 			// must check for the existence of <appName>.dll during rewrite
 			command = fmt.Sprintf("dotnet %s.dll --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(builtAppPath, config.AppName))
