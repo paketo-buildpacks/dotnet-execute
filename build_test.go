@@ -218,8 +218,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					},
 				}))
 			})
-		}, spec.Sequential())
-	})
+		})
+	}, spec.Sequential())
 
 	context("failure cases", func() {
 		context("runtime config not present", func() {
