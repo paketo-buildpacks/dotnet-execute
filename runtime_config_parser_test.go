@@ -46,9 +46,35 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 			}))
 		})
 
+		context("when the runtime config includes comments", func() {
+			it.Before(func() {
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{
+					"runtimeOptions": {
+						/*
+						Multi line
+						Comment
+						*/
+						"configProperties": {
+							"System.GC.Server": true
+						}
+						// comment here ok?
+					}
+				}`), 0600)).To(Succeed())
+			})
+
+			it("parses the runtime config", func() {
+				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(config).To(Equal(dotnetexecute.RuntimeConfig{
+					Path:    filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+					AppName: "some-app",
+				}))
+			})
+		})
+
 		context("when the app includes an executable", func() {
 			it.Before(func() {
-				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app"), nil, 0755)).To(Succeed())
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app"), nil, 0700)).To(Succeed())
 			})
 
 			it("reports that the app includes an executable", func() {
@@ -161,12 +187,6 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).To(MatchError(`failed to find *.runtimeconfig.json: syntax error in pattern: "[-]"`))
 				})
 			})
-			context("when fileinfo for the executable cannot be retrieved", func() {
-				it("returns an error", func() {
-					_, err := parser.Parse("[-]")
-					Expect(err).To(MatchError(`failed to find *.runtimeconfig.json: syntax error in pattern: "[-]"`))
-				})
-			})
 
 			context("when there are multiple runtimeconfig.json files", func() {
 				it.Before(func() {
@@ -181,6 +201,17 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 				})
 			})
 
+			context("the runtimeconfig.json file cannot be minimized", func() {
+				it.Before(func() {
+					Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte("var x = /hello"), 0600)).To(Succeed())
+				})
+
+				it("returns an error", func() {
+					_, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
+					Expect(err).To(MatchError(ContainSubstring("unterminated regular expression literal")))
+				})
+			})
+
 			context("the runtimeconfig.json file cannot be parsed", func() {
 				it.Before(func() {
 					Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`%%%`), 0600)).To(Succeed())
@@ -191,7 +222,6 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).To(MatchError(ContainSubstring("invalid character")))
 				})
 			})
-
 		})
 	})
 }
