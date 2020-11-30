@@ -137,9 +137,11 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Expect(ioutil.WriteFile(filepath.Join(layersDir, "publish-output-location", "some-app"), nil, os.ModePerm)).To(Succeed())
 				os.Setenv("PUBLISH_OUTPUT_LOCATION", filepath.Join(layersDir, "publish-output-location"))
 			})
+
 			it.After(func() {
 				os.Unsetenv("PUBLISH_OUTPUT_LOCATION")
 			})
+
 			it("returns a result that builds correctly", func() {
 				result, err := build(packit.BuildContext{
 					WorkingDir: workingDir,
@@ -180,9 +182,11 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Expect(ioutil.WriteFile(filepath.Join(layersDir, "publish-output-location", "some-app.dll"), nil, os.ModePerm)).To(Succeed())
 				os.Setenv("PUBLISH_OUTPUT_LOCATION", filepath.Join(layersDir, "publish-output-location"))
 			})
+
 			it.After(func() {
 				os.Unsetenv("PUBLISH_OUTPUT_LOCATION")
 			})
+
 			it("returns a result that builds correctly", func() {
 				result, err := build(packit.BuildContext{
 					WorkingDir: workingDir,
@@ -214,7 +218,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					},
 				}))
 			})
-		})
+		}, spec.Sequential())
 	})
 
 	context("failure cases", func() {
