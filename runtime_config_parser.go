@@ -1,12 +1,15 @@
 package dotnetexecute
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gravityblast/go-jsmin"
 )
 
 type RuntimeConfig struct {
@@ -56,7 +59,13 @@ func (p RuntimeConfigParser) Parse(glob string) (RuntimeConfig, error) {
 	}
 	defer file.Close()
 
-	err = json.NewDecoder(file).Decode(&data)
+	buffer := bytes.NewBuffer(nil)
+	err = jsmin.Min(file, buffer)
+	if err != nil {
+		return RuntimeConfig{}, err
+	}
+
+	err = json.NewDecoder(buffer).Decode(&data)
 	if err != nil {
 		return RuntimeConfig{}, err
 	}
