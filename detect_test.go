@@ -289,7 +289,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 					{
-						Name: "build",
+						Name: "dotnet-application",
 						Metadata: map[string]interface{}{
 							"launch": true,
 						},
@@ -345,7 +345,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 					{
-						Name: "build",
+						Name: "dotnet-application",
 						Metadata: map[string]interface{}{
 							"launch": true,
 						},
@@ -396,7 +396,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 					{
-						Name: "build",
+						Name: "dotnet-application",
 						Metadata: map[string]interface{}{
 							"launch": true,
 						},
@@ -468,7 +468,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							},
 						},
 						{
-							Name: "build",
+							Name: "dotnet-application",
 							Metadata: map[string]interface{}{
 								"launch": true,
 							},
