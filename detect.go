@@ -105,8 +105,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 			}
 
 			requirements = append(requirements, packit.BuildPlanRequirement{
-				// later todo: change to dotnet-application after dotnet-publish cnb is done
-				Name: "build",
+				Name: "dotnet-application",
 				Metadata: map[string]interface{}{
 					"launch": true,
 				},
