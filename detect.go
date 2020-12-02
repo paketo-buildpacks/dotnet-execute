@@ -66,14 +66,16 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 			})
 
 			// Only make SDK available at launch if there is no executable (FDD case only)
-			requirements = append(requirements, packit.BuildPlanRequirement{
-				Name: "dotnet-sdk",
-				Metadata: map[string]interface{}{
-					"version":        getSDKVersion(config.Version),
-					"version-source": filepath.Base(config.Path),
-					"launch":         !config.Executable,
-				},
-			})
+			if !config.Executable {
+				requirements = append(requirements, packit.BuildPlanRequirement{
+					Name: "dotnet-sdk",
+					Metadata: map[string]interface{}{
+						"version":        getSDKVersion(config.Version),
+						"version-source": filepath.Base(config.Path),
+						"launch":         true,
+					},
+				})
+			}
 
 			if config.UsesASPNet {
 				requirements = append(requirements, packit.BuildPlanRequirement{
