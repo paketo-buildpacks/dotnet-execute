@@ -103,14 +103,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 								"launch":         true,
 							},
 						},
-						{
-							Name: "dotnet-sdk",
-							Metadata: map[string]interface{}{
-								"version":        "2.1.*",
-								"version-source": "some-app.runtimeconfig.json",
-								"launch":         false,
-							},
-						},
 					},
 				}))
 			})
@@ -188,14 +180,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 								"version":        "2.1.0",
 								"version-source": "some-app.runtimeconfig.json",
 								"launch":         true,
-							},
-						},
-						{
-							Name: "dotnet-sdk",
-							Metadata: map[string]interface{}{
-								"version":        "2.1.*",
-								"version-source": "some-app.runtimeconfig.json",
-								"launch":         false,
 							},
 						},
 						{
