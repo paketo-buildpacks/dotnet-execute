@@ -99,7 +99,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "dotnet-runtime",
 							Metadata: map[string]interface{}{
 								"version":        "2.1.0",
-								"version-source": "some-app.runtimeconfig.json",
+								"version-source": "runtimeconfig.json",
 								"launch":         true,
 							},
 						},
@@ -134,7 +134,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "dotnet-runtime",
 							Metadata: map[string]interface{}{
 								"version":        "2.1.0",
-								"version-source": "some-app.runtimeconfig.json",
+								"version-source": "runtimeconfig.json",
 								"launch":         true,
 							},
 						},
@@ -142,7 +142,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "dotnet-sdk",
 							Metadata: map[string]interface{}{
 								"version":        "2.1.*",
-								"version-source": "some-app.runtimeconfig.json",
+								"version-source": "runtimeconfig.json",
 								"launch":         true,
 							},
 						},
@@ -178,7 +178,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "dotnet-runtime",
 							Metadata: map[string]interface{}{
 								"version":        "2.1.0",
-								"version-source": "some-app.runtimeconfig.json",
+								"version-source": "runtimeconfig.json",
 								"launch":         true,
 							},
 						},
@@ -186,7 +186,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "dotnet-aspnetcore",
 							Metadata: map[string]interface{}{
 								"version":        "2.1.0",
-								"version-source": "some-app.runtimeconfig.json",
+								"version-source": "runtimeconfig.json",
 								"launch":         true,
 							},
 						},
@@ -222,7 +222,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "dotnet-runtime",
 							Metadata: map[string]interface{}{
 								"version":        "2.1.0",
-								"version-source": "some-app.runtimeconfig.json",
+								"version-source": "runtimeconfig.json",
 								"launch":         true,
 							},
 						},
@@ -230,7 +230,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "dotnet-sdk",
 							Metadata: map[string]interface{}{
 								"version":        "2.1.*",
-								"version-source": "some-app.runtimeconfig.json",
+								"version-source": "runtimeconfig.json",
 								"launch":         true,
 							},
 						},
@@ -238,7 +238,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "dotnet-aspnetcore",
 							Metadata: map[string]interface{}{
 								"version":        "2.1.0",
-								"version-source": "some-app.runtimeconfig.json",
+								"version-source": "runtimeconfig.json",
 								"launch":         true,
 							},
 						},
@@ -282,7 +282,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-runtime",
 						Metadata: map[string]interface{}{
 							"version":        "*",
-							"version-source": "some-app.csproj",
+							"version-source": "*sproj",
 							"launch":         true,
 						},
 					},
@@ -290,7 +290,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-sdk",
 						Metadata: map[string]interface{}{
 							"version":        "*",
-							"version-source": "some-app.csproj",
+							"version-source": "*sproj",
 							"launch":         true,
 						},
 					},
@@ -338,7 +338,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-runtime",
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
-							"version-source": "some-app.csproj",
+							"version-source": "*sproj",
 							"launch":         true,
 						},
 					},
@@ -346,7 +346,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-sdk",
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
-							"version-source": "some-app.csproj",
+							"version-source": "*sproj",
 							"launch":         true,
 						},
 					},
@@ -389,7 +389,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-runtime",
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
-							"version-source": "some-app.csproj",
+							"version-source": "*sproj",
 							"launch":         true,
 						},
 					},
@@ -397,14 +397,14 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-sdk",
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
-							"version-source": "some-app.csproj",
+							"version-source": "*sproj",
 							"launch":         true,
 						},
 					},
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
-							"version-source": "some-app.csproj",
+							"version-source": "*sproj",
 							"launch":         true,
 						},
 					},
@@ -461,7 +461,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "dotnet-runtime",
 							Metadata: map[string]interface{}{
 								"version":        "*",
-								"version-source": "some-app.csproj",
+								"version-source": "*sproj",
 								"launch":         true,
 							},
 						},
@@ -469,7 +469,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "dotnet-sdk",
 							Metadata: map[string]interface{}{
 								"version":        "*",
-								"version-source": "some-app.csproj",
+								"version-source": "*sproj",
 								"launch":         true,
 							},
 						},

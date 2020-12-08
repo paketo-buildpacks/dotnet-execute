@@ -60,7 +60,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 				Name: "dotnet-runtime",
 				Metadata: map[string]interface{}{
 					"version":        config.Version,
-					"version-source": filepath.Base(config.Path),
+					"version-source": "runtimeconfig.json",
 					"launch":         true,
 				},
 			})
@@ -71,7 +71,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 					Name: "dotnet-sdk",
 					Metadata: map[string]interface{}{
 						"version":        getSDKVersion(config.Version),
-						"version-source": filepath.Base(config.Path),
+						"version-source": "runtimeconfig.json",
 						"launch":         true,
 					},
 				})
@@ -83,7 +83,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 					Name: "dotnet-aspnetcore",
 					Metadata: map[string]interface{}{
 						"version":        config.Version,
-						"version-source": filepath.Base(config.Path),
+						"version-source": "runtimeconfig.json",
 						"launch":         true,
 					},
 				})
@@ -117,7 +117,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 				Name: "dotnet-runtime",
 				Metadata: map[string]interface{}{
 					"version":        version,
-					"version-source": filepath.Base(projectFile),
+					"version-source": "*sproj",
 					"launch":         true,
 				},
 			})
@@ -126,7 +126,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 				Name: "dotnet-sdk",
 				Metadata: map[string]interface{}{
 					"version":        getSDKVersion(version),
-					"version-source": filepath.Base(projectFile),
+					"version-source": "*sproj",
 					"launch":         true,
 				},
 			})
@@ -141,7 +141,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 					Name: "dotnet-aspnetcore",
 					Metadata: map[string]interface{}{
 						"version":        version,
-						"version-source": filepath.Base(projectFile),
+						"version-source": "*sproj",
 						"launch":         true,
 					},
 				})
@@ -156,7 +156,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					Name: "node",
 					Metadata: map[string]interface{}{
-						"version-source": filepath.Base(projectFile),
+						"version-source": "*sproj",
 						"launch":         true,
 					},
 				})
