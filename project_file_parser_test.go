@@ -3,6 +3,7 @@ package dotnetexecute_test
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -18,6 +19,71 @@ func testProjectFileParser(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		parser = dotnetexecute.NewProjectFileParser()
+	})
+
+	context("FindProjectFile", func() {
+		var path string
+		it.Before(func() {
+			var err error
+			path, err = ioutil.TempDir("", "workingDir")
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(path)).To(Succeed())
+		})
+
+		it("returns an empty string and no error", func() {
+			projectFilePath, err := parser.FindProjectFile(path)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(projectFilePath).To(Equal(""))
+		})
+
+		context("when there is a csproj", func() {
+			it.Before(func() {
+				Expect(ioutil.WriteFile(filepath.Join(path, "app.csproj"), nil, 0600)).To(Succeed())
+			})
+
+			it("returns the path to it", func() {
+				projectFilePath, err := parser.FindProjectFile(path)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(projectFilePath).To(Equal(filepath.Join(path, "app.csproj")))
+			})
+		})
+
+		context("when there is an fsproj", func() {
+			it.Before(func() {
+				Expect(ioutil.WriteFile(filepath.Join(path, "app.fsproj"), nil, 0600)).To(Succeed())
+			})
+
+			it("returns the path to it", func() {
+				projectFilePath, err := parser.FindProjectFile(path)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(projectFilePath).To(Equal(filepath.Join(path, "app.fsproj")))
+			})
+		})
+
+		context("when there is a vbproj", func() {
+			it.Before(func() {
+				Expect(ioutil.WriteFile(filepath.Join(path, "app.vbproj"), nil, 0600)).To(Succeed())
+			})
+
+			it("returns the path to it", func() {
+				projectFilePath, err := parser.FindProjectFile(path)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(projectFilePath).To(Equal(filepath.Join(path, "app.vbproj")))
+			})
+		})
+
+		context("failure cases", func() {
+			context("when file pattern matching fails", func() {
+				it("returns the error", func() {
+					_, err := parser.FindProjectFile(`\`)
+					Expect(err).To(MatchError("syntax error in pattern"))
+				})
+			})
+
+		})
 	})
 
 	context("ParseVersion", func() {
