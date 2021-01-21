@@ -106,12 +106,12 @@ func TestIntegration(t *testing.T) {
 	SetDefaultEventuallyTimeout(10 * time.Second)
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
-	suite("SelfContainedExecutable", testSelfContainedExecutable)
+	suite("FddASPNet", testFddASPNet)
+	suite("FdeASPNet", testFdeASPNet)
 	suite("FrameworkDependentDeployment", testFrameworkDependentDeployment)
 	suite("FrameworkDependentExecutable", testFrameworkDependentExecutable)
-	suite("FdeASPNet", testFdeASPNet)
-	suite("FddASPNet", testFddASPNet)
-	suite("SourceApp", testSourceApp)
 	suite("NodeApp", testNodeApp)
+	suite("SelfContainedExecutable", testSelfContainedExecutable)
+	suite("SourceApp", testSourceApp)
 	suite.Run(t)
 }
