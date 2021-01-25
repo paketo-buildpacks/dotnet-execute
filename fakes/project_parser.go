@@ -15,6 +15,18 @@ type ProjectParser struct {
 		}
 		Stub func(string) (bool, error)
 	}
+	FindProjectFileCall struct {
+		sync.Mutex
+		CallCount int
+		Receives  struct {
+			Root string
+		}
+		Returns struct {
+			String string
+			Error  error
+		}
+		Stub func(string) (string, error)
+	}
 	NodeIsRequiredCall struct {
 		sync.Mutex
 		CallCount int
@@ -31,7 +43,7 @@ type ProjectParser struct {
 		sync.Mutex
 		CallCount int
 		Receives  struct {
-			Glob string
+			Path string
 		}
 		Returns struct {
 			String string
@@ -51,6 +63,16 @@ func (f *ProjectParser) ASPNetIsRequired(param1 string) (bool, error) {
 	}
 	return f.ASPNetIsRequiredCall.Returns.Bool, f.ASPNetIsRequiredCall.Returns.Error
 }
+func (f *ProjectParser) FindProjectFile(param1 string) (string, error) {
+	f.FindProjectFileCall.Lock()
+	defer f.FindProjectFileCall.Unlock()
+	f.FindProjectFileCall.CallCount++
+	f.FindProjectFileCall.Receives.Root = param1
+	if f.FindProjectFileCall.Stub != nil {
+		return f.FindProjectFileCall.Stub(param1)
+	}
+	return f.FindProjectFileCall.Returns.String, f.FindProjectFileCall.Returns.Error
+}
 func (f *ProjectParser) NodeIsRequired(param1 string) (bool, error) {
 	f.NodeIsRequiredCall.Lock()
 	defer f.NodeIsRequiredCall.Unlock()
@@ -65,7 +87,7 @@ func (f *ProjectParser) ParseVersion(param1 string) (string, error) {
 	f.ParseVersionCall.Lock()
 	defer f.ParseVersionCall.Unlock()
 	f.ParseVersionCall.CallCount++
-	f.ParseVersionCall.Receives.Glob = param1
+	f.ParseVersionCall.Receives.Path = param1
 	if f.ParseVersionCall.Stub != nil {
 		return f.ParseVersionCall.Stub(param1)
 	}
