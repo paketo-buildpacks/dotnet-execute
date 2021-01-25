@@ -120,21 +120,61 @@ func testProjectFileParser(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		context("when the RuntimeFrameworkVersion is not specified", func() {
-			it.Before(func() {
-				err := ioutil.WriteFile(path, []byte(`
+			context("when TargetFramework is of the syntax netcoreapp<x>.<y>", func() {
+				it.Before(func() {
+					err := ioutil.WriteFile(path, []byte(`
 					<Project>
 						<PropertyGroup>
 							<TargetFramework>netcoreapp1.2</TargetFramework>
 						</PropertyGroup>
 					</Project>
 				`), 0600)
-				Expect(err).NotTo(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				it("falls back to using the TargetFramework version", func() {
+					version, err := parser.ParseVersion(path)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(version).To(Equal("1.2.0"))
+				})
 			})
 
-			it("falls back to using the TargetFramework version", func() {
-				version, err := parser.ParseVersion(path)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(version).To(Equal("1.2.0"))
+			context("when TargetFramework is of the syntax net<x>.<y>", func() {
+				it.Before(func() {
+					err := ioutil.WriteFile(path, []byte(`
+					<Project>
+						<PropertyGroup>
+							<TargetFramework>net5.0</TargetFramework>
+						</PropertyGroup>
+					</Project>
+				`), 0600)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				it("falls back to using the TargetFramework version", func() {
+					version, err := parser.ParseVersion(path)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(version).To(Equal("5.0.0"))
+				})
+			})
+
+			context("when TargetFramework is of the syntax net<x>.<y>-<platform>", func() {
+				it.Before(func() {
+					err := ioutil.WriteFile(path, []byte(`
+					<Project>
+						<PropertyGroup>
+							<TargetFramework>net5.0-someplatform</TargetFramework>
+						</PropertyGroup>
+					</Project>
+				`), 0600)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				it("falls back to using the TargetFramework version", func() {
+					version, err := parser.ParseVersion(path)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(version).To(Equal("5.0.0"))
+				})
 			})
 		})
 
