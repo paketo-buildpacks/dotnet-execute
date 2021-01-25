@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -65,9 +66,13 @@ func (p ProjectFileParser) ParseVersion(path string) (string, error) {
 		}
 	}
 
+	// This regular expression matches on 'net<x>.<y>',
+	// 'net<x>.<y>-<platform>' & 'netcoreapp<x>.<y>'
+	targetFrameworkRe := regexp.MustCompile(`net(?:coreapp)?(\d\.\d)(?:\w+)?`)
 	for _, group := range project.PropertyGroups {
-		if strings.HasPrefix(group.TargetFramework, "netcoreapp") {
-			return fmt.Sprintf("%s.0", strings.TrimPrefix(group.TargetFramework, "netcoreapp")), nil
+		matches := targetFrameworkRe.FindStringSubmatch(group.TargetFramework)
+		if len(matches) == 2 {
+			return fmt.Sprintf("%s.0", matches[1]), nil
 		}
 	}
 
