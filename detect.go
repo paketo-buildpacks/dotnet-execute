@@ -73,7 +73,6 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 					Metadata: map[string]interface{}{
 						"version":        getSDKVersion(config.Version),
 						"version-source": "runtimeconfig.json",
-						"launch":         true,
 					},
 				})
 			}
@@ -127,7 +126,6 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 				Metadata: map[string]interface{}{
 					"version":        getSDKVersion(version),
 					"version-source": "project file",
-					"launch":         true,
 				},
 			})
 
