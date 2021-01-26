@@ -150,7 +150,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Metadata: map[string]interface{}{
 								"version":        "2.1.*",
 								"version-source": "runtimeconfig.json",
-								"launch":         true,
 							},
 						},
 					},
@@ -249,7 +248,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Metadata: map[string]interface{}{
 							"version":        "*",
 							"version-source": "project file",
-							"launch":         true,
 						},
 					},
 				},
@@ -303,7 +301,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
 							"version-source": "project file",
-							"launch":         true,
 						},
 					},
 				},
@@ -358,7 +355,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
 							"version-source": "project file",
-							"launch":         true,
 						},
 					},
 					{
@@ -421,7 +417,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
 							"version-source": "project file",
-							"launch":         true,
 						},
 					},
 					{
