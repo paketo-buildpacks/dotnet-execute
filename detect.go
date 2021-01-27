@@ -116,7 +116,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 				Name: "dotnet-runtime",
 				Metadata: map[string]interface{}{
 					"version":        version,
-					"version-source": "project file",
+					"version-source": filepath.Base(projectFile),
 					"launch":         true,
 				},
 			})
@@ -125,7 +125,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 				Name: "dotnet-sdk",
 				Metadata: map[string]interface{}{
 					"version":        getSDKVersion(version),
-					"version-source": "project file",
+					"version-source": filepath.Base(projectFile),
 				},
 			})
 
@@ -139,7 +139,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 					Name: "dotnet-aspnetcore",
 					Metadata: map[string]interface{}{
 						"version":        version,
-						"version-source": "project file",
+						"version-source": filepath.Base(projectFile),
 						"launch":         true,
 					},
 				})
@@ -154,7 +154,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					Name: "node",
 					Metadata: map[string]interface{}{
-						"version-source": "project file",
+						"version-source": filepath.Base(projectFile),
 						"launch":         true,
 					},
 				})
