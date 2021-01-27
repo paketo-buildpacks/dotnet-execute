@@ -212,7 +212,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	context("there is a proj file present (and no .runtimeconfig.json)", func() {
 		it.Before(func() {
-			projectParser.FindProjectFileCall.Returns.String = "some-file.csproj"
+			projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
 			projectParser.ParseVersionCall.Returns.String = "*"
 		})
 
@@ -239,7 +239,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-runtime",
 						Metadata: map[string]interface{}{
 							"version":        "*",
-							"version-source": "project file",
+							"version-source": "some-file.csproj",
 							"launch":         true,
 						},
 					},
@@ -247,7 +247,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-sdk",
 						Metadata: map[string]interface{}{
 							"version":        "*",
-							"version-source": "project file",
+							"version-source": "some-file.csproj",
 						},
 					},
 				},
@@ -257,15 +257,15 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
-			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("some-file.csproj"))
-			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("some-file.csproj"))
-			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("some-file.csproj"))
+			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 		})
 	})
 
 	context("the proj file specifies a version of dotnet-runtime", func() {
 		it.Before(func() {
-			projectParser.FindProjectFileCall.Returns.String = "some-file.csproj"
+			projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
 			projectParser.ParseVersionCall.Returns.String = "3.1.*"
 		})
 
@@ -292,7 +292,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-runtime",
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
-							"version-source": "project file",
+							"version-source": "some-file.csproj",
 							"launch":         true,
 						},
 					},
@@ -300,7 +300,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-sdk",
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
-							"version-source": "project file",
+							"version-source": "some-file.csproj",
 						},
 					},
 				},
@@ -310,15 +310,15 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
-			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("some-file.csproj"))
-			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("some-file.csproj"))
-			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("some-file.csproj"))
+			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 		})
 	})
 
 	context("the proj file requires ASPNet", func() {
 		it.Before(func() {
-			projectParser.FindProjectFileCall.Returns.String = "some-file.csproj"
+			projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
 			projectParser.ParseVersionCall.Returns.String = "3.1.*"
 			projectParser.ASPNetIsRequiredCall.Returns.Bool = true
 		})
@@ -346,7 +346,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-runtime",
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
-							"version-source": "project file",
+							"version-source": "some-file.csproj",
 							"launch":         true,
 						},
 					},
@@ -354,14 +354,14 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-sdk",
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
-							"version-source": "project file",
+							"version-source": "some-file.csproj",
 						},
 					},
 					{
 						Name: "dotnet-aspnetcore",
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
-							"version-source": "project file",
+							"version-source": "some-file.csproj",
 							"launch":         true,
 						},
 					},
@@ -372,15 +372,15 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
-			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("some-file.csproj"))
-			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("some-file.csproj"))
-			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("some-file.csproj"))
+			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 		})
 	})
 
 	context("the proj file requires Node", func() {
 		it.Before(func() {
-			projectParser.FindProjectFileCall.Returns.String = "some-file.csproj"
+			projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
 			projectParser.ParseVersionCall.Returns.String = "3.1.*"
 			projectParser.NodeIsRequiredCall.Returns.Bool = true
 		})
@@ -408,7 +408,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-runtime",
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
-							"version-source": "project file",
+							"version-source": "some-file.csproj",
 							"launch":         true,
 						},
 					},
@@ -416,13 +416,13 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-sdk",
 						Metadata: map[string]interface{}{
 							"version":        "3.1.*",
-							"version-source": "project file",
+							"version-source": "some-file.csproj",
 						},
 					},
 					{
 						Name: "node",
 						Metadata: map[string]interface{}{
-							"version-source": "project file",
+							"version-source": "some-file.csproj",
 							"launch":         true,
 						},
 					},
@@ -433,9 +433,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
-			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("some-file.csproj"))
-			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("some-file.csproj"))
-			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("some-file.csproj"))
+			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 		})
 	})
 
@@ -446,7 +446,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		context("project-path directory contains a proj file", func() {
 			it.Before(func() {
-				projectParser.FindProjectFileCall.Returns.String = "some-file.csproj"
+				projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
 				projectParser.ParseVersionCall.Returns.String = "*"
 			})
 
@@ -460,9 +460,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "src/proj1", "*.runtimeconfig.json")))
 
 				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(filepath.Join(workingDir, "src/proj1")))
-				Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("some-file.csproj"))
-				Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("some-file.csproj"))
-				Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("some-file.csproj"))
+				Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+				Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+				Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 			})
 		})
 	})
@@ -524,7 +524,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		context("parsing the version from the project file fails", func() {
 			it.Before(func() {
-				projectParser.FindProjectFileCall.Returns.String = "some-file.csproj"
+				projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
 				projectParser.ParseVersionCall.Returns.Error = errors.New("some-error")
 			})
 
@@ -539,7 +539,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 		context("parsing the aspnet requirement from the project file fails", func() {
 			it.Before(func() {
-				projectParser.FindProjectFileCall.Returns.String = "some-file.csproj"
+				projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
 				projectParser.ASPNetIsRequiredCall.Returns.Error = errors.New("some-error")
 			})
 
@@ -555,7 +555,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		context("parsing the node requirement from the project file fails", func() {
 			it.Before(func() {
 				projectParser.NodeIsRequiredCall.Returns.Error = errors.New("some-error")
-				projectParser.FindProjectFileCall.Returns.String = "some-file.csproj"
+				projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
 			})
 
 			it("fails", func() {
