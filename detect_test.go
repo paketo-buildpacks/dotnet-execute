@@ -10,6 +10,7 @@ import (
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
 	"github.com/paketo-buildpacks/dotnet-execute/fakes"
 	"github.com/paketo-buildpacks/packit"
+	parsersfakes "github.com/paketo-buildpacks/packit/parsers/fakes"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -22,6 +23,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		buildpackYMLParser  *fakes.BuildpackConfigParser
 		runtimeConfigParser *fakes.ConfigParser
 		projectParser       *fakes.ProjectParser
+		projectPathParser   *parsersfakes.ProjectPathParser
 
 		workingDir string
 
@@ -39,8 +41,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Path: filepath.Join(workingDir, "some-app.runtimeconfig.json"),
 		}
 		projectParser = &fakes.ProjectParser{}
+		projectPathParser = &parsersfakes.ProjectPathParser{}
+		projectPathParser.GetCall.Returns.String = ""
 
-		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser, projectParser)
+		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser, projectParser, projectPathParser)
 	})
 
 	it.After(func() {
@@ -457,6 +461,34 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
+				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "src/proj1", "*.runtimeconfig.json")))
+
+				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(filepath.Join(workingDir, "src/proj1")))
+				Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+				Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+				Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+			})
+		})
+	})
+
+	context("when BP_DOTNET_PROJECT_PATH sets a custom project-path", func() {
+		it.Before(func() {
+			projectPathParser.GetCall.Returns.String = "src/proj1"
+		})
+
+		context("project-path directory contains a proj file", func() {
+			it.Before(func() {
+				projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
+				projectParser.ParseVersionCall.Returns.String = "*"
+			})
+
+			it("detects successfully", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(buildpackYMLParser.ParseProjectPathCall.CallCount).To(Equal(0))
 				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "src/proj1", "*.runtimeconfig.json")))
 
 				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(filepath.Join(workingDir, "src/proj1")))
