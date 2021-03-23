@@ -42,7 +42,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		}
 		projectParser = &fakes.ProjectParser{}
 		projectPathParser = &parsersfakes.ProjectPathParser{}
-		projectPathParser.GetCall.Returns.String = ""
+		projectPathParser.GetCall.Returns.ProjectPath = ""
 
 		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser, projectParser, projectPathParser)
 	})
@@ -473,7 +473,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	context("when BP_DOTNET_PROJECT_PATH sets a custom project-path", func() {
 		it.Before(func() {
-			projectPathParser.GetCall.Returns.String = "src/proj1"
+			projectPathParser.GetCall.Returns.ProjectPath = "src/proj1"
 		})
 
 		context("project-path directory contains a proj file", func() {
