@@ -20,6 +20,6 @@ func main() {
 			configParser,
 			projectParser,
 		),
-		dotnetexecute.Build(logger),
+		dotnetexecute.Build(configParser, logger),
 	)
 }
