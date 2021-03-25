@@ -10,7 +10,6 @@ import (
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
 	"github.com/paketo-buildpacks/dotnet-execute/fakes"
 	"github.com/paketo-buildpacks/packit"
-	parsersfakes "github.com/paketo-buildpacks/packit/parsers/fakes"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -23,7 +22,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		buildpackYMLParser  *fakes.BuildpackConfigParser
 		runtimeConfigParser *fakes.ConfigParser
 		projectParser       *fakes.ProjectParser
-		projectPathParser   *parsersfakes.ProjectPathParser
 
 		workingDir string
 
@@ -41,10 +39,8 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Path: filepath.Join(workingDir, "some-app.runtimeconfig.json"),
 		}
 		projectParser = &fakes.ProjectParser{}
-		projectPathParser = &parsersfakes.ProjectPathParser{}
-		projectPathParser.GetCall.Returns.ProjectPath = ""
 
-		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser, projectParser, projectPathParser)
+		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser, projectParser)
 	})
 
 	it.After(func() {
@@ -473,7 +469,11 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	context("when BP_DOTNET_PROJECT_PATH sets a custom project-path", func() {
 		it.Before(func() {
-			projectPathParser.GetCall.Returns.ProjectPath = "src/proj1"
+			Expect(os.Setenv("BP_DOTNET_PROJECT_PATH", "src/proj1")).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv("BP_DOTNET_PROJECT_PATH")).To(Succeed())
 		})
 
 		context("project-path directory contains a proj file", func() {

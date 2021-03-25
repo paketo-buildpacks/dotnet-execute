@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/parsers"
 )
 
 //go:generate faux --interface BuildpackConfigParser --output fakes/buildpack_config_parser.go
@@ -29,24 +28,23 @@ type ProjectParser interface {
 	NodeIsRequired(path string) (bool, error)
 }
 
-func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, projectParser ProjectParser, projectPathParser parsers.ProjectPathParser) packit.DetectFunc {
+func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, projectParser ProjectParser) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
-		root := context.WorkingDir
+		var projectPath string
+		var err error
 
-		path, err := projectPathParser.Get(context.WorkingDir, "BP_DOTNET_PROJECT_PATH")
-		if err != nil {
-			return packit.DetectResult{}, err
-		}
-
-		if path == "" {
-			path, err = buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
+		projectPath = os.Getenv("BP_DOTNET_PROJECT_PATH")
+		if projectPath == "" {
+			projectPath, err = buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
 			if err != nil {
 				return packit.DetectResult{}, fmt.Errorf("failed to parse buildpack.yml: %w", err)
 			}
 		}
 
-		if path != "" {
-			root = filepath.Join(root, path)
+		root := context.WorkingDir
+
+		if projectPath != "" {
+			root = filepath.Join(root, projectPath)
 		}
 
 		requirements := []packit.BuildPlanRequirement{
