@@ -10,8 +10,7 @@ type Config struct {
 	ProjectPath string `yaml:"project-path"`
 }
 
-type BuildpackYMLParser struct {
-}
+type BuildpackYMLParser struct{}
 
 func NewBuildpackYMLParser() BuildpackYMLParser {
 	return BuildpackYMLParser{}
