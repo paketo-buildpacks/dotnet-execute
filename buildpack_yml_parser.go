@@ -3,8 +3,6 @@ package dotnetexecute
 import (
 	"os"
 
-	"github.com/paketo-buildpacks/packit/scribe"
-
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -13,13 +11,10 @@ type Config struct {
 }
 
 type BuildpackYMLParser struct {
-	logger scribe.Logger
 }
 
-func NewBuildpackYMLParser(logger scribe.Logger) BuildpackYMLParser {
-	return BuildpackYMLParser{
-		logger: logger,
-	}
+func NewBuildpackYMLParser() BuildpackYMLParser {
+	return BuildpackYMLParser{}
 }
 
 func (p BuildpackYMLParser) Parse(path string) (Config, error) {
@@ -47,11 +42,6 @@ func (p BuildpackYMLParser) ParseProjectPath(path string) (string, error) {
 	config, err := p.Parse(path)
 	if err != nil {
 		return "", err
-	}
-
-	if config.ProjectPath != "" {
-		p.logger.Subprocess("WARNING: Setting the project path through buildpack.yml will be deprecated soon in Dotnet Execute Buildpack v1.0.0")
-		p.logger.Subprocess("Please specify the project path through the $BP_DOTNET_PROJECT_PATH environment variable instead. See README.md or the documentation on paketo.io for more information.")
 	}
 
 	return config.ProjectPath, nil

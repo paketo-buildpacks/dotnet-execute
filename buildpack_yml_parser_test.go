@@ -1,13 +1,11 @@
 package dotnetexecute_test
 
 import (
-	"bytes"
 	"io/ioutil"
 	"os"
 	"testing"
 
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
-	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -18,7 +16,6 @@ func testBuildpackYMLParser(t *testing.T, context spec.G, it spec.S) {
 		Expect = NewWithT(t).Expect
 
 		path   string
-		logs   *bytes.Buffer
 		parser dotnetexecute.BuildpackYMLParser
 	)
 
@@ -35,8 +32,7 @@ dotnet-build:
 
 		path = file.Name()
 
-		logs = bytes.NewBuffer(nil)
-		parser = dotnetexecute.NewBuildpackYMLParser(scribe.NewLogger(logs))
+		parser = dotnetexecute.NewBuildpackYMLParser()
 	})
 
 	it.After(func() {
@@ -56,8 +52,6 @@ dotnet-build:
 			projectPath, err := parser.ParseProjectPath(path)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(projectPath).To(Equal("src/proj1"))
-			Expect(logs.String()).To(ContainSubstring("WARNING: Setting the project path through buildpack.yml will be deprecated soon in Dotnet Execute Buildpack v1.0.0"))
-			Expect(logs.String()).To(ContainSubstring("Please specify the project path through the $BP_DOTNET_PROJECT_PATH environment variable instead. See README.md or the documentation on paketo.io for more information."))
 		})
 
 		context("when the buildpack.yml file does not exist", func() {

@@ -1,6 +1,7 @@
 package dotnetexecute_test
 
 import (
+	"bytes"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -10,6 +11,7 @@ import (
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
 	"github.com/paketo-buildpacks/dotnet-execute/fakes"
 	"github.com/paketo-buildpacks/packit"
+	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -19,6 +21,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
+		logs                *bytes.Buffer
 		buildpackYMLParser  *fakes.BuildpackConfigParser
 		runtimeConfigParser *fakes.ConfigParser
 		projectParser       *fakes.ProjectParser
@@ -40,7 +43,8 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		}
 		projectParser = &fakes.ProjectParser{}
 
-		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser, projectParser)
+		logs = bytes.NewBuffer(nil)
+		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser, projectParser, scribe.NewLogger(logs))
 	})
 
 	it.After(func() {
@@ -439,7 +443,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("there is a buildpack.yml sets a custom project-path", func() {
+	context("there is a buildpack.yml which sets a custom project-path", func() {
 		it.Before(func() {
 			buildpackYMLParser.ParseProjectPathCall.Returns.ProjectPath = "src/proj1"
 		})
@@ -453,6 +457,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			it("detects successfully", func() {
 				_, err := detect(packit.DetectContext{
 					WorkingDir: workingDir,
+					BuildpackInfo: packit.BuildpackInfo{
+						Version: "0.0.1",
+					},
 				})
 				Expect(err).NotTo(HaveOccurred())
 
@@ -463,6 +470,8 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 				Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 				Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+				Expect(logs.String()).To(ContainSubstring("WARNING: Setting the project path through buildpack.yml will be deprecated soon in Dotnet Execute Buildpack v1.0.0"))
+				Expect(logs.String()).To(ContainSubstring("Please specify the project path through the $BP_DOTNET_PROJECT_PATH environment variable instead. See README.md or the documentation on paketo.io for more information."))
 			})
 		})
 	})
