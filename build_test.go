@@ -2,6 +2,7 @@ package dotnetexecute_test
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
+	"github.com/paketo-buildpacks/dotnet-execute/fakes"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
@@ -20,10 +22,11 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		layersDir  string
-		workingDir string
-		cnbDir     string
-		buffer     *bytes.Buffer
+		layersDir    string
+		workingDir   string
+		cnbDir       string
+		buffer       *bytes.Buffer
+		configParser *fakes.ConfigParser
 
 		build packit.BuildFunc
 	)
@@ -39,10 +42,12 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = ioutil.TempDir("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
+		configParser = &fakes.ConfigParser{}
+
 		buffer = bytes.NewBuffer(nil)
 		logger := scribe.NewLogger(buffer)
 
-		build = dotnetexecute.Build(logger)
+		build = dotnetexecute.Build(configParser, logger)
 	})
 
 	it.After(func() {
@@ -53,8 +58,11 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	context("the app is a framework-dependent or self-contained executable", func() {
 		it.Before(func() {
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{}`), os.ModePerm)).To(Succeed())
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app"), nil, os.ModePerm)).To(Succeed())
+			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+				AppName:    "myapp",
+				Executable: true,
+			}
 		})
 
 		it("returns a result that builds correctly", func() {
@@ -82,7 +90,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Processes: []packit.Process{
 						{
 							Type:    "web",
-							Command: fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "some-app")),
+							Command: fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp")),
 						},
 					},
 				},
@@ -92,8 +100,16 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	context("the app is a framework dependent deployment", func() {
 		it.Before(func() {
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{}`), os.ModePerm)).To(Succeed())
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.dll"), nil, os.ModePerm)).To(Succeed())
+			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+				AppName:    "myapp",
+				Executable: false,
+			}
+			Expect(ioutil.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
 		})
 
 		it("returns a result that builds correctly", func() {
@@ -121,7 +137,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Processes: []packit.Process{
 						{
 							Type:    "web",
-							Command: fmt.Sprintf("dotnet %s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "some-app.dll")),
+							Command: fmt.Sprintf("dotnet %s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp.dll")),
 						},
 					},
 				},
@@ -129,102 +145,69 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("the app is source code", func() {
-		context("the built app in the layers dir is an FDE", func() {
-			it.Before(func() {
-				Expect(os.Mkdir(filepath.Join(layersDir, "publish-output-location"), os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(layersDir, "publish-output-location", "some-app.runtimeconfig.json"), []byte(`{}`), os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(layersDir, "publish-output-location", "some-app"), nil, os.ModePerm)).To(Succeed())
-				os.Setenv("PUBLISH_OUTPUT_LOCATION", filepath.Join(layersDir, "publish-output-location"))
-			})
-
-			it.After(func() {
-				os.Unsetenv("PUBLISH_OUTPUT_LOCATION")
-			})
-
-			it("returns a result that builds correctly", func() {
-				result, err := build(packit.BuildContext{
-					WorkingDir: workingDir,
-					CNBPath:    cnbDir,
-					Stack:      "some-stack",
-					BuildpackInfo: packit.BuildpackInfo{
-						Name:    "Some Buildpack",
-						Version: "some-version",
-					},
-					Plan: packit.BuildpackPlan{
-						Entries: []packit.BuildpackPlanEntry{},
-					},
-					Layers: packit.Layers{Path: layersDir},
-				})
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(result).To(Equal(packit.BuildResult{
-					Plan: packit.BuildpackPlan{
-						Entries: nil,
-					},
-					Layers: nil,
-					Launch: packit.LaunchMetadata{
-						Processes: []packit.Process{
-							{
-								Type:    "web",
-								Command: fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(layersDir, "publish-output-location", "some-app")),
-							},
-						},
-					},
-				}))
-			})
-		})
-
-		context("the built app in the layers dir is an FDD", func() {
-			it.Before(func() {
-				Expect(os.Mkdir(filepath.Join(layersDir, "publish-output-location"), os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(layersDir, "publish-output-location", "some-app.runtimeconfig.json"), []byte(`{}`), os.ModePerm)).To(Succeed())
-				Expect(ioutil.WriteFile(filepath.Join(layersDir, "publish-output-location", "some-app.dll"), nil, os.ModePerm)).To(Succeed())
-				os.Setenv("PUBLISH_OUTPUT_LOCATION", filepath.Join(layersDir, "publish-output-location"))
-			})
-
-			it.After(func() {
-				os.Unsetenv("PUBLISH_OUTPUT_LOCATION")
-			})
-
-			it("returns a result that builds correctly", func() {
-				result, err := build(packit.BuildContext{
-					WorkingDir: workingDir,
-					CNBPath:    cnbDir,
-					Stack:      "some-stack",
-					BuildpackInfo: packit.BuildpackInfo{
-						Name:    "Some Buildpack",
-						Version: "some-version",
-					},
-					Plan: packit.BuildpackPlan{
-						Entries: []packit.BuildpackPlanEntry{},
-					},
-					Layers: packit.Layers{Path: layersDir},
-				})
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(result).To(Equal(packit.BuildResult{
-					Plan: packit.BuildpackPlan{
-						Entries: nil,
-					},
-					Layers: nil,
-					Launch: packit.LaunchMetadata{
-						Processes: []packit.Process{
-							{
-								Type:    "web",
-								Command: fmt.Sprintf("dotnet %s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(layersDir, "publish-output-location", "some-app.dll")),
-							},
-						},
-					},
-				}))
-			})
-		})
-	}, spec.Sequential())
-
 	context("failure cases", func() {
-		context("runtime config not present", func() {
+		context("runtime config parsing fails", func() {
 			it.Before(func() {
-				files, err := filepath.Glob(filepath.Join(workingDir, "*.runtimeconfig.json"))
+				configParser.ParseCall.Returns.Error = errors.New("error parsing runtimeconfig.json")
+			})
+
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					WorkingDir: workingDir,
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					BuildpackInfo: packit.BuildpackInfo{
+						Name:    "Some Buildpack",
+						Version: "some-version",
+					},
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError(ContainSubstring("error parsing runtimeconfig.json")))
+			})
+		})
+
+		context("error when checking for existence of dll file", func() {
+			it.Before(func() {
+				configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+					Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+					AppName:    "myapp",
+					Executable: false,
+				}
+				Expect(os.Chmod(workingDir, 0000)).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Chmod(workingDir, os.ModePerm)).To(Succeed())
+			})
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					WorkingDir: workingDir,
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					BuildpackInfo: packit.BuildpackInfo{
+						Name:    "Some Buildpack",
+						Version: "some-version",
+					},
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError(ContainSubstring("permission denied")))
+			})
+		})
+
+		context("neither executable nor dll file are present (no entrypoint is found)", func() {
+			it.Before(func() {
+				configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+					Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+					AppName:    "myapp",
+					Executable: false,
+				}
+				files, err := filepath.Glob(filepath.Join(workingDir, "*.dll"))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(files).To(BeEmpty())
 			})
@@ -243,8 +226,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					},
 					Layers: packit.Layers{Path: layersDir},
 				})
-				Expect(err).To(MatchError(ContainSubstring("failed to find *.runtimeconfig.json")))
+				Expect(err).To(MatchError(ContainSubstring("no entrypoint [myapp.dll] found")))
 			})
+
 		})
 	})
 }

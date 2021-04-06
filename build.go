@@ -1,6 +1,7 @@
 package dotnetexecute
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,29 +10,28 @@ import (
 	"github.com/paketo-buildpacks/packit/scribe"
 )
 
-func Build(logger scribe.Logger) packit.BuildFunc {
+func Build(configParser ConfigParser, logger scribe.Logger) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
-		configParser := NewRuntimeConfigParser()
-		builtAppPath := context.WorkingDir
-
-		// if the PUBLISH_OUTPUT_LOCATION environment variable is set, use it as the lookup location for the built app instead of workingDir
-		publishOutputLocation, publishOutputLocationSet := os.LookupEnv("PUBLISH_OUTPUT_LOCATION")
-		if publishOutputLocationSet {
-			builtAppPath = publishOutputLocation
-		}
-
-		config, err := configParser.Parse(filepath.Join(builtAppPath, "*.runtimeconfig.json"))
+		config, err := configParser.Parse(filepath.Join(context.WorkingDir, "*.runtimeconfig.json"))
 
 		if err != nil {
 			return packit.BuildResult{}, fmt.Errorf("failed to find *.runtimeconfig.json: %w", err)
 		}
 
-		command := fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(builtAppPath, config.AppName))
+		command := fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(context.WorkingDir, config.AppName))
 		if !config.Executable {
-			// must check for the existence of <appName>.dll during rewrite
-			command = fmt.Sprintf("dotnet %s.dll --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(builtAppPath, config.AppName))
+
+			_, err := os.Stat(filepath.Join(context.WorkingDir, fmt.Sprintf("%s.dll", config.AppName)))
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
+				return packit.BuildResult{}, err
+			}
+			if errors.Is(err, os.ErrNotExist) {
+				return packit.BuildResult{}, fmt.Errorf("no entrypoint [%s.dll] found: %w ", config.AppName, err)
+			}
+
+			command = fmt.Sprintf("dotnet %s.dll --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(context.WorkingDir, config.AppName))
 		}
 		logger.Process("Assigning launch processes")
 		logger.Subprocess("web: %s", command)
