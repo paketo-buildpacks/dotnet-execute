@@ -33,10 +33,10 @@ type ProjectParser interface {
 func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, projectParser ProjectParser, logger scribe.Logger) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
 		var projectPath string
+		var ok bool
 		var err error
 
-		projectPath = os.Getenv("BP_DOTNET_PROJECT_PATH")
-		if projectPath == "" {
+		if projectPath, ok = os.LookupEnv("BP_DOTNET_PROJECT_PATH"); !ok {
 			projectPath, err = buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
 			if err != nil {
 				return packit.DetectResult{}, fmt.Errorf("failed to parse buildpack.yml: %w", err)
