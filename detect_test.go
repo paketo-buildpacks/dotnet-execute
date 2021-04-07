@@ -470,8 +470,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 				Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 				Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
-				Expect(logs.String()).To(ContainSubstring("WARNING: Setting the project path through buildpack.yml will be deprecated soon in Dotnet Execute Buildpack v1.0.0"))
-				Expect(logs.String()).To(ContainSubstring("Please specify the project path through the $BP_DOTNET_PROJECT_PATH environment variable instead. See README.md or the documentation on paketo.io for more information."))
 			})
 		})
 	})

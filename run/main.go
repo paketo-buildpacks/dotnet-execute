@@ -21,6 +21,6 @@ func main() {
 			projectParser,
 			logger,
 		),
-		dotnetexecute.Build(configParser, logger),
+		dotnetexecute.Build(buildpackYMLParser, configParser, logger),
 	)
 }

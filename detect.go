@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Masterminds/semver"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/scribe"
 )
@@ -40,12 +39,6 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 			projectPath, err = buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
 			if err != nil {
 				return packit.DetectResult{}, fmt.Errorf("failed to parse buildpack.yml: %w", err)
-			}
-
-			if projectPath != "" {
-				nextMajorVersion := semver.MustParse(context.BuildpackInfo.Version).IncMajor()
-				logger.Subprocess("WARNING: Setting the project path through buildpack.yml will be deprecated soon in Dotnet Execute Buildpack v%s.", nextMajorVersion.String())
-				logger.Subprocess("Please specify the project path through the $BP_DOTNET_PROJECT_PATH environment variable instead. See README.md or the documentation on paketo.io for more information.")
 			}
 		}
 

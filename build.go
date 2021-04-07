@@ -6,13 +6,25 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Masterminds/semver"
 	"github.com/paketo-buildpacks/packit"
 	"github.com/paketo-buildpacks/packit/scribe"
 )
 
-func Build(configParser ConfigParser, logger scribe.Logger) packit.BuildFunc {
+func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, logger scribe.Logger) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
+
+		projectPath, err := buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
+		if err != nil {
+			logger.Subprocess("WARNING: error parsing buildpack.yml: %w", err)
+		}
+
+		if projectPath != "" {
+			nextMajorVersion := semver.MustParse(context.BuildpackInfo.Version).IncMajor()
+			logger.Subprocess("WARNING: Setting the project path through buildpack.yml will be deprecated soon in Dotnet Execute Buildpack v%s.", nextMajorVersion.String())
+			logger.Subprocess("Please specify the project path through the $BP_DOTNET_PROJECT_PATH environment variable instead. See README.md or the documentation on paketo.io for more information.")
+		}
 
 		config, err := configParser.Parse(filepath.Join(context.WorkingDir, "*.runtimeconfig.json"))
 
