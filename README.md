@@ -24,7 +24,8 @@ another value as the first argument to package.sh.
 
 ## Specifying a project path
 
-To specify a project subdirectory to be used as the root of the app, please use
-the BP_DOTNET_PROJECT_PATH environment variable at build time either directly
-(e.g. pack build my-app --env BP_DOTNET_PROJECT_PATH=./src/my-app) or through a
-project.toml file.
+To specify a project subdirectory (i.e. the directory containing your
+`.csproj`/`.fsproj`/`.vbproj` file), please use the BP_DOTNET_PROJECT_PATH
+environment variable at build time either directly (e.g. pack build my-app
+--env BP_DOTNET_PROJECT_PATH=./src/my-app) or through a project.toml file. This
+configuration does not apply to FDD, FDE or Self-Contained app deployments.
