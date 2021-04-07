@@ -183,11 +183,11 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	context("failure cases", func() {
 		context("buildpack.yml parsing fails", func() {
 			it.Before(func() {
-				buildpackYMLParser.ParseProjectPathCall.Returns.Err = errors.New("error")
+				buildpackYMLParser.ParseProjectPathCall.Returns.Err = errors.New("error parsing buildpack.yml")
 			})
 
 			it("logs a warning", func() {
-				_, _ = build(packit.BuildContext{
+				_, err := build(packit.BuildContext{
 					WorkingDir: workingDir,
 					CNBPath:    cnbDir,
 					Stack:      "some-stack",
@@ -200,7 +200,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					},
 					Layers: packit.Layers{Path: layersDir},
 				})
-				Expect(buffer.String()).To(ContainSubstring("WARNING: error parsing buildpack.yml"))
+				Expect(err).To(MatchError(ContainSubstring("error parsing buildpack.yml")))
 			})
 		})
 

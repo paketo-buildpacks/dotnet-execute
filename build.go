@@ -17,7 +17,7 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 
 		projectPath, err := buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
 		if err != nil {
-			logger.Subprocess("WARNING: error parsing buildpack.yml: %w", err)
+			return packit.BuildResult{}, fmt.Errorf("error parsing buildpack.yml: %w", err)
 		}
 
 		if projectPath != "" {
