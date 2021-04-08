@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/scribe"
 )
 
 //go:generate faux --interface BuildpackConfigParser --output fakes/buildpack_config_parser.go
@@ -29,7 +28,7 @@ type ProjectParser interface {
 	NodeIsRequired(path string) (bool, error)
 }
 
-func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, projectParser ProjectParser, logger scribe.Logger) packit.DetectFunc {
+func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, projectParser ProjectParser) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
 		var projectPath string
 		var ok bool

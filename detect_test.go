@@ -1,7 +1,6 @@
 package dotnetexecute_test
 
 import (
-	"bytes"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -11,7 +10,6 @@ import (
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
 	"github.com/paketo-buildpacks/dotnet-execute/fakes"
 	"github.com/paketo-buildpacks/packit"
-	"github.com/paketo-buildpacks/packit/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -21,7 +19,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		logs                *bytes.Buffer
 		buildpackYMLParser  *fakes.BuildpackConfigParser
 		runtimeConfigParser *fakes.ConfigParser
 		projectParser       *fakes.ProjectParser
@@ -43,8 +40,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		}
 		projectParser = &fakes.ProjectParser{}
 
-		logs = bytes.NewBuffer(nil)
-		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser, projectParser, scribe.NewLogger(logs))
+		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser, projectParser)
 	})
 
 	it.After(func() {

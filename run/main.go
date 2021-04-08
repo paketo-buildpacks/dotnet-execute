@@ -19,7 +19,6 @@ func main() {
 			buildpackYMLParser,
 			configParser,
 			projectParser,
-			logger,
 		),
 		dotnetexecute.Build(buildpackYMLParser, configParser, logger),
 	)
