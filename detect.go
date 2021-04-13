@@ -30,15 +30,21 @@ type ProjectParser interface {
 
 func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, projectParser ProjectParser) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
-		root := context.WorkingDir
+		var projectPath string
+		var ok bool
+		var err error
 
-		path, err := buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
-		if err != nil {
-			return packit.DetectResult{}, fmt.Errorf("failed to parse buildpack.yml: %w", err)
+		if projectPath, ok = os.LookupEnv("BP_DOTNET_PROJECT_PATH"); !ok {
+			projectPath, err = buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
+			if err != nil {
+				return packit.DetectResult{}, fmt.Errorf("failed to parse buildpack.yml: %w", err)
+			}
 		}
 
-		if path != "" {
-			root = filepath.Join(root, path)
+		root := context.WorkingDir
+
+		if projectPath != "" {
+			root = filepath.Join(root, projectPath)
 		}
 
 		requirements := []packit.BuildPlanRequirement{

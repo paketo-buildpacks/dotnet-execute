@@ -439,9 +439,44 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("there is a buildpack.yml sets a custom project-path", func() {
+	context("there is a buildpack.yml which sets a custom project-path", func() {
 		it.Before(func() {
 			buildpackYMLParser.ParseProjectPathCall.Returns.ProjectPath = "src/proj1"
+		})
+
+		context("project-path directory contains a proj file", func() {
+			it.Before(func() {
+				projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
+				projectParser.ParseVersionCall.Returns.String = "*"
+			})
+
+			it("detects successfully", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+					BuildpackInfo: packit.BuildpackInfo{
+						Version: "0.0.1",
+					},
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
+				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "src/proj1", "*.runtimeconfig.json")))
+
+				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(filepath.Join(workingDir, "src/proj1")))
+				Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+				Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+				Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
+			})
+		})
+	})
+
+	context("when BP_DOTNET_PROJECT_PATH sets a custom project-path", func() {
+		it.Before(func() {
+			Expect(os.Setenv("BP_DOTNET_PROJECT_PATH", "src/proj1")).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv("BP_DOTNET_PROJECT_PATH")).To(Succeed())
 		})
 
 		context("project-path directory contains a proj file", func() {
@@ -456,7 +491,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				})
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
+				Expect(buildpackYMLParser.ParseProjectPathCall.CallCount).To(Equal(0))
 				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "src/proj1", "*.runtimeconfig.json")))
 
 				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(filepath.Join(workingDir, "src/proj1")))

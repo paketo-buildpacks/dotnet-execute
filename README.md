@@ -22,9 +22,10 @@ $ ./scripts/package.sh
 This builds the buildpack's source using GOOS=linux by default. You can supply
 another value as the first argument to package.sh.
 
-## `buildpack.yml` Configurations
+## Specifying a project path
 
-There are no extra configurations for this buildpack based on `buildpack.yml`.
-If you would like to specify an `project-path` constraint for the dotnet-build
-buildpack, see its
-[README](https://github.com/paketo-buildpacks/dotnet-core-build/blob/master/README.md#buildpackyml-configurations).
+To specify a project subdirectory (i.e. the directory containing your
+`.csproj`/`.fsproj`/`.vbproj` file), please use the BP_DOTNET_PROJECT_PATH
+environment variable at build time either directly (e.g. pack build my-app
+--env BP_DOTNET_PROJECT_PATH=./src/my-app) or through a project.toml file. This
+configuration does not apply to FDD, FDE or Self-Contained app deployments.

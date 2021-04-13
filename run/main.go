@@ -20,6 +20,6 @@ func main() {
 			configParser,
 			projectParser,
 		),
-		dotnetexecute.Build(configParser, logger),
+		dotnetexecute.Build(buildpackYMLParser, configParser, logger),
 	)
 }
