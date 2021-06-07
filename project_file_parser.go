@@ -68,7 +68,7 @@ func (p ProjectFileParser) ParseVersion(path string) (string, error) {
 
 	// This regular expression matches on 'net<x>.<y>',
 	// 'net<x>.<y>-<platform>' & 'netcoreapp<x>.<y>'
-	targetFrameworkRe := regexp.MustCompile(`net(?:coreapp)?(\d\.\d)(?:\w+)?`)
+	targetFrameworkRe := regexp.MustCompile(`net(?:coreapp)?(?:(\d\.\d)(?:\-?\w+)?)$`)
 	for _, group := range project.PropertyGroups {
 		matches := targetFrameworkRe.FindStringSubmatch(group.TargetFramework)
 		if len(matches) == 2 {
