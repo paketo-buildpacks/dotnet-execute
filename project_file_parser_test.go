@@ -209,6 +209,24 @@ func testProjectFileParser(t *testing.T, context spec.G, it spec.S) {
 					Expect(err).To(MatchError("failed to find version in project file: missing TargetFramework property"))
 				})
 			})
+
+			context("when the project file version is malformed", func() {
+				it.Before(func() {
+					err := ioutil.WriteFile(path, []byte(`
+					<Project>
+						<PropertyGroup>
+							<TargetFramework>netcoreapp3.1.0</TargetFramework>
+						</PropertyGroup>
+					</Project>
+				`), 0600)
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				it("returns an error", func() {
+					_, err := parser.ParseVersion(path)
+					Expect(err).To(MatchError("failed to find version in project file: missing TargetFramework property"))
+				})
+			})
 		})
 	})
 
