@@ -76,7 +76,7 @@ func (p ProjectFileParser) ParseVersion(path string) (string, error) {
 		}
 	}
 
-	return "", errors.New("failed to find version in project file: missing TargetFramework property")
+	return "", errors.New("failed to find version in project file: missing or invalid TargetFramework property")
 }
 
 func (p ProjectFileParser) ASPNetIsRequired(path string) (bool, error) {

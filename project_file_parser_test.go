@@ -206,7 +206,7 @@ func testProjectFileParser(t *testing.T, context spec.G, it spec.S) {
 
 				it("returns an error", func() {
 					_, err := parser.ParseVersion(path)
-					Expect(err).To(MatchError("failed to find version in project file: missing TargetFramework property"))
+					Expect(err).To(MatchError("failed to find version in project file: missing or invalid TargetFramework property"))
 				})
 			})
 
@@ -224,7 +224,7 @@ func testProjectFileParser(t *testing.T, context spec.G, it spec.S) {
 
 				it("returns an error", func() {
 					_, err := parser.ParseVersion(path)
-					Expect(err).To(MatchError("failed to find version in project file: missing TargetFramework property"))
+					Expect(err).To(MatchError("failed to find version in project file: missing or invalid TargetFramework property"))
 				})
 			})
 		})
