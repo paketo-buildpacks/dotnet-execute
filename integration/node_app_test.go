@@ -68,9 +68,6 @@ func testNodeApp(t *testing.T, context spec.G, it spec.S) {
 					settings.Buildpacks.DotnetPublish.Online,
 					settings.Buildpacks.DotnetExecute.Online,
 				).
-				WithEnv(map[string]string{
-					"NODE_ENV": "development",
-				}).
 				Execute(name, source)
 			Expect(err).ToNot(HaveOccurred(), logs.String)
 
