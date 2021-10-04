@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/Masterminds/semver"
 	"github.com/paketo-buildpacks/packit"
@@ -45,6 +46,18 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 
 			command = fmt.Sprintf("dotnet %s.dll --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(context.WorkingDir, config.AppName))
 		}
+
+		if reload, ok := os.LookupEnv("BP_LIVE_RELOAD_ENABLED"); ok {
+			shouldEnableReload, err := strconv.ParseBool(reload)
+			if err != nil {
+				return packit.BuildResult{}, fmt.Errorf("failed to parse BP_LIVE_RELOAD_ENABLED: %w", err)
+			}
+			if shouldEnableReload {
+
+				command = fmt.Sprintf(`watchexec --restart --watch %s "%s"`, context.WorkingDir, command)
+			}
+		}
+
 		logger.Process("Assigning launch processes")
 		logger.Subprocess("web: %s", command)
 		logger.Break()

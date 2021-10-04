@@ -180,6 +180,56 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
+	context("when BP_LIVE_RELOAD_ENABLED=true", func() {
+		it.Before(func() {
+			Expect(os.Setenv("BP_LIVE_RELOAD_ENABLED", "true")).To(Succeed())
+			Expect(ioutil.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+				AppName:    "myapp",
+				Executable: false,
+			}
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv("BP_LIVE_RELOAD_ENABLED")).To(Succeed())
+			Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
+		})
+
+		it("wraps the start command with watchexec", func() {
+			result, err := build(packit.BuildContext{
+				WorkingDir: workingDir,
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				BuildpackInfo: packit.BuildpackInfo{
+					Name:    "Some Buildpack",
+					Version: "some-version",
+				},
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{},
+				},
+				Layers: packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			startCommand := fmt.Sprintf("dotnet %s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp.dll"))
+			Expect(result).To(Equal(packit.BuildResult{
+				Plan: packit.BuildpackPlan{
+					Entries: nil,
+				},
+				Layers: nil,
+				Launch: packit.LaunchMetadata{
+					Processes: []packit.Process{
+						{
+							Type:    "web",
+							Command: fmt.Sprintf(`watchexec --restart --watch %s "%s"`, workingDir, startCommand),
+						},
+					},
+				},
+			}))
+		})
+	})
+
 	context("failure cases", func() {
 		context("buildpack.yml parsing fails", func() {
 			it.Before(func() {
@@ -287,6 +337,31 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).To(MatchError(ContainSubstring("no entrypoint [myapp.dll] found")))
 			})
 
+		})
+
+		context("parsing the value of BP_LIVE_RELOAD_ENABLED fails", func() {
+			it.Before(func() {
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+				configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+					Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+					AppName:    "myapp",
+					Executable: false,
+				}
+				Expect(os.Setenv("BP_LIVE_RELOAD_ENABLED", "%%%")).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("BP_LIVE_RELOAD_ENABLED")).To(Succeed())
+				Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
+			})
+
+			it("fails", func() {
+				_, err := build(packit.BuildContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError(ContainSubstring("invalid syntax")))
+			})
 		})
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/paketo-buildpacks/packit"
@@ -54,6 +55,21 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 					"launch": true,
 				},
 			},
+		}
+
+		if reload, ok := os.LookupEnv("BP_LIVE_RELOAD_ENABLED"); ok {
+			shouldEnableReload, err := strconv.ParseBool(reload)
+			if err != nil {
+				return packit.DetectResult{}, fmt.Errorf("failed to parse BP_LIVE_RELOAD_ENABLED: %w", err)
+			}
+			if shouldEnableReload {
+				requirements = append(requirements, packit.BuildPlanRequirement{
+					Name: "watchexec",
+					Metadata: map[string]interface{}{
+						"launch": true,
+					},
+				})
+			}
 		}
 
 		config, err := configParser.Parse(filepath.Join(root, "*.runtimeconfig.json"))
