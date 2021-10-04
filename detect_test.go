@@ -502,6 +502,30 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
+	context("when BP_LIVE_RELOAD_ENABLED is set to true", func() {
+		it.Before(func() {
+			Expect(os.Setenv("BP_LIVE_RELOAD_ENABLED", "true")).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv("BP_LIVE_RELOAD_ENABLED")).To(Succeed())
+		})
+
+		it("requires watchexec at launch", func() {
+			result, err := detect(packit.DetectContext{
+				WorkingDir: workingDir,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Plan.Requires).To(ContainElement(packit.BuildPlanRequirement{
+				Name: "watchexec",
+				Metadata: map[string]interface{}{
+					"launch": true,
+				},
+			},
+			))
+		})
+	})
+
 	context("failure cases", func() {
 		context("when the buildpack.yml parser fails", func() {
 			it.Before(func() {
@@ -599,6 +623,24 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				})
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(MatchError("some-error"))
+			})
+		})
+
+		context("parsing the value of BP_LIVE_RELOAD_ENABLED fails", func() {
+			it.Before(func() {
+				Expect(os.Setenv("BP_LIVE_RELOAD_ENABLED", "%%%")).To(Succeed())
+			})
+
+			it.After(func() {
+				Expect(os.Unsetenv("BP_LIVE_RELOAD_ENABLED")).To(Succeed())
+			})
+
+			it("fails", func() {
+				_, err := detect(packit.DetectContext{
+					WorkingDir: workingDir,
+				})
+				Expect(err).To(HaveOccurred())
+				Expect(err).To(MatchError(ContainSubstring("invalid syntax")))
 			})
 		})
 	})

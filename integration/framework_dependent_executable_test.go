@@ -80,5 +80,40 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 				"",
 			))
 		})
+		context("when BP_LIVE_RELOAD_ENABLED=true", func() {
+			it("sets a start command with watchexec", func() {
+				var err error
+				source, err = occam.Source(filepath.Join("testdata", "framework_dependent_executable"))
+				Expect(err).NotTo(HaveOccurred())
+
+				var logs fmt.Stringer
+				image, logs, err = pack.Build.
+					WithPullPolicy("never").
+					WithBuildpacks(
+						settings.Buildpacks.ICU.Online,
+						settings.Buildpacks.Watchexec.Online,
+						settings.Buildpacks.DotnetCoreRuntime.Online,
+						settings.Buildpacks.DotnetExecute.Online,
+					).
+					WithEnv(map[string]string{"BP_LIVE_RELOAD_ENABLED": "true"}).
+					Execute(name, source)
+				Expect(err).ToNot(HaveOccurred(), logs.String)
+
+				container, err = docker.Container.Run.Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(func() string {
+					logs, _ := docker.Container.Logs.Execute(container.ID)
+					return logs.String()
+				}).Should(Equal("Hello World!\n"))
+
+				Expect(logs).To(ContainLines(
+					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
+					"  Assigning launch processes",
+					`    web: watchexec --restart --watch /workspace "/workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}"`,
+					"",
+				))
+			})
+		})
 	})
 }
