@@ -111,6 +111,7 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
 					"  Assigning launch processes",
 					`    web: watchexec --restart --watch /workspace "/workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}"`,
+					`    no-reload: /workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}`,
 					"",
 				))
 			})
