@@ -81,7 +81,13 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 			))
 		})
 		context("when BP_LIVE_RELOAD_ENABLED=true", func() {
-			it("sets a start command with watchexec", func() {
+			var noReloadContainer occam.Container
+
+			it.After(func() {
+				Expect(docker.Container.Remove.Execute(noReloadContainer.ID)).To(Succeed())
+			})
+
+			it("adds a default start process with watchexec and names the normal start process no-reload", func() {
 				var err error
 				source, err = occam.Source(filepath.Join("testdata", "framework_dependent_executable"))
 				Expect(err).NotTo(HaveOccurred())
@@ -111,8 +117,17 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
 					"  Assigning launch processes",
 					`    web: watchexec --restart --watch /workspace "/workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}"`,
+					`    no-reload: /workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}`,
 					"",
 				))
+
+				noReloadContainer, err = docker.Container.Run.WithEntrypoint("no-reload").Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(func() string {
+					logs, _ := docker.Container.Logs.Execute(noReloadContainer.ID)
+					return logs.String()
+				}).Should(Equal("Hello World!\n"))
 			})
 		})
 	})

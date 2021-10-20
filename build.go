@@ -47,29 +47,42 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 			command = fmt.Sprintf("dotnet %s.dll --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(context.WorkingDir, config.AppName))
 		}
 
+		processes := []packit.Process{
+			{
+				Type:    "web",
+				Command: command,
+			},
+		}
+
 		if reload, ok := os.LookupEnv("BP_LIVE_RELOAD_ENABLED"); ok {
 			shouldEnableReload, err := strconv.ParseBool(reload)
 			if err != nil {
 				return packit.BuildResult{}, fmt.Errorf("failed to parse BP_LIVE_RELOAD_ENABLED: %w", err)
 			}
-			if shouldEnableReload {
 
-				command = fmt.Sprintf(`watchexec --restart --watch %s "%s"`, context.WorkingDir, command)
+			if shouldEnableReload {
+				processes = []packit.Process{
+					{
+						Type:    "web",
+						Command: fmt.Sprintf(`watchexec --restart --watch %s "%s"`, context.WorkingDir, command),
+					},
+					{
+						Type:    "no-reload",
+						Command: command,
+					},
+				}
 			}
 		}
 
 		logger.Process("Assigning launch processes")
-		logger.Subprocess("web: %s", command)
+		for _, process := range processes {
+			logger.Subprocess("%s: %s", process.Type, process.Command)
+		}
 		logger.Break()
 
 		return packit.BuildResult{
 			Launch: packit.LaunchMetadata{
-				Processes: []packit.Process{
-					{
-						Type:    "web",
-						Command: command,
-					},
-				},
+				Processes: processes,
 			},
 		}, nil
 	}
