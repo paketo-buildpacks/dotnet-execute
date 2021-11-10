@@ -51,6 +51,7 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 			{
 				Type:    "web",
 				Command: command,
+				Default: true,
 			},
 		}
 
@@ -65,6 +66,7 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 					{
 						Type:    "web",
 						Command: fmt.Sprintf(`watchexec --restart --watch %s "%s"`, context.WorkingDir, command),
+						Default: true,
 					},
 					{
 						Type:    "no-reload",

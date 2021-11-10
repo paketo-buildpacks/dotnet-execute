@@ -126,6 +126,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 						{
 							Type:    "web",
 							Command: fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp")),
+							Default: true,
 						},
 					},
 				},
@@ -173,6 +174,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 						{
 							Type:    "web",
 							Command: fmt.Sprintf("dotnet %s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp.dll")),
+							Default: true,
 						},
 					},
 				},
@@ -223,6 +225,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 						{
 							Type:    "web",
 							Command: fmt.Sprintf(`watchexec --restart --watch %s "%s"`, workingDir, startCommand),
+							Default: true,
 						},
 						{
 							Type:    "no-reload",
