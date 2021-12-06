@@ -79,9 +79,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		context("when the runtimeconfig.json specifies a runtime framework", func() {
 			it.Before(func() {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-					Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
-					Version:    "2.1.0",
-					Executable: true,
+					Path:           filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+					RuntimeVersion: "2.1.0",
+					Executable:     true,
 				}
 			})
 
@@ -118,9 +118,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		context("when there is no executable", func() {
 			it.Before(func() {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-					Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
-					Version:    "2.1.0",
-					Executable: false,
+					Path:           filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+					RuntimeVersion: "2.1.0",
+					Executable:     false,
 				}
 			})
 
@@ -164,10 +164,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		context("when the runtimeconfig.json specifies an ASP.NET framework", func() {
 			it.Before(func() {
 				runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-					Path:       filepath.Join(workingDir, "some-app.runtimeconfig.json"),
-					Version:    "2.1.0",
-					Executable: true,
-					UsesASPNet: true,
+					Path:           filepath.Join(workingDir, "some-app.runtimeconfig.json"),
+					RuntimeVersion: "2.1.0",
+					ASPNETVersion:  "2.1.0",
+					Executable:     true,
 				}
 			})
 

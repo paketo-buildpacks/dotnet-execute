@@ -78,11 +78,11 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 		}
 
 		// FDE + FDD cases
-		if config.Version != "" {
+		if config.RuntimeVersion != "" {
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-runtime",
 				Metadata: map[string]interface{}{
-					"version":        config.Version,
+					"version":        config.RuntimeVersion,
 					"version-source": "runtimeconfig.json",
 					"launch":         true,
 				},
@@ -93,18 +93,18 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					Name: "dotnet-sdk",
 					Metadata: map[string]interface{}{
-						"version":        getSDKVersion(config.Version),
+						"version":        getSDKVersion(config.RuntimeVersion),
 						"version-source": "runtimeconfig.json",
 					},
 				})
 			}
 
-			if config.UsesASPNet {
+			if config.ASPNETVersion != "" {
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					// When aspnet buildpack is rewritten per RFC0001, change to "dotnet-aspnet"
 					Name: "dotnet-aspnetcore",
 					Metadata: map[string]interface{}{
-						"version":        config.Version,
+						"version":        config.ASPNETVersion,
 						"version-source": "runtimeconfig.json",
 						"launch":         true,
 					},

@@ -13,11 +13,11 @@ import (
 )
 
 type RuntimeConfig struct {
-	Path       string
-	Version    string
-	AppName    string
-	Executable bool
-	UsesASPNet bool
+	Path           string
+	RuntimeVersion string
+	ASPNETVersion  string
+	AppName        string
+	Executable     bool
 }
 
 type framework struct {
@@ -75,36 +75,30 @@ func (p RuntimeConfigParser) Parse(glob string) (RuntimeConfig, error) {
 
 	switch data.RuntimeOptions.Framework.Name {
 	case "Microsoft.NETCore.App":
-		config.Version = versionOrWildcard(data.RuntimeOptions.Framework.Version)
+		config.RuntimeVersion = versionOrWildcard(data.RuntimeOptions.Framework.Version)
 	case "Microsoft.AspNetCore.App":
-		config.Version = versionOrWildcard(data.RuntimeOptions.Framework.Version)
-		config.UsesASPNet = true
+		config.ASPNETVersion = versionOrWildcard(data.RuntimeOptions.Framework.Version)
+		config.RuntimeVersion = config.ASPNETVersion
 	default:
-		config.Version = ""
+		config.RuntimeVersion = ""
+		config.ASPNETVersion = ""
 	}
 
-	var aspnetVersion, runtimeVersion string
 	for _, f := range data.RuntimeOptions.Frameworks {
 		switch f.Name {
 		case "Microsoft.NETCore.App":
-			if runtimeVersion != "" {
+			if config.RuntimeVersion != "" {
 				return RuntimeConfig{}, fmt.Errorf("malformed runtimeconfig.json: multiple '%s' frameworks specified", f.Name)
 			}
-			runtimeVersion = versionOrWildcard(f.Version)
-			config.Version = runtimeVersion
+			config.RuntimeVersion = versionOrWildcard(f.Version)
 		case "Microsoft.AspNetCore.App":
-			if aspnetVersion != "" {
+			if config.ASPNETVersion != "" {
 				return RuntimeConfig{}, fmt.Errorf("malformed runtimeconfig.json: multiple '%s' frameworks specified", f.Name)
 			}
-			aspnetVersion = versionOrWildcard(f.Version)
-			config.UsesASPNet = true
+			config.ASPNETVersion = versionOrWildcard(f.Version)
 		default:
 			continue
 		}
-	}
-
-	if runtimeVersion != "" && aspnetVersion != "" && runtimeVersion != aspnetVersion {
-		return RuntimeConfig{}, fmt.Errorf("cannot satisfy mismatched runtimeconfig.json version requirements ('%s' and '%s')", runtimeVersion, aspnetVersion)
 	}
 
 	config.AppName = strings.TrimSuffix(filepath.Base(file.Name()), ".runtimeconfig.json")
