@@ -8,7 +8,7 @@ import (
 
 type ConfigParser struct {
 	ParseCall struct {
-		sync.Mutex
+		mutex     sync.Mutex
 		CallCount int
 		Receives  struct {
 			Glob string
@@ -22,8 +22,8 @@ type ConfigParser struct {
 }
 
 func (f *ConfigParser) Parse(param1 string) (dotnetexecute.RuntimeConfig, error) {
-	f.ParseCall.Lock()
-	defer f.ParseCall.Unlock()
+	f.ParseCall.mutex.Lock()
+	defer f.ParseCall.mutex.Unlock()
 	f.ParseCall.CallCount++
 	f.ParseCall.Receives.Glob = param1
 	if f.ParseCall.Stub != nil {

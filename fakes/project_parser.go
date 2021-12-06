@@ -4,7 +4,7 @@ import "sync"
 
 type ProjectParser struct {
 	ASPNetIsRequiredCall struct {
-		sync.Mutex
+		mutex     sync.Mutex
 		CallCount int
 		Receives  struct {
 			Path string
@@ -16,7 +16,7 @@ type ProjectParser struct {
 		Stub func(string) (bool, error)
 	}
 	FindProjectFileCall struct {
-		sync.Mutex
+		mutex     sync.Mutex
 		CallCount int
 		Receives  struct {
 			Root string
@@ -28,7 +28,7 @@ type ProjectParser struct {
 		Stub func(string) (string, error)
 	}
 	NodeIsRequiredCall struct {
-		sync.Mutex
+		mutex     sync.Mutex
 		CallCount int
 		Receives  struct {
 			Path string
@@ -40,7 +40,7 @@ type ProjectParser struct {
 		Stub func(string) (bool, error)
 	}
 	ParseVersionCall struct {
-		sync.Mutex
+		mutex     sync.Mutex
 		CallCount int
 		Receives  struct {
 			Path string
@@ -54,8 +54,8 @@ type ProjectParser struct {
 }
 
 func (f *ProjectParser) ASPNetIsRequired(param1 string) (bool, error) {
-	f.ASPNetIsRequiredCall.Lock()
-	defer f.ASPNetIsRequiredCall.Unlock()
+	f.ASPNetIsRequiredCall.mutex.Lock()
+	defer f.ASPNetIsRequiredCall.mutex.Unlock()
 	f.ASPNetIsRequiredCall.CallCount++
 	f.ASPNetIsRequiredCall.Receives.Path = param1
 	if f.ASPNetIsRequiredCall.Stub != nil {
@@ -64,8 +64,8 @@ func (f *ProjectParser) ASPNetIsRequired(param1 string) (bool, error) {
 	return f.ASPNetIsRequiredCall.Returns.Bool, f.ASPNetIsRequiredCall.Returns.Error
 }
 func (f *ProjectParser) FindProjectFile(param1 string) (string, error) {
-	f.FindProjectFileCall.Lock()
-	defer f.FindProjectFileCall.Unlock()
+	f.FindProjectFileCall.mutex.Lock()
+	defer f.FindProjectFileCall.mutex.Unlock()
 	f.FindProjectFileCall.CallCount++
 	f.FindProjectFileCall.Receives.Root = param1
 	if f.FindProjectFileCall.Stub != nil {
@@ -74,8 +74,8 @@ func (f *ProjectParser) FindProjectFile(param1 string) (string, error) {
 	return f.FindProjectFileCall.Returns.String, f.FindProjectFileCall.Returns.Error
 }
 func (f *ProjectParser) NodeIsRequired(param1 string) (bool, error) {
-	f.NodeIsRequiredCall.Lock()
-	defer f.NodeIsRequiredCall.Unlock()
+	f.NodeIsRequiredCall.mutex.Lock()
+	defer f.NodeIsRequiredCall.mutex.Unlock()
 	f.NodeIsRequiredCall.CallCount++
 	f.NodeIsRequiredCall.Receives.Path = param1
 	if f.NodeIsRequiredCall.Stub != nil {
@@ -84,8 +84,8 @@ func (f *ProjectParser) NodeIsRequired(param1 string) (bool, error) {
 	return f.NodeIsRequiredCall.Returns.Bool, f.NodeIsRequiredCall.Returns.Error
 }
 func (f *ProjectParser) ParseVersion(param1 string) (string, error) {
-	f.ParseVersionCall.Lock()
-	defer f.ParseVersionCall.Unlock()
+	f.ParseVersionCall.mutex.Lock()
+	defer f.ParseVersionCall.mutex.Unlock()
 	f.ParseVersionCall.CallCount++
 	f.ParseVersionCall.Receives.Path = param1
 	if f.ParseVersionCall.Stub != nil {
