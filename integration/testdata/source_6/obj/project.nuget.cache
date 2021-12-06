@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "dIpov+AMdY9bvx5Deq/zhMq3evXkqklDtyqqe63SWwyDYmWw3wivuUIUX6ELDNZwd84Lc5BxvMbNwQZGxCmr6Q==",
+  "success": true,
+  "projectFilePath": "/Users/frankieg/workspace/paketo-buildpacks/dotnet-execute/integration/testdata/source_6_app/source_6_app.csproj",
+  "expectedPackageFiles": [
+    "/Users/frankieg/.nuget/packages/microsoft.netcore.app.host.linux-x64/6.0.0/microsoft.netcore.app.host.linux-x64.6.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

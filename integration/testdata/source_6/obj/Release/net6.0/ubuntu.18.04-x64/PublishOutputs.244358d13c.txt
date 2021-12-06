@@ -1,0 +1,7 @@
+/Users/frankieg/workspace/paketo-buildpacks/dotnet-execute/integration/testdata/fde_dotnet_6/source_6_app
+/Users/frankieg/workspace/paketo-buildpacks/dotnet-execute/integration/testdata/fde_dotnet_6/appsettings.Development.json
+/Users/frankieg/workspace/paketo-buildpacks/dotnet-execute/integration/testdata/fde_dotnet_6/appsettings.json
+/Users/frankieg/workspace/paketo-buildpacks/dotnet-execute/integration/testdata/fde_dotnet_6/source_6_app.dll
+/Users/frankieg/workspace/paketo-buildpacks/dotnet-execute/integration/testdata/fde_dotnet_6/source_6_app.deps.json
+/Users/frankieg/workspace/paketo-buildpacks/dotnet-execute/integration/testdata/fde_dotnet_6/source_6_app.runtimeconfig.json
+/Users/frankieg/workspace/paketo-buildpacks/dotnet-execute/integration/testdata/fde_dotnet_6/source_6_app.pdb

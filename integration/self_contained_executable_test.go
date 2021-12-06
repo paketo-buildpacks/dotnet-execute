@@ -2,8 +2,6 @@ package integration_test
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,7 +23,7 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 	)
 
 	it.Before(func() {
-		pack = occam.NewPack().WithVerbose().WithNoColor()
+		pack = occam.NewPack().WithNoColor()
 		docker = occam.NewDocker()
 	})
 
@@ -73,16 +71,7 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 				Execute(image.ID)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(container).Should(BeAvailable())
-
-			response, err := http.Get(fmt.Sprintf("http://localhost:%s", container.HostPort("8080")))
-			Expect(err).NotTo(HaveOccurred())
-			Expect(response.StatusCode).To(Equal(http.StatusOK))
-
-			content, err := ioutil.ReadAll(response.Body)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(content)).To(ContainSubstring("Hello World"))
-			Expect(response.Body.Close()).To(Succeed())
+			Eventually(container).Should(Serve(ContainSubstring("Hello World")).OnPort(8080))
 
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
@@ -90,6 +79,40 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 				`    web: /workspace/asp_dotnet2 --urls http://0.0.0.0:${PORT:-8080}`,
 				"",
 			))
+		})
+
+		context("when the self-contained executable uses .NET 6", func() {
+			it("builds and runs successfully", func() {
+				var err error
+				source, err = occam.Source(filepath.Join("testdata", "self_contained_executable_6"))
+				Expect(err).NotTo(HaveOccurred())
+
+				var logs fmt.Stringer
+				image, logs, err = pack.Build.
+					WithPullPolicy("never").
+					WithBuildpacks(
+						settings.Buildpacks.ICU.Online,
+						settings.Buildpacks.DotnetExecute.Online,
+					).
+					Execute(name, source)
+				Expect(err).ToNot(HaveOccurred(), logs.String)
+
+				container, err = docker.Container.Run.
+					WithEnv(map[string]string{"PORT": "8080"}).
+					WithPublish("8080").
+					WithPublishAll().
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(container).Should(Serve(ContainSubstring("Hello, world!")).OnPort(8080))
+
+				Expect(logs).To(ContainLines(
+					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
+					"  Assigning launch processes",
+					`    web: /workspace/source_6_selfcontained --urls http://0.0.0.0:${PORT:-8080}`,
+					"",
+				))
+			})
 		})
 	})
 }
