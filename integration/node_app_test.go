@@ -2,8 +2,6 @@ package integration_test
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -78,17 +76,7 @@ func testNodeApp(t *testing.T, context spec.G, it spec.S) {
 				Execute(image.ID)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(container).Should(BeAvailable())
-
-			response, err := http.Get(fmt.Sprintf("http://localhost:%s", container.HostPort("8080")))
-			Expect(err).NotTo(HaveOccurred())
-			defer response.Body.Close()
-
-			Expect(response.StatusCode).To(Equal(http.StatusOK))
-
-			content, err := ioutil.ReadAll(response.Body)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(content)).To(ContainSubstring("Loading..."))
+			Eventually(container).Should(Serve(ContainSubstring("Loading...")).OnPort(8080))
 		})
 	})
 }

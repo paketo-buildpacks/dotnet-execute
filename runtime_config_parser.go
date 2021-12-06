@@ -20,6 +20,11 @@ type RuntimeConfig struct {
 	UsesASPNet bool
 }
 
+type framework struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
 type RuntimeConfigParser struct{}
 
 func NewRuntimeConfigParser() RuntimeConfigParser {
@@ -46,10 +51,8 @@ func (p RuntimeConfigParser) Parse(glob string) (RuntimeConfig, error) {
 
 	var data struct {
 		RuntimeOptions struct {
-			Framework struct {
-				Name    string `json:"name"`
-				Version string `json:"version"`
-			} `json:"framework"`
+			Framework  framework   `json:"framework"`
+			Frameworks []framework `json:"frameworks"`
 		} `json:"runtimeOptions"`
 	}
 
@@ -70,17 +73,38 @@ func (p RuntimeConfigParser) Parse(glob string) (RuntimeConfig, error) {
 		return RuntimeConfig{}, err
 	}
 
-	config.Version = data.RuntimeOptions.Framework.Version
-	if data.RuntimeOptions.Framework.Name == "Microsoft.NETCore.App" && config.Version == "" {
-		config.Version = "*"
+	switch data.RuntimeOptions.Framework.Name {
+	case "Microsoft.NETCore.App":
+		config.Version = versionOrWildcard(data.RuntimeOptions.Framework.Version)
+	case "Microsoft.AspNetCore.App":
+		config.Version = versionOrWildcard(data.RuntimeOptions.Framework.Version)
+		config.UsesASPNet = true
+	default:
+		config.Version = ""
 	}
 
-	if data.RuntimeOptions.Framework.Name == "Microsoft.AspNetCore.App" ||
-		data.RuntimeOptions.Framework.Name == "Microsoft.AspNetCore.All" {
-		config.UsesASPNet = true
-		if config.Version == "" {
-			config.Version = "*"
+	var aspnetVersion, runtimeVersion string
+	for _, f := range data.RuntimeOptions.Frameworks {
+		switch f.Name {
+		case "Microsoft.NETCore.App":
+			if runtimeVersion != "" {
+				return RuntimeConfig{}, fmt.Errorf("malformed runtimeconfig.json: multiple '%s' frameworks specified", f.Name)
+			}
+			runtimeVersion = versionOrWildcard(f.Version)
+			config.Version = runtimeVersion
+		case "Microsoft.AspNetCore.App":
+			if aspnetVersion != "" {
+				return RuntimeConfig{}, fmt.Errorf("malformed runtimeconfig.json: multiple '%s' frameworks specified", f.Name)
+			}
+			aspnetVersion = versionOrWildcard(f.Version)
+			config.UsesASPNet = true
+		default:
+			continue
 		}
+	}
+
+	if runtimeVersion != "" && aspnetVersion != "" && runtimeVersion != aspnetVersion {
+		return RuntimeConfig{}, fmt.Errorf("cannot satisfy mismatched runtimeconfig.json version requirements ('%s' and '%s')", runtimeVersion, aspnetVersion)
 	}
 
 	config.AppName = strings.TrimSuffix(filepath.Base(file.Name()), ".runtimeconfig.json")
@@ -95,4 +119,11 @@ func (p RuntimeConfigParser) Parse(glob string) (RuntimeConfig, error) {
 	}
 
 	return config, nil
+}
+
+func versionOrWildcard(version string) string {
+	if version == "" {
+		return "*"
+	}
+	return version
 }

@@ -111,6 +111,54 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
+		context("when runtime frameworks are specified", func() {
+			it.Before(func() {
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{
+  "runtimeOptions": {
+    "frameworks": [
+      {
+        "name": "Microsoft.NETCore.App",
+        "version": "2.1.3"
+      }
+    ]
+  }
+}`), 0600)).To(Succeed())
+			})
+
+			it("returns the runtime version", func() {
+				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(config.Version).To(Equal("2.1.3"))
+				Expect(config.UsesASPNet).To(BeFalse())
+			})
+		})
+
+		context("when runtime frameworks include AspNetCore", func() {
+			it.Before(func() {
+				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{
+  "runtimeOptions": {
+    "frameworks": [
+      {
+        "name": "Microsoft.NETCore.App",
+        "version": "2.1.3"
+      },
+      {
+        "name": "Microsoft.AspNetCore.App",
+        "version": "2.1.3"
+      }
+    ]
+  }
+}`), 0600)).To(Succeed())
+			})
+
+			it("returns the runtime version and detects that ASP.NET is required", func() {
+				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(config.Version).To(Equal("2.1.3"))
+				Expect(config.UsesASPNet).To(BeTrue())
+			})
+		})
+
 		context("when the runtime framework is specified with no version", func() {
 			it.Before(func() {
 				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{
@@ -149,26 +197,6 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 			})
 		})
 
-		context("when the app requires ASP.Net via Microsoft.AspNetCore.All", func() {
-			it.Before(func() {
-				Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{
-					"runtimeOptions": {
-						"framework": {
-							"name": "Microsoft.AspNetCore.All",
-							"version": "2.1.1"
-						}
-					}
-				}`), 0600)).To(Succeed())
-			})
-
-			it("reports that the app requires ASP.Net", func() {
-				config, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
-				Expect(err).NotTo(HaveOccurred())
-				Expect(config.Version).To(Equal("2.1.1"))
-				Expect(config.UsesASPNet).To(BeTrue())
-			})
-		})
-
 		context("the runtimeconfig.json does not exist", func() {
 			it.Before(func() {
 				Expect(os.RemoveAll(filepath.Join(workingDir, "some-app.runtimeconfig.json"))).NotTo(HaveOccurred())
@@ -185,6 +213,80 @@ func testRuntimeConfigParser(t *testing.T, context spec.G, it spec.S) {
 				it("returns an error", func() {
 					_, err := parser.Parse("[-]")
 					Expect(err).To(MatchError(`failed to find *.runtimeconfig.json: syntax error in pattern: "[-]"`))
+				})
+			})
+
+			context("when frameworks array is specified in runtimeconfig.json", func() {
+				context("when ASP.NET and .NET runtime versions do not match", func() {
+					it.Before(func() {
+						Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{
+  "runtimeOptions": {
+    "frameworks": [
+      {
+        "name": "Microsoft.NETCore.App",
+        "version": "2.1.3"
+      },
+      {
+        "name": "Microsoft.AspNetCore.App",
+        "version": "2.0.0"
+      }
+    ]
+  }
+}`), 0600)).To(Succeed())
+					})
+
+					it("returns an error", func() {
+						_, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
+						Expect(err).To(MatchError(ContainSubstring("cannot satisfy mismatched runtimeconfig.json version requirements ('2.1.3' and '2.0.0')")))
+					})
+				})
+
+				context("when there are multiple ASP.NET framework entries", func() {
+					it.Before(func() {
+						Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{
+  "runtimeOptions": {
+    "frameworks": [
+      {
+        "name": "Microsoft.AspNetCore.App",
+        "version": "2.1.3"
+      },
+      {
+        "name": "Microsoft.AspNetCore.App",
+        "version": "2.0.0"
+      }
+    ]
+  }
+}`), 0600)).To(Succeed())
+					})
+
+					it("returns an error", func() {
+						_, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
+						Expect(err).To(MatchError(ContainSubstring("malformed runtimeconfig.json: multiple 'Microsoft.AspNetCore.App' frameworks specified")))
+					})
+				})
+
+				context("and there are multiple NETCore framework entries", func() {
+					it.Before(func() {
+						Expect(ioutil.WriteFile(filepath.Join(workingDir, "some-app.runtimeconfig.json"), []byte(`{
+  "runtimeOptions": {
+    "frameworks": [
+      {
+        "name": "Microsoft.NETCore.App",
+        "version": "2.1.3"
+      },
+      {
+        "name": "Microsoft.NETCore.App",
+        "version": "2.0.0"
+      }
+    ]
+  }
+}`), 0600)).To(Succeed())
+					})
+
+					it("returns an error", func() {
+						_, err := parser.Parse(filepath.Join(workingDir, "*.runtimeconfig.json"))
+						Expect(err).To(MatchError(ContainSubstring("malformed runtimeconfig.json: multiple 'Microsoft.NETCore.App' frameworks specified")))
+					})
 				})
 			})
 
