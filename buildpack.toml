@@ -4,8 +4,8 @@ api = "0.6"
   description = "A buildpack for running the `dotnet execute` command for an app"
   homepage = "https://github.com/paketo-buildpacks/dotnet-execute"
   id = "paketo-buildpacks/dotnet-execute"
-  name = "Paketo .NET Execute Buildpack"
   keywords = ["dotnet"]
+  name = "Paketo .NET Execute Buildpack"
   version = "{{ .Version }}"
 
   [[buildpack.licenses]]
