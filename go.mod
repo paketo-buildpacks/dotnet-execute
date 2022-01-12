@@ -3,7 +3,7 @@ module github.com/paketo-buildpacks/dotnet-execute
 go 1.16
 
 require (
-	github.com/BurntSushi/toml v0.4.1
+	github.com/BurntSushi/toml v1.0.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
