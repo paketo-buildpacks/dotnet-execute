@@ -65,7 +65,8 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 				processes = []packit.Process{
 					{
 						Type:    "web",
-						Command: fmt.Sprintf(`watchexec --restart --watch %s "%s"`, context.WorkingDir, command),
+						Command: "watchexec",
+						Args:    []string{"--restart", "--shell", "sh", "--watch", context.WorkingDir, strconv.Quote(command)},
 						Default: true,
 					},
 					{
