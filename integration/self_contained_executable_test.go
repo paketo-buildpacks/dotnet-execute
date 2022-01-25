@@ -75,8 +75,8 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
-				"  Assigning launch processes",
-				`    web: /workspace/asp_dotnet2 --urls http://0.0.0.0:${PORT:-8080}`,
+				"  Assigning launch processes:",
+				`    web (default): /workspace/asp_dotnet2 --urls http://0.0.0.0:${PORT:-8080}`,
 				"",
 			))
 		})
@@ -108,8 +108,8 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 
 				Expect(logs).To(ContainLines(
 					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
-					"  Assigning launch processes",
-					`    web: /workspace/source_6_selfcontained --urls http://0.0.0.0:${PORT:-8080}`,
+					"  Assigning launch processes:",
+					`    web (default): /workspace/source_6_selfcontained --urls http://0.0.0.0:${PORT:-8080}`,
 					"",
 				))
 			})

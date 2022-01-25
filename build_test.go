@@ -49,7 +49,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		buildpackYMLParser = &fakes.BuildpackConfigParser{}
 
 		buffer = bytes.NewBuffer(nil)
-		logger := scribe.NewLogger(buffer)
+		logger := scribe.NewEmitter(buffer)
 
 		build = dotnetexecute.Build(buildpackYMLParser, configParser, logger)
 	})

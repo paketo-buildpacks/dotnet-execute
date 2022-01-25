@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	logger := scribe.NewLogger(os.Stdout)
+	logger := scribe.NewEmitter(os.Stdout)
 	buildpackYMLParser := dotnetexecute.NewBuildpackYMLParser()
 	configParser := dotnetexecute.NewRuntimeConfigParser()
 	projectParser := dotnetexecute.NewProjectFileParser()
