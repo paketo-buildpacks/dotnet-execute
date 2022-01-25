@@ -12,7 +12,7 @@ import (
 	"github.com/paketo-buildpacks/packit/scribe"
 )
 
-func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, logger scribe.Logger) packit.BuildFunc {
+func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, logger scribe.Emitter) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
@@ -65,7 +65,8 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 				processes = []packit.Process{
 					{
 						Type:    "web",
-						Command: fmt.Sprintf(`watchexec --restart --watch %s "%s"`, context.WorkingDir, command),
+						Command: "watchexec",
+						Args:    []string{"--restart", "--shell", "sh", "--watch", context.WorkingDir, strconv.Quote(command)},
 						Default: true,
 					},
 					{
@@ -76,11 +77,7 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 			}
 		}
 
-		logger.Process("Assigning launch processes")
-		for _, process := range processes {
-			logger.Subprocess("%s: %s", process.Type, process.Command)
-		}
-		logger.Break()
+		logger.LaunchProcesses(processes)
 
 		return packit.BuildResult{
 			Launch: packit.LaunchMetadata{

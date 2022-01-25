@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
@@ -48,7 +49,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		buildpackYMLParser = &fakes.BuildpackConfigParser{}
 
 		buffer = bytes.NewBuffer(nil)
-		logger := scribe.NewLogger(buffer)
+		logger := scribe.NewEmitter(buffer)
 
 		build = dotnetexecute.Build(buildpackYMLParser, configParser, logger)
 	})
@@ -224,7 +225,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Processes: []packit.Process{
 						{
 							Type:    "web",
-							Command: fmt.Sprintf(`watchexec --restart --watch %s "%s"`, workingDir, startCommand),
+							Command: "watchexec",
+							Args:    []string{"--restart", "--shell", "sh", "--watch", workingDir, strconv.Quote(startCommand)},
 							Default: true,
 						},
 						{

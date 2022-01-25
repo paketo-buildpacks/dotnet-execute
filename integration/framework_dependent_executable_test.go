@@ -75,8 +75,8 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
-				"  Assigning launch processes",
-				`    web: /workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}`,
+				"  Assigning launch processes:",
+				`    web (default): /workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}`,
 				"",
 			))
 		})
@@ -110,8 +110,8 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 
 				Expect(logs).To(ContainLines(
 					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
-					"  Assigning launch processes",
-					`    web: /workspace/fde_dotnet_6 --urls http://0.0.0.0:${PORT:-8080}`,
+					"  Assigning launch processes:",
+					`    web (default): /workspace/fde_dotnet_6 --urls http://0.0.0.0:${PORT:-8080}`,
 					"",
 				))
 			})
@@ -152,9 +152,9 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 
 				Expect(logs).To(ContainLines(
 					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
-					"  Assigning launch processes",
-					`    web: watchexec --restart --watch /workspace "/workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}"`,
-					`    no-reload: /workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}`,
+					"  Assigning launch processes:",
+					`    web (default): watchexec --restart --shell sh --watch /workspace "/workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}"`,
+					`    no-reload:     /workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}`,
 					"",
 				))
 
