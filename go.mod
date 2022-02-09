@@ -11,7 +11,7 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/onsi/gomega v1.18.1
-	github.com/paketo-buildpacks/occam v0.3.0
+	github.com/paketo-buildpacks/occam v0.4.0
 	github.com/paketo-buildpacks/packit v1.3.1
 	github.com/pilu/miniassert v0.0.0-20140522125902-bee63581261a // indirect
 	github.com/sclevine/spec v1.4.0
