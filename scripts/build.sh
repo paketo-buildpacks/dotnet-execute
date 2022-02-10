@@ -55,6 +55,16 @@ function run::build() {
 
       echo "Success!"
 
+      printf "%s" "Building helper... "
+
+      GOOS=linux \
+        go build \
+          -ldflags="-s -w" \
+          -o "helper" \
+            "${BUILDPACKDIR}/helper/run"
+
+      echo "Success!"
+
       for name in detect build; do
         printf "%s" "Linking ${name}... "
 

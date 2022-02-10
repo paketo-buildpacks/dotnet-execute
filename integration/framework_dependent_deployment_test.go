@@ -72,12 +72,14 @@ func testFrameworkDependentDeployment(t *testing.T, context spec.G, it spec.S) {
 			Eventually(func() string {
 				logs, _ := docker.Container.Logs.Execute(container.ID)
 				return logs.String()
-			}).Should(Equal("Hello World!\n"))
+			}).Should(Equal(`Setting ASPNETCORE_URLS=http://0.0.0.0:8080
+Hello World!
+`))
 
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
 				"  Assigning launch processes:",
-				`    web (default): dotnet /workspace/MyApp.dll --urls http://0.0.0.0:${PORT:-8080}`,
+				`    web (default): dotnet /workspace/MyApp.dll`,
 				"",
 			))
 		})
