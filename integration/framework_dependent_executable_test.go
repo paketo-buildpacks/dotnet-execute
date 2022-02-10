@@ -71,12 +71,14 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 			Eventually(func() string {
 				logs, _ := docker.Container.Logs.Execute(container.ID)
 				return logs.String()
-			}).Should(Equal("Hello World!\n"))
+			}).Should(Equal(`Setting ASPNETCORE_URLS=http://0.0.0.0:8080
+Hello World!
+`))
 
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
 				"  Assigning launch processes:",
-				`    web (default): /workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}`,
+				`    web (default): /workspace/MyApp`,
 				"",
 			))
 		})
@@ -111,7 +113,7 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 				Expect(logs).To(ContainLines(
 					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
 					"  Assigning launch processes:",
-					`    web (default): /workspace/fde_dotnet_6 --urls http://0.0.0.0:${PORT:-8080}`,
+					`    web (default): /workspace/fde_dotnet_6`,
 					"",
 				))
 			})
@@ -148,13 +150,15 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 				Eventually(func() string {
 					logs, _ := docker.Container.Logs.Execute(container.ID)
 					return logs.String()
-				}).Should(Equal("Hello World!\n"))
+				}).Should(Equal(`Setting ASPNETCORE_URLS=http://0.0.0.0:8080
+Hello World!
+`))
 
 				Expect(logs).To(ContainLines(
 					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
 					"  Assigning launch processes:",
-					`    web (default): watchexec --restart --shell sh --watch /workspace "/workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}"`,
-					`    no-reload:     /workspace/MyApp --urls http://0.0.0.0:${PORT:-8080}`,
+					`    web (default): watchexec --restart --watch /workspace --shell none -- /workspace/MyApp`,
+					`    no-reload:     /workspace/MyApp`,
 					"",
 				))
 
@@ -164,7 +168,9 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 				Eventually(func() string {
 					logs, _ := docker.Container.Logs.Execute(noReloadContainer.ID)
 					return logs.String()
-				}).Should(Equal("Hello World!\n"))
+				}).Should(Equal(`Setting ASPNETCORE_URLS=http://0.0.0.0:8080
+Hello World!
+`))
 			})
 		})
 	})

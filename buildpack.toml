@@ -13,7 +13,7 @@ api = "0.6"
     uri = "https://github.com/paketo-buildpacks/dotnet-execute/blob/main/LICENSE"
 
 [metadata]
-  include-files = ["bin/build", "bin/detect", "bin/run", "buildpack.toml"]
+  include-files = ["bin/build", "bin/detect", "bin/run", "bin/helper", "buildpack.toml"]
   pre-package = "./scripts/build.sh"
 
 [[stacks]]

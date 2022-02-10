@@ -3,11 +3,9 @@ package dotnetexecute_test
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strconv"
 	"testing"
 
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
@@ -31,6 +29,16 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		buildpackYMLParser *fakes.BuildpackConfigParser
 
 		build packit.BuildFunc
+
+		layer = packit.Layer{
+			Path:             "<UNKNOWN>",
+			Name:             "dotnetexecute_helper",
+			Launch:           true,
+			SharedEnv:        packit.Environment{},
+			BuildEnv:         packit.Environment{},
+			LaunchEnv:        packit.Environment{},
+			ProcessLaunchEnv: map[string]packit.Environment{},
+		}
 	)
 
 	it.Before(func() {
@@ -40,6 +48,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		cnbDir, err = ioutil.TempDir("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
+		Expect(os.MkdirAll(filepath.Join(cnbDir, "bin"), os.ModePerm)).NotTo(HaveOccurred())
+		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "bin", "helper"), []byte(""), 0644)).NotTo(HaveOccurred())
 
 		workingDir, err = ioutil.TempDir("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
@@ -117,17 +127,21 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
+			// I don't think there's any way to guess this or apply a matcher instead of checking equality
+			layer.Path = result.Layers[0].Path
+
 			Expect(result).To(Equal(packit.BuildResult{
 				Plan: packit.BuildpackPlan{
 					Entries: nil,
 				},
-				Layers: nil,
+				Layers: []packit.Layer{layer},
 				Launch: packit.LaunchMetadata{
 					Processes: []packit.Process{
 						{
 							Type:    "web",
-							Command: fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp")),
+							Command: filepath.Join(workingDir, "myapp"),
 							Default: true,
+							Direct:  true,
 						},
 					},
 				},
@@ -165,17 +179,23 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
+			// I don't think there's any way to guess this or apply a matcher instead of checking equality
+			layer.Path = result.Layers[0].Path
+
 			Expect(result).To(Equal(packit.BuildResult{
 				Plan: packit.BuildpackPlan{
 					Entries: nil,
 				},
-				Layers: nil,
+				Layers: []packit.Layer{layer},
 				Launch: packit.LaunchMetadata{
 					Processes: []packit.Process{
 						{
+
 							Type:    "web",
-							Command: fmt.Sprintf("dotnet %s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp.dll")),
+							Command: "dotnet",
+							Args:    []string{filepath.Join(workingDir, "myapp.dll")},
 							Default: true,
+							Direct:  true,
 						},
 					},
 				},
@@ -215,23 +235,35 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			startCommand := fmt.Sprintf("dotnet %s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp.dll"))
+			// I don't think there's any way to guess this or apply a matcher instead of checking equality
+			layer.Path = result.Layers[0].Path
+
 			Expect(result).To(Equal(packit.BuildResult{
 				Plan: packit.BuildpackPlan{
 					Entries: nil,
 				},
-				Layers: nil,
+				Layers: []packit.Layer{layer},
 				Launch: packit.LaunchMetadata{
 					Processes: []packit.Process{
 						{
 							Type:    "web",
 							Command: "watchexec",
-							Args:    []string{"--restart", "--shell", "sh", "--watch", workingDir, strconv.Quote(startCommand)},
+							Args: []string{
+								"--restart",
+								"--watch", workingDir,
+								"--shell", "none",
+								"--",
+								"dotnet",
+								filepath.Join(workingDir, "myapp.dll"),
+							},
 							Default: true,
+							Direct:  true,
 						},
 						{
 							Type:    "no-reload",
-							Command: startCommand,
+							Command: "dotnet",
+							Args:    []string{filepath.Join(workingDir, "myapp.dll")},
+							Direct:  true,
 						},
 					},
 				},
