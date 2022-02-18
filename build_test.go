@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strconv"
 	"testing"
 
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
@@ -126,8 +125,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Processes: []packit.Process{
 						{
 							Type:    "web",
-							Command: fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp")),
+							Command: "bash",
+							Args:    []string{"-c", fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp"))},
 							Default: true,
+							Direct:  true,
 						},
 					},
 				},
@@ -174,8 +175,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Processes: []packit.Process{
 						{
 							Type:    "web",
-							Command: fmt.Sprintf("dotnet %s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp.dll")),
+							Command: "bash",
+							Args:    []string{"-c", fmt.Sprintf("dotnet %s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(workingDir, "myapp.dll"))},
 							Default: true,
+							Direct:  true,
 						},
 					},
 				},
@@ -226,12 +229,15 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 						{
 							Type:    "web",
 							Command: "watchexec",
-							Args:    []string{"--restart", "--shell", "sh", "--watch", workingDir, strconv.Quote(startCommand)},
+							Args:    []string{"--restart", "--shell", "sh", "--watch", workingDir, "--", startCommand},
 							Default: true,
+							Direct:  true,
 						},
 						{
 							Type:    "no-reload",
-							Command: startCommand,
+							Command: "bash",
+							Args:    []string{"-c", startCommand},
+							Direct:  true,
 						},
 					},
 				},

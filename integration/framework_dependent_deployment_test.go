@@ -77,7 +77,7 @@ func testFrameworkDependentDeployment(t *testing.T, context spec.G, it spec.S) {
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
 				"  Assigning launch processes:",
-				`    web (default): dotnet /workspace/MyApp.dll --urls http://0.0.0.0:${PORT:-8080}`,
+				`    web (default): bash -c dotnet /workspace/MyApp.dll --urls http://0.0.0.0:${PORT:-8080}`,
 				"",
 			))
 		})

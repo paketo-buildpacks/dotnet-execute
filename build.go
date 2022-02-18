@@ -33,7 +33,7 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 			return packit.BuildResult{}, fmt.Errorf("failed to find *.runtimeconfig.json: %w", err)
 		}
 
-		command := fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(context.WorkingDir, config.AppName))
+		args := fmt.Sprintf("%s --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(context.WorkingDir, config.AppName))
 		if !config.Executable {
 
 			_, err := os.Stat(filepath.Join(context.WorkingDir, fmt.Sprintf("%s.dll", config.AppName)))
@@ -44,14 +44,16 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 				return packit.BuildResult{}, fmt.Errorf("no entrypoint [%s.dll] found: %w ", config.AppName, err)
 			}
 
-			command = fmt.Sprintf("dotnet %s.dll --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(context.WorkingDir, config.AppName))
+			args = fmt.Sprintf("dotnet %s.dll --urls http://0.0.0.0:${PORT:-8080}", filepath.Join(context.WorkingDir, config.AppName))
 		}
 
 		processes := []packit.Process{
 			{
 				Type:    "web",
-				Command: command,
+				Command: "bash",
+				Args:    []string{"-c", args},
 				Default: true,
+				Direct:  true,
 			},
 		}
 
@@ -66,12 +68,15 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 					{
 						Type:    "web",
 						Command: "watchexec",
-						Args:    []string{"--restart", "--shell", "sh", "--watch", context.WorkingDir, strconv.Quote(command)},
+						Args:    []string{"--restart", "--shell", "sh", "--watch", context.WorkingDir, "--", args},
 						Default: true,
+						Direct:  true,
 					},
 					{
 						Type:    "no-reload",
-						Command: command,
+						Command: "bash",
+						Args:    []string{"-c", args},
+						Direct:  true,
 					},
 				}
 			}
