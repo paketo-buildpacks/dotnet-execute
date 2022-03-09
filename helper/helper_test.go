@@ -1,7 +1,7 @@
 package helper_test
 
 import (
-	production "github.com/paketo-buildpacks/dotnet-execute/helper"
+	"github.com/paketo-buildpacks/dotnet-execute/helper"
 	"github.com/paketo-buildpacks/occam"
 	"os"
 	"testing"
@@ -14,12 +14,9 @@ import (
 func testHelper(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
-
-		helper production.Helper
 	)
 
 	it.Before(func() {
-		helper = production.Helper{}
 		Expect(os.Unsetenv("PORT")).NotTo(HaveOccurred())
 		Expect(os.Unsetenv("ASPNETCORE_URLS")).NotTo(HaveOccurred())
 	})

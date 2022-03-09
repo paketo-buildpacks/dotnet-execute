@@ -10,9 +10,7 @@ const (
 	EnvVar = "ASPNETCORE_URLS"
 )
 
-type Helper struct{}
-
-func (h Helper) Execute() (map[string]string, error) {
+func Execute() (map[string]string, error) {
 	if _, hasUrl := os.LookupEnv(EnvVar); hasUrl {
 		return map[string]string{}, nil
 	}
