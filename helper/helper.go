@@ -7,13 +7,13 @@ import (
 )
 
 const (
-	ENV_VAR = "ASPNETCORE_URLS"
+	EnvVar = "ASPNETCORE_URLS"
 )
 
 type Helper struct{}
 
 func (h Helper) Execute() (map[string]string, error) {
-	if _, hasUrl := os.LookupEnv(ENV_VAR); hasUrl {
+	if _, hasUrl := os.LookupEnv(EnvVar); hasUrl {
 		return map[string]string{}, nil
 	}
 
@@ -30,7 +30,7 @@ func (h Helper) Execute() (map[string]string, error) {
 	fmt.Printf("Setting ASPNETCORE_URLS=%s\n", url)
 
 	envVars := map[string]string{
-		ENV_VAR: url,
+		EnvVar: url,
 	}
 	return envVars, nil
 }
