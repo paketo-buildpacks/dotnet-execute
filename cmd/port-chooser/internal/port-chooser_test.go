@@ -1,7 +1,7 @@
-package helper_test
+package internal_test
 
 import (
-	"github.com/paketo-buildpacks/dotnet-execute/helper"
+	"github.com/paketo-buildpacks/dotnet-execute/cmd/port-chooser/internal"
 	"github.com/paketo-buildpacks/occam"
 	"os"
 	"testing"
@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func testHelper(t *testing.T, context spec.G, it spec.S) {
+func testPortChooser(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 	)
@@ -29,7 +29,7 @@ func testHelper(t *testing.T, context spec.G, it spec.S) {
 	context(`when ASPNETCORE_URLS is not set`, func() {
 		context(`when PORT is not set`, func() {
 			it(`will set ASPNETCORE_URLS to http://0.0.0.0:8080`, func() {
-				envVars, err := helper.Execute()
+				envVars, err := internal.ChoosePort()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(envVars).To(Equal(map[string]string{
 					"ASPNETCORE_URLS": "http://0.0.0.0:8080",
@@ -43,7 +43,7 @@ func testHelper(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it(`will set ASPNETCORE_URLS to http://0.0.0.0:9876`, func() {
-				envVars, err := helper.Execute()
+				envVars, err := internal.ChoosePort()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(envVars).To(Equal(map[string]string{
 					"ASPNETCORE_URLS": "http://0.0.0.0:9876",
@@ -57,7 +57,7 @@ func testHelper(t *testing.T, context spec.G, it spec.S) {
 			})
 
 			it(`will set ASPNETCORE_URLS to http://0.0.0.0:8080`, func() {
-				envVars, err := helper.Execute()
+				envVars, err := internal.ChoosePort()
 				Expect(err).NotTo(HaveOccurred())
 				Expect(envVars).To(Equal(map[string]string{
 					"ASPNETCORE_URLS": "http://0.0.0.0:8080",
@@ -80,7 +80,7 @@ func testHelper(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it(`will leave ASPNETCORE_URLS in place`, func() {
-			envVars, err := helper.Execute()
+			envVars, err := internal.ChoosePort()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(envVars).To(Equal(map[string]string{}))
 			Expect(os.Getenv("ASPNETCORE_URLS")).To(Equal(aspNetCoreUrl))
