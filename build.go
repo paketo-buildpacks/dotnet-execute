@@ -92,41 +92,32 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 
 		logger.LaunchProcesses(processes)
 
-		helperLayer, err := buildHelperLayer(context)
+		portChooserLayer, err := context.Layers.Get("port-chooser")
+		portChooserLayer.Launch = true
+		if err != nil {
+			return packit.BuildResult{}, err
+		}
+
+		in := filepath.Join(context.CNBPath, "bin", "port-chooser")
+		execdDir := filepath.Join(portChooserLayer.Path, "exec.d")
+		err = os.MkdirAll(execdDir, os.ModePerm)
+		if err != nil {
+			return packit.BuildResult{}, err
+		}
+		out := filepath.Join(execdDir, "port-chooser")
+
+		err = fs.Copy(in, out)
 		if err != nil {
 			return packit.BuildResult{}, err
 		}
 
 		return packit.BuildResult{
 			Layers: []packit.Layer{
-				helperLayer,
+				portChooserLayer,
 			},
 			Launch: packit.LaunchMetadata{
 				Processes: processes,
 			},
 		}, nil
 	}
-}
-
-func buildHelperLayer(context packit.BuildContext) (helperLayer packit.Layer, err error) {
-	helperLayer, err = context.Layers.Get("dotnetexecute_helper")
-	helperLayer.Launch = true
-	if err != nil {
-		return packit.Layer{}, err
-	}
-
-	in := filepath.Join(context.CNBPath, "bin", "helper")
-	execdDir := filepath.Join(helperLayer.Path, "exec.d")
-	err = os.MkdirAll(execdDir, os.ModePerm)
-	if err != nil {
-		return packit.Layer{}, err
-	}
-	out := filepath.Join(execdDir, "helper")
-
-	err = fs.Copy(in, out)
-	if err != nil {
-		return packit.Layer{}, err
-	}
-
-	return
 }

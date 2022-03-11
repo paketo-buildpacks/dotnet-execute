@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/paketo-buildpacks/dotnet-execute/helper"
+	"github.com/paketo-buildpacks/dotnet-execute/cmd/port-chooser/internal"
 	"os"
 	"strconv"
 )
@@ -10,7 +10,7 @@ import (
 func main() {
 	execdWriter := os.NewFile(3, "/dev/fd/3")
 
-	envVars, err := helper.Execute()
+	envVars, err := internal.ChoosePort()
 	if err != nil {
 		return
 	}
