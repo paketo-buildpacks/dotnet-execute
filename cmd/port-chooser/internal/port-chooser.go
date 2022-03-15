@@ -14,6 +14,10 @@ const (
 	AspNetCoreUrls = "ASPNETCORE_URLS"
 )
 
+// ChoosePort will choose a port for the .NET Core application.
+// If an environment variable `ASPNETCORE_URLS` already exists, no further action is taken.
+// Otherwise, the `PORT` environment variable is chosen.
+// If neither `ASPNETCORE_URLS` nor `PORT` is defined, `8080` is chosen.
 func ChoosePort() (map[string]string, error) {
 	if _, hasUrl := os.LookupEnv(AspNetCoreUrls); hasUrl {
 		return map[string]string{}, nil
