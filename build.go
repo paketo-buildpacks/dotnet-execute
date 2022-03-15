@@ -93,10 +93,10 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 		logger.LaunchProcesses(processes)
 
 		portChooserLayer, err := context.Layers.Get("port-chooser")
-		portChooserLayer.Launch = true
 		if err != nil {
 			return packit.BuildResult{}, err
 		}
+		portChooserLayer.Launch = true
 
 		in := filepath.Join(context.CNBPath, "bin", "port-chooser")
 		execdDir := filepath.Join(portChooserLayer.Path, "exec.d")
