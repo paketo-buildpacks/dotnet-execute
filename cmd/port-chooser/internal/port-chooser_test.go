@@ -1,10 +1,11 @@
 package internal_test
 
 import (
-	"github.com/paketo-buildpacks/dotnet-execute/cmd/port-chooser/internal"
-	"github.com/paketo-buildpacks/occam"
 	"os"
 	"testing"
+
+	"github.com/paketo-buildpacks/dotnet-execute/cmd/port-chooser/internal"
+	"github.com/paketo-buildpacks/occam"
 
 	"github.com/sclevine/spec"
 
