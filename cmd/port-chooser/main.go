@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/paketo-buildpacks/dotnet-execute/cmd/port-chooser/internal"
 	"os"
 	"strconv"
+
+	"github.com/paketo-buildpacks/dotnet-execute/cmd/port-chooser/internal"
 )
 
 // main will invoke the port chooser, and write all provided environment variables to FD 3.

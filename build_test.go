@@ -3,7 +3,6 @@ package dotnetexecute_test
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -35,15 +34,15 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	it.Before(func() {
 		var err error
-		layersDir, err = ioutil.TempDir("", "layers")
+		layersDir, err = os.MkdirTemp("", "layers")
 		Expect(err).NotTo(HaveOccurred())
 
-		cnbDir, err = ioutil.TempDir("", "cnb")
+		cnbDir, err = os.MkdirTemp("", "cnb")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(os.MkdirAll(filepath.Join(cnbDir, "bin"), os.ModePerm)).NotTo(HaveOccurred())
-		Expect(ioutil.WriteFile(filepath.Join(cnbDir, "bin", "port-chooser"), []byte(""), 0644)).NotTo(HaveOccurred())
+		Expect(os.WriteFile(filepath.Join(cnbDir, "bin", "port-chooser"), []byte(""), 0644)).NotTo(HaveOccurred())
 
-		workingDir, err = ioutil.TempDir("", "working-dir")
+		workingDir, err = os.MkdirTemp("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
 		configParser = &fakes.ConfigParser{}
@@ -157,7 +156,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				AppName:    "myapp",
 				Executable: false,
 			}
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
 		})
 
 		it.After(func() {
@@ -206,7 +205,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	context("when BP_LIVE_RELOAD_ENABLED=true", func() {
 		it.Before(func() {
 			Expect(os.Setenv("BP_LIVE_RELOAD_ENABLED", "true")).To(Succeed())
-			Expect(ioutil.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
 			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
 				AppName:    "myapp",
@@ -381,7 +380,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		context("parsing the value of BP_LIVE_RELOAD_ENABLED fails", func() {
 			it.Before(func() {
-				Expect(ioutil.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+				Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
 				configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 					Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
 					AppName:    "myapp",
