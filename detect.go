@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/paketo-buildpacks/packit"
+	"github.com/paketo-buildpacks/packit/v2"
 )
 
 //go:generate faux --interface BuildpackConfigParser --output fakes/buildpack_config_parser.go
