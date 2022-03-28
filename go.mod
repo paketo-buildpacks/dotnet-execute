@@ -6,7 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.0.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/gravityblast/go-jsmin v0.0.0-20141027113318-a32d741b3595
-	github.com/onsi/gomega v1.18.1
+	github.com/onsi/gomega v1.19.0
 	github.com/paketo-buildpacks/occam v0.7.0
 	github.com/paketo-buildpacks/packit/v2 v2.1.0
 	github.com/pilu/miniassert v0.0.0-20140522125902-bee63581261a // indirect
