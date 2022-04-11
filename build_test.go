@@ -57,6 +57,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			BuildEnv:         packit.Environment{},
 			LaunchEnv:        packit.Environment{},
 			ProcessLaunchEnv: map[string]packit.Environment{},
+			ExecD: []string{
+				filepath.Join(cnbDir, "bin", "port-chooser"),
+			},
 		}
 
 		buffer = bytes.NewBuffer(nil)
