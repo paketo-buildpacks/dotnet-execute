@@ -9,7 +9,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/paketo-buildpacks/packit/v2"
-	"github.com/paketo-buildpacks/packit/v2/fs"
 	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
 
@@ -98,19 +97,7 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 			return packit.BuildResult{}, err
 		}
 		portChooserLayer.Launch = true
-
-		in := filepath.Join(context.CNBPath, "bin", "port-chooser")
-		execdDir := filepath.Join(portChooserLayer.Path, "exec.d")
-		err = os.MkdirAll(execdDir, os.ModePerm)
-		if err != nil {
-			return packit.BuildResult{}, err
-		}
-		out := filepath.Join(execdDir, "port-chooser")
-
-		err = fs.Copy(in, out)
-		if err != nil {
-			return packit.BuildResult{}, err
-		}
+		portChooserLayer.ExecD = []string{filepath.Join(context.CNBPath, "bin", "port-chooser")}
 
 		return packit.BuildResult{
 			Layers: []packit.Layer{
