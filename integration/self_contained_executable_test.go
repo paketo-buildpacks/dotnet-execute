@@ -49,38 +49,6 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(source)).To(Succeed())
 		})
 
-		it("builds and runs successfully", func() {
-			var err error
-			source, err = occam.Source(filepath.Join("testdata", "self_contained_executable"))
-			Expect(err).NotTo(HaveOccurred())
-
-			var logs fmt.Stringer
-			image, logs, err = pack.Build.
-				WithPullPolicy("never").
-				WithBuildpacks(
-					settings.Buildpacks.ICU.Online,
-					settings.Buildpacks.DotnetExecute.Online,
-				).
-				Execute(name, source)
-			Expect(err).ToNot(HaveOccurred(), logs.String)
-
-			container, err = docker.Container.Run.
-				WithEnv(map[string]string{"PORT": "8080"}).
-				WithPublish("8080").
-				WithPublishAll().
-				Execute(image.ID)
-			Expect(err).NotTo(HaveOccurred())
-
-			Eventually(container).Should(Serve(ContainSubstring("Hello World")).OnPort(8080))
-
-			Expect(logs).To(ContainLines(
-				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
-				"  Assigning launch processes:",
-				`    web (default): /workspace/asp_dotnet2`,
-				"",
-			))
-		})
-
 		context("when the self-contained executable uses .NET 6", func() {
 			it("builds and runs successfully", func() {
 				var err error
