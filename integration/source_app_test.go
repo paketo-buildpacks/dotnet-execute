@@ -78,39 +78,7 @@ func testSourceApp(t *testing.T, context spec.G, it spec.S) {
 			Eventually(container).Should(Serve(ContainSubstring("simple_3_0_app")).OnPort(8080))
 		})
 
-		context("when 'net5.0' is specified as the TargetFramework", func() {
-			it("builds and runs successfully", func() {
-				var err error
-				source, err = occam.Source(filepath.Join("testdata", "source_5_app"))
-				Expect(err).NotTo(HaveOccurred())
-
-				var logs fmt.Stringer
-				image, logs, err = pack.Build.
-					WithPullPolicy("never").
-					WithBuildpacks(
-						settings.Buildpacks.ICU.Online,
-						settings.Buildpacks.DotnetCoreRuntime.Online,
-						settings.Buildpacks.DotnetCoreASPNet.Online,
-						settings.Buildpacks.DotnetCoreSDK.Online,
-						settings.Buildpacks.DotnetPublish.Online,
-						settings.Buildpacks.DotnetExecute.Online,
-					).
-					Execute(name, source)
-				Expect(err).ToNot(HaveOccurred(), logs.String)
-
-				container, err = docker.Container.Run.
-					WithEnv(map[string]string{"PORT": "8080"}).
-					WithPublish("8080").
-					WithPublishAll().
-					Execute(image.ID)
-				Expect(err).NotTo(HaveOccurred())
-
-				Eventually(container).Should(Serve(ContainSubstring("simple_5_0_app")).OnPort(8080))
-			})
-		})
-
-		// Not sure if this test is really necessary; largely same as .NET 5
-		context.Pend("when 'net6.0' is specified as the TargetFramework", func() {
+		context("when 'net6.0' is specified as the TargetFramework", func() {
 			it("builds and runs successfully", func() {
 				var err error
 				source, err = occam.Source(filepath.Join("testdata", "source_6"))
