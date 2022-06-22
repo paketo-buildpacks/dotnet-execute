@@ -76,7 +76,7 @@ Hello World!
 `))
 
 			Expect(logs).To(ContainLines(
-				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
+				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
 				"  Assigning launch processes:",
 				`    web (default): /workspace/MyApp`,
 				"",
@@ -111,7 +111,7 @@ Hello World!
 				Eventually(container).Should(Serve(ContainSubstring("fde_dotnet_6")).OnPort(8080))
 
 				Expect(logs).To(ContainLines(
-					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
+					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
 					"  Assigning launch processes:",
 					`    web (default): /workspace/fde_dotnet_6`,
 					"",
@@ -155,7 +155,7 @@ Hello World!
 `))
 
 				Expect(logs).To(ContainLines(
-					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
+					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
 					"  Assigning launch processes:",
 					`    web (default): watchexec --restart --watch /workspace --shell none -- /workspace/MyApp`,
 					`    no-reload:     /workspace/MyApp`,

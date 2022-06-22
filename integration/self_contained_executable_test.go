@@ -75,7 +75,7 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 				Eventually(container).Should(Serve(ContainSubstring("Hello, world!")).OnPort(8080))
 
 				Expect(logs).To(ContainLines(
-					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
+					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
 					"  Assigning launch processes:",
 					`    web (default): /workspace/source_6_selfcontained`,
 					"",
