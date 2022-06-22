@@ -111,16 +111,6 @@ func Build(
 		portChooserLayer.Launch = true
 		portChooserLayer.ExecD = []string{filepath.Join(context.CNBPath, "bin", "port-chooser")}
 
-		sbomLayer, err := context.Layers.Get("sbom")
-		if err != nil {
-			return packit.BuildResult{}, err
-		}
-		sbomLayer, err = sbomLayer.Reset()
-		if err != nil {
-			return packit.BuildResult{}, err
-		}
-		sbomLayer.Launch = true
-
 		logger.GeneratingSBOM(context.WorkingDir)
 		var sbomContent sbom.SBOM
 		duration, err := clock.Measure(func() error {
@@ -135,7 +125,7 @@ func Build(
 		logger.Break()
 
 		logger.FormattingSBOM(context.BuildpackInfo.SBOMFormats...)
-		sbomLayer.SBOM, err = sbomContent.InFormats(context.BuildpackInfo.SBOMFormats...)
+		sbomFormatter, err := sbomContent.InFormats(context.BuildpackInfo.SBOMFormats...)
 		if err != nil {
 			return packit.BuildResult{}, err
 		}
@@ -143,10 +133,10 @@ func Build(
 		return packit.BuildResult{
 			Layers: []packit.Layer{
 				portChooserLayer,
-				sbomLayer,
 			},
 			Launch: packit.LaunchMetadata{
 				Processes: processes,
+				SBOM:      sbomFormatter,
 			},
 		}, nil
 	}

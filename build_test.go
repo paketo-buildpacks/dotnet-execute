@@ -89,7 +89,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(result.Layers).To(HaveLen(2))
+			Expect(result.Layers).To(HaveLen(1))
 			portLayer := result.Layers[0]
 
 			Expect(portLayer.Name).To(Equal("port-chooser"))
@@ -100,8 +100,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(portLayer.Launch).To(BeTrue())
 			Expect(portLayer.Cache).To(BeFalse())
 
-			sbomLayer := result.Layers[1]
-			Expect(sbomLayer.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
+			Expect(result.Launch.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
 				{
 					Extension: sbom.Format(sbom.CycloneDXFormat).Extension(),
 					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.CycloneDXFormat),
@@ -112,21 +111,12 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(sbomLayer.Name).To(Equal("sbom"))
-			Expect(sbomLayer.Path).To(Equal(filepath.Join(layersDir, "sbom")))
-
-			Expect(sbomLayer.Build).To(BeFalse())
-			Expect(sbomLayer.Launch).To(BeTrue())
-			Expect(sbomLayer.Cache).To(BeFalse())
-
-			Expect(result.Launch).To(Equal(packit.LaunchMetadata{
-				Processes: []packit.Process{
-					{
-						Type:    "web",
-						Command: filepath.Join(workingDir, "myapp"),
-						Default: true,
-						Direct:  true,
-					},
+			Expect(result.Launch.Processes).To(Equal([]packit.Process{
+				{
+					Type:    "web",
+					Command: filepath.Join(workingDir, "myapp"),
+					Default: true,
+					Direct:  true,
 				},
 			}))
 
@@ -169,7 +159,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(result.Layers).To(HaveLen(2))
+			Expect(result.Layers).To(HaveLen(1))
 			portLayer := result.Layers[0]
 
 			Expect(portLayer.Name).To(Equal("port-chooser"))
@@ -180,8 +170,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(portLayer.Launch).To(BeTrue())
 			Expect(portLayer.Cache).To(BeFalse())
 
-			sbomLayer := result.Layers[1]
-			Expect(sbomLayer.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
+			Expect(result.Launch.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
 				{
 					Extension: sbom.Format(sbom.CycloneDXFormat).Extension(),
 					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.CycloneDXFormat),
@@ -192,23 +181,14 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(sbomLayer.Name).To(Equal("sbom"))
-			Expect(sbomLayer.Path).To(Equal(filepath.Join(layersDir, "sbom")))
+			Expect(result.Launch.Processes).To(Equal([]packit.Process{
+				{
 
-			Expect(sbomLayer.Build).To(BeFalse())
-			Expect(sbomLayer.Launch).To(BeTrue())
-			Expect(sbomLayer.Cache).To(BeFalse())
-
-			Expect(result.Launch).To(Equal(packit.LaunchMetadata{
-				Processes: []packit.Process{
-					{
-
-						Type:    "web",
-						Command: "dotnet",
-						Args:    []string{filepath.Join(workingDir, "myapp.dll")},
-						Default: true,
-						Direct:  true,
-					},
+					Type:    "web",
+					Command: "dotnet",
+					Args:    []string{filepath.Join(workingDir, "myapp.dll")},
+					Default: true,
+					Direct:  true,
 				},
 			}))
 
@@ -253,7 +233,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(result.Layers).To(HaveLen(2))
+			Expect(result.Layers).To(HaveLen(1))
 			portLayer := result.Layers[0]
 
 			Expect(portLayer.Name).To(Equal("port-chooser"))
@@ -264,8 +244,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(portLayer.Launch).To(BeTrue())
 			Expect(portLayer.Cache).To(BeFalse())
 
-			sbomLayer := result.Layers[1]
-			Expect(sbomLayer.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
+			Expect(result.Launch.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
 				{
 					Extension: sbom.Format(sbom.CycloneDXFormat).Extension(),
 					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.CycloneDXFormat),
@@ -276,35 +255,26 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(sbomLayer.Name).To(Equal("sbom"))
-			Expect(sbomLayer.Path).To(Equal(filepath.Join(layersDir, "sbom")))
-
-			Expect(sbomLayer.Build).To(BeFalse())
-			Expect(sbomLayer.Launch).To(BeTrue())
-			Expect(sbomLayer.Cache).To(BeFalse())
-
-			Expect(result.Launch).To(Equal(packit.LaunchMetadata{
-				Processes: []packit.Process{
-					{
-						Type:    "web",
-						Command: "watchexec",
-						Args: []string{
-							"--restart",
-							"--watch", workingDir,
-							"--shell", "none",
-							"--",
-							"dotnet",
-							filepath.Join(workingDir, "myapp.dll"),
-						},
-						Default: true,
-						Direct:  true,
+			Expect(result.Launch.Processes).To(Equal([]packit.Process{
+				{
+					Type:    "web",
+					Command: "watchexec",
+					Args: []string{
+						"--restart",
+						"--watch", workingDir,
+						"--shell", "none",
+						"--",
+						"dotnet",
+						filepath.Join(workingDir, "myapp.dll"),
 					},
-					{
-						Type:    "no-reload",
-						Command: "dotnet",
-						Args:    []string{filepath.Join(workingDir, "myapp.dll")},
-						Direct:  true,
-					},
+					Default: true,
+					Direct:  true,
+				},
+				{
+					Type:    "no-reload",
+					Command: "dotnet",
+					Args:    []string{filepath.Join(workingDir, "myapp.dll")},
+					Direct:  true,
 				},
 			}))
 
