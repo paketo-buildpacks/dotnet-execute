@@ -77,7 +77,7 @@ Hello World!
 `))
 
 			Expect(logs).To(ContainLines(
-				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Name)),
+				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
 				"  Assigning launch processes:",
 				`    web (default): dotnet /workspace/MyApp.dll`,
 				"",

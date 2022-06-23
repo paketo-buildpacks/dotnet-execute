@@ -6,13 +6,27 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/Masterminds/semver"
 	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/chronos"
+	"github.com/paketo-buildpacks/packit/v2/sbom"
 	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
 
-func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, logger scribe.Emitter) packit.BuildFunc {
+//go:generate faux --interface SBOMGenerator --output fakes/sbom_generator.go
+type SBOMGenerator interface {
+	Generate(path string) (sbom.SBOM, error)
+}
+
+func Build(
+	buildpackYMLParser BuildpackConfigParser,
+	configParser ConfigParser,
+	sbomGenerator SBOMGenerator,
+	logger scribe.Emitter,
+	clock chronos.Clock,
+) packit.BuildFunc {
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
@@ -23,12 +37,11 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 
 		if projectPath != "" {
 			nextMajorVersion := semver.MustParse(context.BuildpackInfo.Version).IncMajor()
-			logger.Subprocess("WARNING: Setting the project path through buildpack.yml will be deprecated soon in Dotnet Execute Buildpack v%s.", nextMajorVersion.String())
+			logger.Subprocess("WARNING: Setting the project path through buildpack.yml will be deprecated soon in .NET Execute Buildpack v%s.", nextMajorVersion.String())
 			logger.Subprocess("Please specify the project path through the $BP_DOTNET_PROJECT_PATH environment variable instead. See README.md or the documentation on paketo.io for more information.")
 		}
 
 		config, err := configParser.Parse(filepath.Join(context.WorkingDir, "*.runtimeconfig.json"))
-
 		if err != nil {
 			return packit.BuildResult{}, fmt.Errorf("failed to find *.runtimeconfig.json: %w", err)
 		}
@@ -36,7 +49,6 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 		command := filepath.Join(context.WorkingDir, config.AppName)
 		var args []string
 		if !config.Executable {
-
 			_, err := os.Stat(filepath.Join(context.WorkingDir, fmt.Sprintf("%s.dll", config.AppName)))
 			if err != nil && !errors.Is(err, os.ErrNotExist) {
 				return packit.BuildResult{}, err
@@ -99,12 +111,32 @@ func Build(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, 
 		portChooserLayer.Launch = true
 		portChooserLayer.ExecD = []string{filepath.Join(context.CNBPath, "bin", "port-chooser")}
 
+		logger.GeneratingSBOM(context.WorkingDir)
+		var sbomContent sbom.SBOM
+		duration, err := clock.Measure(func() error {
+			sbomContent, err = sbomGenerator.Generate(context.WorkingDir)
+			return err
+		})
+		if err != nil {
+			return packit.BuildResult{}, err
+		}
+
+		logger.Action("Completed in %s", duration.Round(time.Millisecond))
+		logger.Break()
+
+		logger.FormattingSBOM(context.BuildpackInfo.SBOMFormats...)
+		sbomFormatter, err := sbomContent.InFormats(context.BuildpackInfo.SBOMFormats...)
+		if err != nil {
+			return packit.BuildResult{}, err
+		}
+
 		return packit.BuildResult{
 			Layers: []packit.Layer{
 				portChooserLayer,
 			},
 			Launch: packit.LaunchMetadata{
 				Processes: processes,
+				SBOM:      sbomFormatter,
 			},
 		}, nil
 	}

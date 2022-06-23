@@ -1,4 +1,4 @@
-api = "0.6"
+api = "0.8"
 
 [buildpack]
   description = "A buildpack for running the `dotnet execute` command for an app"
@@ -6,7 +6,7 @@ api = "0.6"
   id = "paketo-buildpacks/dotnet-execute"
   keywords = ["dotnet"]
   name = "Paketo .NET Execute Buildpack"
-  version = "{{ .Version }}"
+  sbom-formats = ["application/vnd.cyclonedx+json", "application/spdx+json", "application/vnd.syft+json"]
 
   [[buildpack.licenses]]
     type = "Apache-2.0"

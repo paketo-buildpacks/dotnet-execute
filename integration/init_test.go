@@ -19,8 +19,10 @@ import (
 
 var settings struct {
 	BuildpackInfo struct {
-		ID   string
-		Name string
+		Buildpack struct {
+			ID   string
+			Name string
+		}
 	}
 	Config struct {
 		ICU               string `json:"icu"`

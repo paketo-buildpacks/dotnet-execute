@@ -10,6 +10,8 @@ import (
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
 	"github.com/paketo-buildpacks/dotnet-execute/fakes"
 	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/chronos"
+	"github.com/paketo-buildpacks/packit/v2/sbom"
 	"github.com/paketo-buildpacks/packit/v2/scribe"
 	"github.com/sclevine/spec"
 
@@ -26,10 +28,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		buffer             *bytes.Buffer
 		configParser       *fakes.ConfigParser
 		buildpackYMLParser *fakes.BuildpackConfigParser
+		sbomGenerator      *fakes.SBOMGenerator
 
 		build packit.BuildFunc
-
-		portChooserLayer packit.Layer
 	)
 
 	it.Before(func() {
@@ -47,29 +48,242 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		buildpackYMLParser = &fakes.BuildpackConfigParser{}
 
-		portChooserLayer = packit.Layer{
-			Path:             filepath.Join(layersDir, "port-chooser"),
-			Name:             "port-chooser",
-			Launch:           true,
-			SharedEnv:        packit.Environment{},
-			BuildEnv:         packit.Environment{},
-			LaunchEnv:        packit.Environment{},
-			ProcessLaunchEnv: map[string]packit.Environment{},
-			ExecD: []string{
-				filepath.Join(cnbDir, "bin", "port-chooser"),
-			},
-		}
+		sbomGenerator = &fakes.SBOMGenerator{}
+		sbomGenerator.GenerateCall.Returns.SBOM = sbom.SBOM{}
 
 		buffer = bytes.NewBuffer(nil)
 		logger := scribe.NewEmitter(buffer)
 
-		build = dotnetexecute.Build(buildpackYMLParser, configParser, logger)
+		build = dotnetexecute.Build(buildpackYMLParser, configParser, sbomGenerator, logger, chronos.DefaultClock)
 	})
 
 	it.After(func() {
 		Expect(os.RemoveAll(layersDir)).To(Succeed())
 		Expect(os.RemoveAll(cnbDir)).To(Succeed())
 		Expect(os.RemoveAll(workingDir)).To(Succeed())
+	})
+
+	context("the app is a framework-dependent or self-contained executable", func() {
+		it.Before(func() {
+			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+				AppName:    "myapp",
+				Executable: true,
+			}
+		})
+
+		it("returns a result that builds correctly", func() {
+			result, err := build(packit.BuildContext{
+				WorkingDir: workingDir,
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				BuildpackInfo: packit.BuildpackInfo{
+					Name:        "Some Buildpack",
+					Version:     "some-version",
+					SBOMFormats: []string{sbom.CycloneDXFormat, sbom.SPDXFormat},
+				},
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{},
+				},
+				Layers: packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result.Layers).To(HaveLen(1))
+			portLayer := result.Layers[0]
+
+			Expect(portLayer.Name).To(Equal("port-chooser"))
+			Expect(portLayer.Path).To(Equal(filepath.Join(layersDir, "port-chooser")))
+			Expect(portLayer.ExecD).To(Equal([]string{filepath.Join(cnbDir, "bin", "port-chooser")}))
+
+			Expect(portLayer.Build).To(BeFalse())
+			Expect(portLayer.Launch).To(BeTrue())
+			Expect(portLayer.Cache).To(BeFalse())
+
+			Expect(result.Launch.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
+				{
+					Extension: sbom.Format(sbom.CycloneDXFormat).Extension(),
+					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.CycloneDXFormat),
+				},
+				{
+					Extension: sbom.Format(sbom.SPDXFormat).Extension(),
+					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.SPDXFormat),
+				},
+			}))
+
+			Expect(result.Launch.Processes).To(Equal([]packit.Process{
+				{
+					Type:    "web",
+					Command: filepath.Join(workingDir, "myapp"),
+					Default: true,
+					Direct:  true,
+				},
+			}))
+
+			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
+
+			Expect(configParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
+
+			Expect(sbomGenerator.GenerateCall.Receives.Path).To(Equal(workingDir))
+		})
+	})
+
+	context("the app is a framework dependent deployment", func() {
+		it.Before(func() {
+			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+				AppName:    "myapp",
+				Executable: false,
+			}
+			Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
+		})
+
+		it("returns a result that builds correctly", func() {
+			result, err := build(packit.BuildContext{
+				WorkingDir: workingDir,
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				BuildpackInfo: packit.BuildpackInfo{
+					Name:        "Some Buildpack",
+					Version:     "some-version",
+					SBOMFormats: []string{sbom.CycloneDXFormat, sbom.SPDXFormat},
+				},
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{},
+				},
+				Layers: packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result.Layers).To(HaveLen(1))
+			portLayer := result.Layers[0]
+
+			Expect(portLayer.Name).To(Equal("port-chooser"))
+			Expect(portLayer.Path).To(Equal(filepath.Join(layersDir, "port-chooser")))
+			Expect(portLayer.ExecD).To(Equal([]string{filepath.Join(cnbDir, "bin", "port-chooser")}))
+
+			Expect(portLayer.Build).To(BeFalse())
+			Expect(portLayer.Launch).To(BeTrue())
+			Expect(portLayer.Cache).To(BeFalse())
+
+			Expect(result.Launch.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
+				{
+					Extension: sbom.Format(sbom.CycloneDXFormat).Extension(),
+					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.CycloneDXFormat),
+				},
+				{
+					Extension: sbom.Format(sbom.SPDXFormat).Extension(),
+					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.SPDXFormat),
+				},
+			}))
+
+			Expect(result.Launch.Processes).To(Equal([]packit.Process{
+				{
+
+					Type:    "web",
+					Command: "dotnet",
+					Args:    []string{filepath.Join(workingDir, "myapp.dll")},
+					Default: true,
+					Direct:  true,
+				},
+			}))
+
+			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
+
+			Expect(configParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
+
+			Expect(sbomGenerator.GenerateCall.Receives.Path).To(Equal(workingDir))
+		})
+	})
+
+	context("when BP_LIVE_RELOAD_ENABLED=true", func() {
+		it.Before(func() {
+			Expect(os.Setenv("BP_LIVE_RELOAD_ENABLED", "true")).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+				AppName:    "myapp",
+				Executable: false,
+			}
+		})
+
+		it.After(func() {
+			Expect(os.Unsetenv("BP_LIVE_RELOAD_ENABLED")).To(Succeed())
+			Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
+		})
+
+		it("wraps the start command with watchexec", func() {
+			result, err := build(packit.BuildContext{
+				WorkingDir: workingDir,
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				BuildpackInfo: packit.BuildpackInfo{
+					Name:        "Some Buildpack",
+					Version:     "some-version",
+					SBOMFormats: []string{sbom.CycloneDXFormat, sbom.SPDXFormat},
+				},
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{},
+				},
+				Layers: packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result.Layers).To(HaveLen(1))
+			portLayer := result.Layers[0]
+
+			Expect(portLayer.Name).To(Equal("port-chooser"))
+			Expect(portLayer.Path).To(Equal(filepath.Join(layersDir, "port-chooser")))
+			Expect(portLayer.ExecD).To(Equal([]string{filepath.Join(cnbDir, "bin", "port-chooser")}))
+
+			Expect(portLayer.Build).To(BeFalse())
+			Expect(portLayer.Launch).To(BeTrue())
+			Expect(portLayer.Cache).To(BeFalse())
+
+			Expect(result.Launch.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
+				{
+					Extension: sbom.Format(sbom.CycloneDXFormat).Extension(),
+					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.CycloneDXFormat),
+				},
+				{
+					Extension: sbom.Format(sbom.SPDXFormat).Extension(),
+					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.SPDXFormat),
+				},
+			}))
+
+			Expect(result.Launch.Processes).To(Equal([]packit.Process{
+				{
+					Type:    "web",
+					Command: "watchexec",
+					Args: []string{
+						"--restart",
+						"--watch", workingDir,
+						"--shell", "none",
+						"--",
+						"dotnet",
+						filepath.Join(workingDir, "myapp.dll"),
+					},
+					Default: true,
+					Direct:  true,
+				},
+				{
+					Type:    "no-reload",
+					Command: "dotnet",
+					Args:    []string{filepath.Join(workingDir, "myapp.dll")},
+					Direct:  true,
+				},
+			}))
+
+			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
+
+			Expect(configParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
+
+			Expect(sbomGenerator.GenerateCall.Receives.Path).To(Equal(workingDir))
+		})
 	})
 
 	context("The project path is set via buildpack.yml", func() {
@@ -99,174 +313,11 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
-			Expect(buffer.String()).To(ContainSubstring("WARNING: Setting the project path through buildpack.yml will be deprecated soon in Dotnet Execute Buildpack v2.0.0"))
+
+			Expect(configParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
+
+			Expect(buffer.String()).To(ContainSubstring("WARNING: Setting the project path through buildpack.yml will be deprecated soon in .NET Execute Buildpack v2.0.0"))
 			Expect(buffer.String()).To(ContainSubstring("Please specify the project path through the $BP_DOTNET_PROJECT_PATH environment variable instead. See README.md or the documentation on paketo.io for more information."))
-		})
-	})
-
-	context("the app is a framework-dependent or self-contained executable", func() {
-		it.Before(func() {
-			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
-				AppName:    "myapp",
-				Executable: true,
-			}
-		})
-
-		it("returns a result that builds correctly", func() {
-			result, err := build(packit.BuildContext{
-				WorkingDir: workingDir,
-				CNBPath:    cnbDir,
-				Stack:      "some-stack",
-				BuildpackInfo: packit.BuildpackInfo{
-					Name:    "Some Buildpack",
-					Version: "some-version",
-				},
-				Plan: packit.BuildpackPlan{
-					Entries: []packit.BuildpackPlanEntry{},
-				},
-				Layers: packit.Layers{Path: layersDir},
-			})
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(result).To(Equal(packit.BuildResult{
-				Plan: packit.BuildpackPlan{
-					Entries: nil,
-				},
-				Layers: []packit.Layer{
-					portChooserLayer,
-				},
-				Launch: packit.LaunchMetadata{
-					Processes: []packit.Process{
-						{
-							Type:    "web",
-							Command: filepath.Join(workingDir, "myapp"),
-							Default: true,
-							Direct:  true,
-						},
-					},
-				},
-			}))
-		})
-	})
-
-	context("the app is a framework dependent deployment", func() {
-		it.Before(func() {
-			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
-				AppName:    "myapp",
-				Executable: false,
-			}
-			Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
-		})
-
-		it.After(func() {
-			Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
-		})
-
-		it("returns a result that builds correctly", func() {
-			result, err := build(packit.BuildContext{
-				WorkingDir: workingDir,
-				CNBPath:    cnbDir,
-				Stack:      "some-stack",
-				BuildpackInfo: packit.BuildpackInfo{
-					Name:    "Some Buildpack",
-					Version: "some-version",
-				},
-				Plan: packit.BuildpackPlan{
-					Entries: []packit.BuildpackPlanEntry{},
-				},
-				Layers: packit.Layers{Path: layersDir},
-			})
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(result).To(Equal(packit.BuildResult{
-				Plan: packit.BuildpackPlan{
-					Entries: nil,
-				},
-				Layers: []packit.Layer{
-					portChooserLayer,
-				},
-				Launch: packit.LaunchMetadata{
-					Processes: []packit.Process{
-						{
-
-							Type:    "web",
-							Command: "dotnet",
-							Args:    []string{filepath.Join(workingDir, "myapp.dll")},
-							Default: true,
-							Direct:  true,
-						},
-					},
-				},
-			}))
-		})
-	})
-
-	context("when BP_LIVE_RELOAD_ENABLED=true", func() {
-		it.Before(func() {
-			Expect(os.Setenv("BP_LIVE_RELOAD_ENABLED", "true")).To(Succeed())
-			Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
-			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
-				AppName:    "myapp",
-				Executable: false,
-			}
-		})
-
-		it.After(func() {
-			Expect(os.Unsetenv("BP_LIVE_RELOAD_ENABLED")).To(Succeed())
-			Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
-		})
-
-		it("wraps the start command with watchexec", func() {
-			result, err := build(packit.BuildContext{
-				WorkingDir: workingDir,
-				CNBPath:    cnbDir,
-				Stack:      "some-stack",
-				BuildpackInfo: packit.BuildpackInfo{
-					Name:    "Some Buildpack",
-					Version: "some-version",
-				},
-				Plan: packit.BuildpackPlan{
-					Entries: []packit.BuildpackPlanEntry{},
-				},
-				Layers: packit.Layers{Path: layersDir},
-			})
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(result).To(Equal(packit.BuildResult{
-				Plan: packit.BuildpackPlan{
-					Entries: nil,
-				},
-				Layers: []packit.Layer{
-					portChooserLayer,
-				},
-				Launch: packit.LaunchMetadata{
-					Processes: []packit.Process{
-						{
-							Type:    "web",
-							Command: "watchexec",
-							Args: []string{
-								"--restart",
-								"--watch", workingDir,
-								"--shell", "none",
-								"--",
-								"dotnet",
-								filepath.Join(workingDir, "myapp.dll"),
-							},
-							Default: true,
-							Direct:  true,
-						},
-						{
-							Type:    "no-reload",
-							Command: "dotnet",
-							Args:    []string{filepath.Join(workingDir, "myapp.dll")},
-							Direct:  true,
-						},
-					},
-				},
-			}))
 		})
 	})
 
@@ -401,6 +452,59 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				})
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(MatchError(ContainSubstring("invalid syntax")))
+			})
+		})
+
+		context("when generating the SBOM returns an error", func() {
+			it.Before(func() {
+				sbomGenerator.GenerateCall.Returns.Error = errors.New("failed to generate SBOM")
+
+				configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+					Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+					AppName:    "myapp",
+					Executable: true,
+				}
+			})
+
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					WorkingDir: workingDir,
+					CNBPath:    cnbDir,
+					Stack:      "some-stack",
+					BuildpackInfo: packit.BuildpackInfo{
+						Name:    "Some Buildpack",
+						Version: "some-version",
+					},
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError(ContainSubstring("failed to generate SBOM")))
+			})
+		})
+
+		context("when formatting the SBOM returns an error", func() {
+			it.Before(func() {
+				configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+					Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+					AppName:    "myapp",
+					Executable: true,
+				}
+			})
+
+			it("returns an error", func() {
+				_, err := build(packit.BuildContext{
+					BuildpackInfo: packit.BuildpackInfo{SBOMFormats: []string{"random-format"}},
+					WorkingDir:    workingDir,
+					CNBPath:       cnbDir,
+					Stack:         "some-stack",
+					Plan: packit.BuildpackPlan{
+						Entries: []packit.BuildpackPlanEntry{},
+					},
+					Layers: packit.Layers{Path: layersDir},
+				})
+				Expect(err).To(MatchError("unsupported SBOM format: 'random-format'"))
 			})
 		})
 	})

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/paketo-buildpacks/occam"
@@ -32,14 +33,19 @@ func testNodeApp(t *testing.T, context spec.G, it spec.S) {
 			image     occam.Image
 			container occam.Container
 
-			name   string
-			source string
+			name    string
+			source  string
+			sbomDir string
 		)
 
 		it.Before(func() {
 			var err error
 			name, err = occam.RandomName()
 			Expect(err).NotTo(HaveOccurred())
+
+			sbomDir, err = os.MkdirTemp("", "sbom")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(os.Chmod(sbomDir, os.ModePerm)).To(Succeed())
 		})
 
 		it.After(func() {
@@ -47,6 +53,7 @@ func testNodeApp(t *testing.T, context spec.G, it spec.S) {
 			Expect(docker.Volume.Remove.Execute(occam.CacheVolumeNames(name))).To(Succeed())
 			Expect(docker.Image.Remove.Execute(image.ID)).To(Succeed())
 			Expect(os.RemoveAll(source)).To(Succeed())
+			Expect(os.RemoveAll(sbomDir)).To(Succeed())
 		})
 
 		it("builds and runs successfully", func() {
@@ -66,6 +73,7 @@ func testNodeApp(t *testing.T, context spec.G, it spec.S) {
 					settings.Buildpacks.DotnetPublish.Online,
 					settings.Buildpacks.DotnetExecute.Online,
 				).
+				WithSBOMOutputDir(sbomDir).
 				Execute(name, source)
 			Expect(err).ToNot(HaveOccurred(), logs.String)
 
@@ -77,6 +85,11 @@ func testNodeApp(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(container).Should(Serve(ContainSubstring("Loading...")).OnPort(8080))
+
+			// check an SBOM file
+			contents, err := os.ReadFile(filepath.Join(sbomDir, "sbom", "launch", strings.ReplaceAll(settings.BuildpackInfo.Buildpack.ID, "/", "_"), "sbom.cdx.json"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(contents)).To(ContainSubstring(`"name": "System.Text.Encoding"`))
 		})
 	})
 }
