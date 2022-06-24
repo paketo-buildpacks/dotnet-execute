@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
+	"github.com/Masterminds/semver"
 	"github.com/paketo-buildpacks/packit/v2"
 )
 
@@ -55,6 +55,14 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 					"launch": true,
 				},
 			},
+			// Require dotnet aspnetcore at launch since app is probably an FDD or FDE when compiled;
+			// but don't require a specific version
+			{
+				Name: "dotnet-aspnetcore",
+				Metadata: map[string]interface{}{
+					"launch": true,
+				},
+			},
 		}
 
 		if reload, ok := os.LookupEnv("BP_LIVE_RELOAD_ENABLED"); ok {
@@ -80,7 +88,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 		// FDE + FDD cases
 		if config.RuntimeVersion != "" {
 			requirements = append(requirements, packit.BuildPlanRequirement{
-				Name: "dotnet-runtime",
+				Name: "dotnet-aspnetcore",
 				Metadata: map[string]interface{}{
 					"version":        config.RuntimeVersion,
 					"version-source": "runtimeconfig.json",
@@ -95,6 +103,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 					Metadata: map[string]interface{}{
 						"version":        getSDKVersion(config.RuntimeVersion),
 						"version-source": "runtimeconfig.json",
+						"launch":         true,
 					},
 				})
 			}
@@ -121,12 +130,8 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 			return packit.DetectResult{}, packit.Fail.WithMessage("no *.runtimeconfig.json or project file found")
 		}
 
+		// TODO: Search for project files more generally?
 		if projectFile != "" {
-			version, err := projectParser.ParseVersion(projectFile)
-			if err != nil {
-				return packit.DetectResult{}, err
-			}
-
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-application",
 				Metadata: map[string]interface{}{
@@ -135,37 +140,12 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 			})
 
 			requirements = append(requirements, packit.BuildPlanRequirement{
-				Name: "dotnet-runtime",
+				Name: "dotnet-aspnetcore",
 				Metadata: map[string]interface{}{
-					"version":        version,
-					"version-source": filepath.Base(projectFile),
 					"launch":         true,
+					"version-source": ".NET Execute Buildpack",
 				},
 			})
-
-			requirements = append(requirements, packit.BuildPlanRequirement{
-				Name: "dotnet-sdk",
-				Metadata: map[string]interface{}{
-					"version":        getSDKVersion(version),
-					"version-source": filepath.Base(projectFile),
-				},
-			})
-
-			aspNetIsRequired, err := projectParser.ASPNetIsRequired(projectFile)
-			if err != nil {
-				return packit.DetectResult{}, err
-			}
-
-			if aspNetIsRequired {
-				requirements = append(requirements, packit.BuildPlanRequirement{
-					Name: "dotnet-aspnetcore",
-					Metadata: map[string]interface{}{
-						"version":        version,
-						"version-source": filepath.Base(projectFile),
-						"launch":         true,
-					},
-				})
-			}
 
 			nodeIsRequired, err := projectParser.NodeIsRequired(projectFile)
 			if err != nil {
@@ -195,23 +175,7 @@ func getSDKVersion(version string) string {
 	if version == "" {
 		return "*"
 	}
-	pieces := strings.SplitN(version, ".", 3)
-	if len(pieces) < 3 {
-		pieces = append(pieces, "*")
-	}
 
-	var parts []string
-	for i, part := range pieces {
-		if i+1 == len(pieces) {
-			part = "*"
-		}
-
-		parts = append(parts, part)
-
-		if part == "*" {
-			break
-		}
-	}
-
-	return strings.Join(parts, ".")
+	v := semver.MustParse(version)
+	return fmt.Sprintf("%d.*", v.Major())
 }
