@@ -96,18 +96,6 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 				},
 			})
 
-			// Only make SDK available at launch if there is no executable (FDD case only)
-			if !config.Executable {
-				requirements = append(requirements, packit.BuildPlanRequirement{
-					Name: "dotnet-sdk",
-					Metadata: map[string]interface{}{
-						"version":        getSDKVersion(config.RuntimeVersion),
-						"version-source": "runtimeconfig.json",
-						"launch":         true,
-					},
-				})
-			}
-
 			if config.ASPNETVersion != "" {
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					// When aspnet buildpack is rewritten per RFC0001, change to "dotnet-aspnet"
@@ -130,7 +118,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 			return packit.DetectResult{}, packit.Fail.WithMessage("no *.runtimeconfig.json or project file found")
 		}
 
-		// TODO: Search for project files more generally?
+		// TODO: Search for project files recursively?
 		if projectFile != "" {
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-application",
