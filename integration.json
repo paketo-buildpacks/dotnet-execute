@@ -1,4 +1,5 @@
 {
+  "builders": ["paketobuildpacks/builder:buildpackless-base", "paketobuildpacks/builder-jammy-buildpackless-base"],
   "dotnet-core-aspnet": "github.com/paketo-buildpacks/dotnet-core-aspnet",
   "dotnet-core-runtime": "github.com/paketo-buildpacks/dotnet-core-runtime",
   "dotnet-core-sdk": "github.com/paketo-buildpacks/dotnet-core-sdk",
