@@ -27,7 +27,8 @@ func testFdeASPNet(t *testing.T, context spec.G, it spec.S) {
 		docker = occam.NewDocker()
 	})
 
-	for _, builder := range settings.Config.Builders {
+	for _, b := range settings.Config.Builders {
+		var builder string = b
 		context(fmt.Sprintf("with %s builder", builder), func() {
 			context("when building a .NET 6 FDE app that uses the ASP.NET Framework", func() {
 				var (
@@ -65,6 +66,7 @@ func testFdeASPNet(t *testing.T, context spec.G, it spec.S) {
 							settings.Buildpacks.DotnetCoreASPNet.Online,
 							settings.Buildpacks.DotnetExecute.Online,
 						).
+						WithBuilder(builder).
 						Execute(name, source)
 					Expect(err).ToNot(HaveOccurred(), logs.String)
 

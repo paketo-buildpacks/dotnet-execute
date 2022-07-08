@@ -78,7 +78,8 @@ func testSourceApp(t *testing.T, context spec.G, it spec.S) {
 			Eventually(container).Should(Serve(ContainSubstring("simple_3_0_app")).OnPort(8080))
 		})
 
-		for _, builder := range settings.Config.Builders {
+		for _, b := range settings.Config.Builders {
+			var builder string = b
 			context(fmt.Sprintf("with %s builder", builder), func() {
 				context("when 'net6.0' is specified as the TargetFramework", func() {
 					it("builds and runs successfully", func() {
@@ -97,6 +98,7 @@ func testSourceApp(t *testing.T, context spec.G, it spec.S) {
 								settings.Buildpacks.DotnetPublish.Online,
 								settings.Buildpacks.DotnetExecute.Online,
 							).
+							WithBuilder(builder).
 							Execute(name, source)
 						Expect(err).ToNot(HaveOccurred(), logs.String)
 

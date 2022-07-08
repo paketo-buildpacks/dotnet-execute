@@ -49,7 +49,8 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(source)).To(Succeed())
 		})
 
-		for _, builder := range settings.Config.Builders {
+		for _, b := range settings.Config.Builders {
+			var builder string = b
 			context(fmt.Sprintf("with %s builder", builder), func() {
 				context("when the self-contained executable uses .NET 6", func() {
 					it("builds and runs successfully", func() {
@@ -64,6 +65,7 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 								settings.Buildpacks.ICU.Online,
 								settings.Buildpacks.DotnetExecute.Online,
 							).
+							WithBuilder(builder).
 							Execute(name, source)
 						Expect(err).ToNot(HaveOccurred(), logs.String)
 
