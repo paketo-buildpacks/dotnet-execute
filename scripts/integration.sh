@@ -82,10 +82,10 @@ function images::pull() {
 
   if [[ -f "${BUILDPACKDIR}/integration.json" ]]; then
     builders="$(jq -r .builder "${BUILDPACKDIR}/integration.json")"
-  fi
 
-  if [[ "${builders}" == "null" || -z "${builders}" ]]; then
-    builders="$(jq -r 'select(.builders != null) | .builders[]' "${BUILDPACKDIR}/integration.json")"
+    if [[ "${builders}" == "null" || -z "${builders}" ]]; then
+      builders="$(jq -r 'select(.builders != null) | .builders[]' "${BUILDPACKDIR}/integration.json")"
+    fi
   fi
 
   if [[ "${builders}" == "null" || -z "${builders}" ]]; then
@@ -113,10 +113,10 @@ function images::pull() {
     docker pull "${lifecycle_image}"
   done <<< "${builders}"
 
-    util::print::title "Setting default pack builder image..."
-    local default
-    read -r default <<< "${builders}"
-    pack config default-builder "${default}"
+  util::print::title "Setting default pack builder image..."
+  local default
+  read -r default <<< "${builders}"
+  pack config default-builder "${default}"
 }
 
 function token::fetch() {
