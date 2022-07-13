@@ -126,8 +126,8 @@ func TestIntegration(t *testing.T) {
 	suite("FdeASPNet", testFdeASPNet)
 	suite("FrameworkDependentDeployment", testFrameworkDependentDeployment)
 	suite("FrameworkDependentExecutable", testFrameworkDependentExecutable)
-	suite("NodeApp", testNodeApp)
+	// suite("NodeApp", testNodeApp)
 	suite("SelfContainedExecutable", testSelfContainedExecutable)
-	suite("SourceApp", testSourceApp)
+	// suite("SourceApp", testSourceApp)
 	suite.Run(t)
 }
