@@ -27,7 +27,7 @@ func testFdeASPNet(t *testing.T, context spec.G, it spec.S) {
 		docker = occam.NewDocker()
 	})
 
-	context("when building an FDE app that uses the ASP.NET Framework", func() {
+	context("when building a .NET 6 FDE app that uses the ASP.NET Framework", func() {
 		var (
 			image     occam.Image
 			container occam.Container

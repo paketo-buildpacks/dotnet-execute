@@ -27,7 +27,7 @@ func testFddASPNet(t *testing.T, context spec.G, it spec.S) {
 		docker = occam.NewDocker()
 	})
 
-	context("when building an FDD app that uses the ASP.NET Framework", func() {
+	context("when building a .NET 3.1 FDD app that uses the ASP.NET Framework", func() {
 		var (
 			image     occam.Image
 			container occam.Container

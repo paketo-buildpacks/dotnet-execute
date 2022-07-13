@@ -25,13 +25,14 @@ var settings struct {
 		}
 	}
 	Config struct {
-		ICU               string `json:"icu"`
-		DotnetCoreRuntime string `json:"dotnet-core-runtime"`
-		DotnetCoreSDK     string `json:"dotnet-core-sdk"`
-		DotnetCoreASPNet  string `json:"dotnet-core-aspnet"`
-		DotnetPublish     string `json:"dotnet-publish"`
-		NodeEngine        string `json:"node-engine"`
-		Watchexec         string `json:"watchexec"`
+		ICU               string   `json:"icu"`
+		DotnetCoreRuntime string   `json:"dotnet-core-runtime"`
+		DotnetCoreSDK     string   `json:"dotnet-core-sdk"`
+		DotnetCoreASPNet  string   `json:"dotnet-core-aspnet"`
+		DotnetPublish     string   `json:"dotnet-publish"`
+		NodeEngine        string   `json:"node-engine"`
+		Watchexec         string   `json:"watchexec"`
+		Builders          []string `json:"builders"`
 	}
 	Buildpacks struct {
 		DotnetExecute struct {
@@ -125,8 +126,6 @@ func TestIntegration(t *testing.T) {
 	suite("FdeASPNet", testFdeASPNet)
 	suite("FrameworkDependentDeployment", testFrameworkDependentDeployment)
 	suite("FrameworkDependentExecutable", testFrameworkDependentExecutable)
-	suite("NodeApp", testNodeApp)
 	suite("SelfContainedExecutable", testSelfContainedExecutable)
-	suite("SourceApp", testSourceApp)
 	suite.Run(t)
 }
