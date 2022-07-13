@@ -83,41 +83,47 @@ Hello World!
 			))
 		})
 
-		context("when the app is a .NET 6 framework dependent executable", func() {
-			it("builds and runs successfully", func() {
-				var err error
-				source, err = occam.Source(filepath.Join("testdata", "fde_6"))
-				Expect(err).NotTo(HaveOccurred())
+		for _, b := range settings.Config.Builders {
+			builder := b
+			context(fmt.Sprintf("with %s", builder), func() {
+				context("when the app is a .NET 6 framework dependent executable", func() {
+					it("builds and runs successfully", func() {
+						var err error
+						source, err = occam.Source(filepath.Join("testdata", "fde_6"))
+						Expect(err).NotTo(HaveOccurred())
 
-				var logs fmt.Stringer
-				image, logs, err = pack.WithVerbose().Build.
-					WithPullPolicy("never").
-					WithBuildpacks(
-						settings.Buildpacks.ICU.Online,
-						settings.Buildpacks.DotnetCoreRuntime.Online,
-						settings.Buildpacks.DotnetCoreASPNet.Online,
-						settings.Buildpacks.DotnetExecute.Online,
-					).
-					Execute(name, source)
-				Expect(err).ToNot(HaveOccurred(), logs.String)
+						var logs fmt.Stringer
+						image, logs, err = pack.WithVerbose().Build.
+							WithPullPolicy("never").
+							WithBuildpacks(
+								settings.Buildpacks.ICU.Online,
+								settings.Buildpacks.DotnetCoreRuntime.Online,
+								settings.Buildpacks.DotnetCoreASPNet.Online,
+								settings.Buildpacks.DotnetExecute.Online,
+							).
+							WithBuilder(builder).
+							Execute(name, source)
+						Expect(err).ToNot(HaveOccurred(), logs.String)
 
-				container, err = docker.Container.Run.
-					WithEnv(map[string]string{"PORT": "8080"}).
-					WithPublish("8080").
-					WithPublishAll().
-					Execute(image.ID)
-				Expect(err).NotTo(HaveOccurred())
+						container, err = docker.Container.Run.
+							WithEnv(map[string]string{"PORT": "8080"}).
+							WithPublish("8080").
+							WithPublishAll().
+							Execute(image.ID)
+						Expect(err).NotTo(HaveOccurred())
 
-				Eventually(container).Should(Serve(ContainSubstring("fde_dotnet_6")).OnPort(8080))
+						Eventually(container).Should(Serve(ContainSubstring("fde_dotnet_6")).OnPort(8080))
 
-				Expect(logs).To(ContainLines(
-					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
-					"  Assigning launch processes:",
-					`    web (default): /workspace/fde_dotnet_6`,
-					"",
-				))
+						Expect(logs).To(ContainLines(
+							MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
+							"  Assigning launch processes:",
+							`    web (default): /workspace/fde_dotnet_6`,
+							"",
+						))
+					})
+				})
 			})
-		})
+		}
 
 		context("when BP_LIVE_RELOAD_ENABLED=true", func() {
 			var noReloadContainer occam.Container
