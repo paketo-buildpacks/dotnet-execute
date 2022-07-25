@@ -78,7 +78,7 @@ func testFdeASPNet(t *testing.T, context spec.G, it spec.S) {
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
 				"  Assigning launch processes:",
-				`    web (default): /workspace/simple_aspnet_app`,
+				`    simple_aspnet_app (default): /workspace/simple_aspnet_app`,
 				"",
 			))
 		})

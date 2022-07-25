@@ -113,7 +113,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(result.Launch.Processes).To(Equal([]packit.Process{
 				{
-					Type:    "web",
+					Type:    "myapp",
 					Command: filepath.Join(workingDir, "myapp"),
 					Default: true,
 					Direct:  true,
@@ -184,7 +184,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(result.Launch.Processes).To(Equal([]packit.Process{
 				{
 
-					Type:    "web",
+					Type:    "myapp",
 					Command: "dotnet",
 					Args:    []string{filepath.Join(workingDir, "myapp.dll")},
 					Default: true,
@@ -257,7 +257,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			Expect(result.Launch.Processes).To(Equal([]packit.Process{
 				{
-					Type:    "web",
+					Type:    "reload-myapp",
 					Command: "watchexec",
 					Args: []string{
 						"--restart",
@@ -271,7 +271,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Direct:  true,
 				},
 				{
-					Type:    "no-reload",
+					Type:    "myapp",
 					Command: "dotnet",
 					Args:    []string{filepath.Join(workingDir, "myapp.dll")},
 					Direct:  true,

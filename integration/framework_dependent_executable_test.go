@@ -78,7 +78,7 @@ Hello World!
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
 				"  Assigning launch processes:",
-				`    web (default): /workspace/MyApp`,
+				`    MyApp (default): /workspace/MyApp`,
 				"",
 			))
 		})
@@ -117,7 +117,7 @@ Hello World!
 						Expect(logs).To(ContainLines(
 							MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
 							"  Assigning launch processes:",
-							`    web (default): /workspace/fde_dotnet_6`,
+							`    fde_dotnet_6 (default): /workspace/fde_dotnet_6`,
 							"",
 						))
 					})
@@ -163,12 +163,12 @@ Hello World!
 				Expect(logs).To(ContainLines(
 					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
 					"  Assigning launch processes:",
-					`    web (default): watchexec --restart --watch /workspace --shell none -- /workspace/MyApp`,
-					`    no-reload:     /workspace/MyApp`,
+					`    reload-MyApp (default): watchexec --restart --watch /workspace --shell none -- /workspace/MyApp`,
+					`    MyApp:                  /workspace/MyApp`,
 					"",
 				))
 
-				noReloadContainer, err = docker.Container.Run.WithEntrypoint("no-reload").Execute(image.ID)
+				noReloadContainer, err = docker.Container.Run.WithEntrypoint("MyApp").Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(func() string {
