@@ -63,7 +63,7 @@ func Build(
 
 		processes := []packit.Process{
 			{
-				Type:    "web",
+				Type:    config.AppName,
 				Command: command,
 				Args:    args,
 				Default: true,
@@ -80,7 +80,7 @@ func Build(
 			if shouldEnableReload {
 				processes = []packit.Process{
 					{
-						Type:    "web",
+						Type:    fmt.Sprintf("reload-%s", config.AppName),
 						Command: "watchexec",
 						Args: append([]string{
 							"--restart",
@@ -93,7 +93,7 @@ func Build(
 						Direct:  true,
 					},
 					{
-						Type:    "no-reload",
+						Type:    config.AppName,
 						Command: command,
 						Args:    args,
 						Direct:  true,
