@@ -51,7 +51,7 @@ func testFdeASPNet(t *testing.T, context spec.G, it spec.S) {
 
 		it("builds and runs successfully", func() {
 			var err error
-			source, err = occam.Source(filepath.Join("testdata", "fde_aspnet"))
+			source, err = occam.Source(filepath.Join("testdata", "fde_6"))
 			Expect(err).NotTo(HaveOccurred())
 
 			var logs fmt.Stringer
@@ -73,12 +73,12 @@ func testFdeASPNet(t *testing.T, context spec.G, it spec.S) {
 				Execute(image.ID)
 			Expect(err).NotTo(HaveOccurred())
 
-			Eventually(container).Should(Serve(ContainSubstring("Hello World!")).OnPort(8080))
+			Eventually(container).Should(Serve(ContainSubstring("Welcome")).OnPort(8080))
 
 			Expect(logs).To(ContainLines(
 				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
 				"  Assigning launch processes:",
-				`    simple_aspnet_app (default): /workspace/simple_aspnet_app`,
+				`    fde_dotnet_6 (default): /workspace/fde_dotnet_6`,
 				"",
 			))
 		})
