@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/paketo-buildpacks/occam"
@@ -49,90 +50,8 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(source)).To(Succeed())
 		})
 
-		it("builds and runs successfully", func() {
-			var err error
-			source, err = occam.Source(filepath.Join("testdata", "framework_dependent_executable"))
-			Expect(err).NotTo(HaveOccurred())
-
-			var logs fmt.Stringer
-			image, logs, err = pack.Build.
-				WithPullPolicy("never").
-				WithBuildpacks(
-					settings.Buildpacks.ICU.Online,
-					settings.Buildpacks.DotnetCoreRuntime.Online,
-					settings.Buildpacks.DotnetExecute.Online,
-				).
-				Execute(name, source)
-			Expect(err).ToNot(HaveOccurred(), logs.String)
-
-			container, err = docker.Container.Run.Execute(image.ID)
-			Expect(err).NotTo(HaveOccurred())
-
-			Eventually(func() string {
-				logs, _ := docker.Container.Logs.Execute(container.ID)
-				return logs.String()
-			}).Should(Equal(`Setting ASPNETCORE_URLS=http://0.0.0.0:8080
-Hello World!
-`))
-
-			Expect(logs).To(ContainLines(
-				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
-				"  Assigning launch processes:",
-				`    MyApp (default): /workspace/MyApp`,
-				"",
-			))
-		})
-
-		for _, b := range settings.Config.Builders {
-			builder := b
-			context(fmt.Sprintf("with %s", builder), func() {
-				context("when the app is a .NET 6 framework dependent executable", func() {
-					it("builds and runs successfully", func() {
-						var err error
-						source, err = occam.Source(filepath.Join("testdata", "fde_6"))
-						Expect(err).NotTo(HaveOccurred())
-
-						var logs fmt.Stringer
-						image, logs, err = pack.WithVerbose().Build.
-							WithPullPolicy("never").
-							WithBuildpacks(
-								settings.Buildpacks.ICU.Online,
-								settings.Buildpacks.DotnetCoreRuntime.Online,
-								settings.Buildpacks.DotnetCoreASPNet.Online,
-								settings.Buildpacks.DotnetExecute.Online,
-							).
-							WithBuilder(builder).
-							Execute(name, source)
-						Expect(err).ToNot(HaveOccurred(), logs.String)
-
-						container, err = docker.Container.Run.
-							WithEnv(map[string]string{"PORT": "8080"}).
-							WithPublish("8080").
-							WithPublishAll().
-							Execute(image.ID)
-						Expect(err).NotTo(HaveOccurred())
-
-						Eventually(container).Should(Serve(ContainSubstring("fde_dotnet_6")).OnPort(8080))
-
-						Expect(logs).To(ContainLines(
-							MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
-							"  Assigning launch processes:",
-							`    fde_dotnet_6 (default): /workspace/fde_dotnet_6`,
-							"",
-						))
-					})
-				})
-			})
-		}
-
-		context("when BP_LIVE_RELOAD_ENABLED=true", func() {
-			var noReloadContainer occam.Container
-
-			it.After(func() {
-				Expect(docker.Container.Remove.Execute(noReloadContainer.ID)).To(Succeed())
-			})
-
-			it("adds a default start process with watchexec and names the normal start process no-reload", func() {
+		if !strings.Contains(builder.Local.Stack.ID, "jammy") {
+			it("builds and runs a .NET 3.1 app successfully", func() {
 				var err error
 				source, err = occam.Source(filepath.Join("testdata", "framework_dependent_executable"))
 				Expect(err).NotTo(HaveOccurred())
@@ -142,11 +61,9 @@ Hello World!
 					WithPullPolicy("never").
 					WithBuildpacks(
 						settings.Buildpacks.ICU.Online,
-						settings.Buildpacks.Watchexec.Online,
 						settings.Buildpacks.DotnetCoreRuntime.Online,
 						settings.Buildpacks.DotnetExecute.Online,
 					).
-					WithEnv(map[string]string{"BP_LIVE_RELOAD_ENABLED": "true"}).
 					Execute(name, source)
 				Expect(err).ToNot(HaveOccurred(), logs.String)
 
@@ -163,20 +80,97 @@ Hello World!
 				Expect(logs).To(ContainLines(
 					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
 					"  Assigning launch processes:",
-					`    reload-MyApp (default): watchexec --restart --watch /workspace --shell none -- /workspace/MyApp`,
-					`    MyApp:                  /workspace/MyApp`,
+					`    MyApp (default): /workspace/MyApp`,
+					"",
+				))
+			})
+		}
+
+		context("when the app is a .NET 6 framework dependent executable", func() {
+			it("builds and runs successfully", func() {
+				var err error
+				source, err = occam.Source(filepath.Join("testdata", "fde_6"))
+				Expect(err).NotTo(HaveOccurred())
+
+				var logs fmt.Stringer
+				image, logs, err = pack.WithVerbose().Build.
+					WithPullPolicy("never").
+					WithBuildpacks(
+						settings.Buildpacks.ICU.Online,
+						settings.Buildpacks.DotnetCoreRuntime.Online,
+						settings.Buildpacks.DotnetCoreASPNet.Online,
+						settings.Buildpacks.DotnetExecute.Online,
+					).
+					Execute(name, source)
+				Expect(err).ToNot(HaveOccurred(), logs.String)
+
+				container, err = docker.Container.Run.
+					WithEnv(map[string]string{"PORT": "8080"}).
+					WithPublish("8080").
+					WithPublishAll().
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(container).Should(Serve(ContainSubstring("fde_dotnet_6")).OnPort(8080))
+
+				Expect(logs).To(ContainLines(
+					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
+					"  Assigning launch processes:",
+					`    fde_dotnet_6 (default): /workspace/fde_dotnet_6`,
+					"",
+				))
+			})
+		})
+
+		context("when BP_LIVE_RELOAD_ENABLED=true", func() {
+			var noReloadContainer occam.Container
+
+			it.After(func() {
+				Expect(docker.Container.Remove.Execute(noReloadContainer.ID)).To(Succeed())
+			})
+
+			it("adds a default start process with watchexec and names the normal start process no-reload", func() {
+				var err error
+				source, err = occam.Source(filepath.Join("testdata", "fde_6"))
+				Expect(err).NotTo(HaveOccurred())
+
+				var logs fmt.Stringer
+				image, logs, err = pack.Build.
+					WithPullPolicy("never").
+					WithBuildpacks(
+						settings.Buildpacks.ICU.Online,
+						settings.Buildpacks.Watchexec.Online,
+						settings.Buildpacks.DotnetCoreRuntime.Online,
+						settings.Buildpacks.DotnetCoreASPNet.Online,
+						settings.Buildpacks.DotnetExecute.Online,
+					).
+					WithEnv(map[string]string{"BP_LIVE_RELOAD_ENABLED": "true"}).
+					Execute(name, source)
+				Expect(err).ToNot(HaveOccurred(), logs.String)
+
+				container, err = docker.Container.Run.Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(func() string {
+					logs, _ := docker.Container.Logs.Execute(container.ID)
+					return logs.String()
+				}).Should(ContainSubstring(`Now listening on: http://0.0.0.0:8080`))
+
+				Expect(logs).To(ContainLines(
+					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
+					"  Assigning launch processes:",
+					`    reload-fde_dotnet_6 (default): watchexec --restart --watch /workspace --shell none -- /workspace/fde_dotnet_6`,
+					`    fde_dotnet_6:                  /workspace/fde_dotnet_6`,
 					"",
 				))
 
-				noReloadContainer, err = docker.Container.Run.WithEntrypoint("MyApp").Execute(image.ID)
+				noReloadContainer, err = docker.Container.Run.WithEntrypoint("fde_dotnet_6").Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(func() string {
 					logs, _ := docker.Container.Logs.Execute(noReloadContainer.ID)
 					return logs.String()
-				}).Should(Equal(`Setting ASPNETCORE_URLS=http://0.0.0.0:8080
-Hello World!
-`))
+				}).Should(ContainSubstring(`Now listening on: http://0.0.0.0:8080`))
 			})
 		})
 	})

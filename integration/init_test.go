@@ -1,6 +1,7 @@
 package integration_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/paketo-buildpacks/occam"
 	"github.com/paketo-buildpacks/occam/packagers"
+	"github.com/paketo-buildpacks/packit/v2/pexec"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
@@ -25,14 +27,13 @@ var settings struct {
 		}
 	}
 	Config struct {
-		ICU               string   `json:"icu"`
-		DotnetCoreRuntime string   `json:"dotnet-core-runtime"`
-		DotnetCoreSDK     string   `json:"dotnet-core-sdk"`
-		DotnetCoreASPNet  string   `json:"dotnet-core-aspnet"`
-		DotnetPublish     string   `json:"dotnet-publish"`
-		NodeEngine        string   `json:"node-engine"`
-		Watchexec         string   `json:"watchexec"`
-		Builders          []string `json:"builders"`
+		ICU               string `json:"icu"`
+		DotnetCoreRuntime string `json:"dotnet-core-runtime"`
+		DotnetCoreSDK     string `json:"dotnet-core-sdk"`
+		DotnetCoreASPNet  string `json:"dotnet-core-aspnet"`
+		DotnetPublish     string `json:"dotnet-publish"`
+		NodeEngine        string `json:"node-engine"`
+		Watchexec         string `json:"watchexec"`
 	}
 	Buildpacks struct {
 		DotnetExecute struct {
@@ -60,6 +61,13 @@ var settings struct {
 			Online string
 		}
 	}
+}
+var builder struct {
+	Local struct {
+		Stack struct {
+			ID string `json:"id"`
+		} `json:"stack"`
+	} `json:"local_info"`
 }
 
 func TestIntegration(t *testing.T) {
@@ -120,6 +128,16 @@ func TestIntegration(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 
 	SetDefaultEventuallyTimeout(10 * time.Second)
+
+	buf := bytes.NewBuffer(nil)
+	cmd := pexec.NewExecutable("pack")
+	Expect(cmd.Execute(pexec.Execution{
+		Args:   []string{"builder", "inspect", "--output", "json"},
+		Stdout: buf,
+		Stderr: buf,
+	})).To(Succeed(), buf.String())
+
+	Expect(json.Unmarshal(buf.Bytes(), &builder)).To(Succeed(), buf.String())
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("FddASPNet", testFddASPNet)
