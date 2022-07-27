@@ -49,44 +49,38 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(source)).To(Succeed())
 		})
 
-		for _, b := range settings.Config.Builders {
-			var builder string = b
-			context(fmt.Sprintf("with %s builder", builder), func() {
-				context("when the self-contained executable uses .NET 6", func() {
-					it("builds and runs successfully", func() {
-						var err error
-						source, err = occam.Source(filepath.Join("testdata", "self_contained_executable_6"))
-						Expect(err).NotTo(HaveOccurred())
+		context("when the self-contained executable uses .NET 6", func() {
+			it("builds and runs successfully", func() {
+				var err error
+				source, err = occam.Source(filepath.Join("testdata", "self_contained_executable_6"))
+				Expect(err).NotTo(HaveOccurred())
 
-						var logs fmt.Stringer
-						image, logs, err = pack.Build.
-							WithPullPolicy("never").
-							WithBuildpacks(
-								settings.Buildpacks.ICU.Online,
-								settings.Buildpacks.DotnetExecute.Online,
-							).
-							WithBuilder(builder).
-							Execute(name, source)
-						Expect(err).ToNot(HaveOccurred(), logs.String)
+				var logs fmt.Stringer
+				image, logs, err = pack.Build.
+					WithPullPolicy("never").
+					WithBuildpacks(
+						settings.Buildpacks.ICU.Online,
+						settings.Buildpacks.DotnetExecute.Online,
+					).
+					Execute(name, source)
+				Expect(err).ToNot(HaveOccurred(), logs.String)
 
-						container, err = docker.Container.Run.
-							WithEnv(map[string]string{"PORT": "8080"}).
-							WithPublish("8080").
-							WithPublishAll().
-							Execute(image.ID)
-						Expect(err).NotTo(HaveOccurred())
+				container, err = docker.Container.Run.
+					WithEnv(map[string]string{"PORT": "8080"}).
+					WithPublish("8080").
+					WithPublishAll().
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
 
-						Eventually(container).Should(Serve(ContainSubstring("Hello, world!")).OnPort(8080))
+				Eventually(container).Should(Serve(ContainSubstring("Hello, world!")).OnPort(8080))
 
-						Expect(logs).To(ContainLines(
-							MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
-							"  Assigning launch processes:",
-							`    source_6_selfcontained (default): /workspace/source_6_selfcontained`,
-							"",
-						))
-					})
-				})
+				Expect(logs).To(ContainLines(
+					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
+					"  Assigning launch processes:",
+					`    source_6_selfcontained (default): /workspace/source_6_selfcontained`,
+					"",
+				))
 			})
-		}
+		})
 	})
 }
