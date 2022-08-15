@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/Netflix/go-env"
 	"github.com/paketo-buildpacks/packit/v2"
 	"github.com/paketo-buildpacks/packit/v2/chronos"
 	"github.com/paketo-buildpacks/packit/v2/sbom"
@@ -22,8 +23,6 @@ type SBOMGenerator interface {
 // Configuration enumerates the environment variable configuration options
 // that govern the buildpack's behaviour.
 type Configuration struct {
-	// LogLevel             string `env:"BP_LOG_LEVEL"`
-
 	// When BP_DEBUG_ENABLED=TRUE, the buildpack will include the Visual Studio
 	// Debugger in the app launch image Remote debuggers can invoke vsdbg inside
 	// the running app container and attach to vsdbg's exposed port.
@@ -36,6 +35,10 @@ type Configuration struct {
 	// https://github.com/watchexec/watchexec for more on watchexec as a
 	// reloadable process manager.
 	LiveReloadEnabled bool `env:"BP_LIVE_RELOAD_ENABLED"`
+
+	// BP_LOG_LEVEL determines the amount of logs produced by the buildpack. Set
+	// BP_LOG_LEVEL=DEBUG for more detailed logs.
+	LogLevel string `env:"BP_LOG_LEVEL,default=INFO"`
 
 	// When BP_DOTNET_PROJECT_PATH is set to a relative path, the buildpack
 	// will look for project file(s) in that subdirectory to determine which
@@ -54,6 +57,18 @@ func Build(
 	return func(context packit.BuildContext) (packit.BuildResult, error) {
 		logger.Title("%s %s", context.BuildpackInfo.Name, context.BuildpackInfo.Version)
 
+		es, err := env.Marshal(&config)
+		if err != nil {
+			// not tested
+			return packit.BuildResult{}, fmt.Errorf("parsing build configuration: %w", err)
+		}
+
+		logger.Debug.Process("Build configuration:")
+		for envVar := range es {
+			logger.Debug.Subprocess("%s: %s", envVar, es[envVar])
+		}
+		logger.Debug.Break()
+
 		projectPath, err := buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
 		if err != nil {
 			return packit.BuildResult{}, fmt.Errorf("error parsing buildpack.yml: %w", err)
@@ -68,6 +83,25 @@ func Build(
 		runtimeConfig, err := configParser.Parse(filepath.Join(context.WorkingDir, "*.runtimeconfig.json"))
 		if err != nil {
 			return packit.BuildResult{}, fmt.Errorf("failed to find *.runtimeconfig.json: %w", err)
+		}
+
+		logger.GeneratingSBOM(context.WorkingDir)
+		var sbomContent sbom.SBOM
+		duration, err := clock.Measure(func() error {
+			sbomContent, err = sbomGenerator.Generate(context.WorkingDir)
+			return err
+		})
+		if err != nil {
+			return packit.BuildResult{}, err
+		}
+
+		logger.Action("Completed in %s", duration.Round(time.Millisecond))
+		logger.Break()
+
+		logger.FormattingSBOM(context.BuildpackInfo.SBOMFormats...)
+		sbomFormatter, err := sbomContent.InFormats(context.BuildpackInfo.SBOMFormats...)
+		if err != nil {
+			return packit.BuildResult{}, err
 		}
 
 		command := filepath.Join(context.WorkingDir, runtimeConfig.AppName)
@@ -132,26 +166,13 @@ func Build(
 			portChooserLayer.LaunchEnv.Default("ASPNETCORE_ENVIRONMENT", "Development")
 		}
 
+		// logger.LayerFlags(portChooserLayer)
+		logger.Debug.Process("Setting up layer '%s'", portChooserLayer.Name)
+		logger.Debug.Subprocess("Available at app launch: %t", portChooserLayer.Launch)
+		logger.Debug.Subprocess("Available to other buildpacks: %t", portChooserLayer.Build)
+		logger.Debug.Subprocess("Cached for rebuilds: %t", portChooserLayer.Cache)
+		logger.Debug.Break()
 		logger.EnvironmentVariables(portChooserLayer)
-
-		logger.GeneratingSBOM(context.WorkingDir)
-		var sbomContent sbom.SBOM
-		duration, err := clock.Measure(func() error {
-			sbomContent, err = sbomGenerator.Generate(context.WorkingDir)
-			return err
-		})
-		if err != nil {
-			return packit.BuildResult{}, err
-		}
-
-		logger.Action("Completed in %s", duration.Round(time.Millisecond))
-		logger.Break()
-
-		logger.FormattingSBOM(context.BuildpackInfo.SBOMFormats...)
-		sbomFormatter, err := sbomContent.InFormats(context.BuildpackInfo.SBOMFormats...)
-		if err != nil {
-			return packit.BuildResult{}, err
-		}
 
 		return packit.BuildResult{
 			Layers: []packit.Layer{

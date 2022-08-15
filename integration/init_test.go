@@ -152,6 +152,7 @@ func TestIntegration(t *testing.T) {
 	suite("FdeASPNet", testFdeASPNet)
 	suite("FrameworkDependentDeployment", testFrameworkDependentDeployment)
 	suite("FrameworkDependentExecutable", testFrameworkDependentExecutable)
+	suite("Logging", testLogging)
 	suite("NodeApp", testNodeApp)
 	suite("SelfContainedExecutable", testSelfContainedExecutable)
 	suite("SourceApp", testSourceApp)

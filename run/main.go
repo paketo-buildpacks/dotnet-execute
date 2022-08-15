@@ -26,7 +26,7 @@ func main() {
 		log.Fatal(fmt.Errorf("failed to parse build configuration: %w", err))
 	}
 
-	logger := scribe.NewEmitter(os.Stdout)
+	logger := scribe.NewEmitter(os.Stdout).WithLevel(config.LogLevel)
 	buildpackYMLParser := dotnetexecute.NewBuildpackYMLParser()
 	configParser := dotnetexecute.NewRuntimeConfigParser()
 	projectParser := dotnetexecute.NewProjectFileParser()
