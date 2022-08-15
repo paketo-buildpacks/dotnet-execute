@@ -34,6 +34,7 @@ func main() {
 	packit.Run(
 		dotnetexecute.Detect(
 			config,
+			logger,
 			buildpackYMLParser,
 			configParser,
 			projectParser,

@@ -7,7 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Netflix/go-env"
 	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
 
 //go:generate faux --interface BuildpackConfigParser --output fakes/buildpack_config_parser.go
@@ -60,8 +62,28 @@ type ProjectParser interface {
 // Self-contained Executables
 // The buildpack will require ICU at launch time. It will require Nodejs at
 // launch time if the app relies on JavaScript components.
-func Detect(config Configuration, buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, projectParser ProjectParser) packit.DetectFunc {
+func Detect(
+	config Configuration,
+	logger scribe.Emitter,
+	buildpackYMLParser BuildpackConfigParser,
+	configParser ConfigParser,
+	projectParser ProjectParser,
+) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
+		logger.Debug.Process("Build configuration:")
+		es, err := env.Marshal(&config)
+		if err != nil {
+			// not tested
+			return packit.DetectResult{}, fmt.Errorf("parsing build configuration: %w", err)
+		}
+		for envVar := range es {
+			// for bug https://github.com/Netflix/go-env/issues/23
+			if !strings.Contains(envVar, "=") {
+				logger.Debug.Subprocess("%s: %s", envVar, es[envVar])
+			}
+		}
+		logger.Debug.Break()
+
 		requirements := []packit.BuildPlanRequirement{
 			{
 				Name: "icu",
@@ -102,13 +124,17 @@ func Detect(config Configuration, buildpackYMLParser BuildpackConfigParser, conf
 			root = filepath.Join(root, config.ProjectPath)
 		}
 
+		logger.Debug.Process("Looking for .NET project files in '%s'", root)
+
 		runtimeConfig, err := configParser.Parse(filepath.Join(root, "*.runtimeconfig.json"))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return packit.DetectResult{}, err
 		}
-
 		// FDE + FDD cases
 		if runtimeConfig.RuntimeVersion != "" {
+			logger.Debug.Subprocess("Detected '%s'", filepath.Join(root, fmt.Sprintf("%s.runtimeconfig.json", runtimeConfig.AppName)))
+			logger.Debug.Break()
+
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-runtime",
 				Metadata: map[string]interface{}{
@@ -152,6 +178,8 @@ func Detect(config Configuration, buildpackYMLParser BuildpackConfigParser, conf
 		}
 
 		if projectFile != "" {
+			logger.Debug.Subprocess("Detected '%s'", projectFile)
+			logger.Debug.Break()
 			version, err := projectParser.ParseVersion(projectFile)
 			if err != nil {
 				return packit.DetectResult{}, err
@@ -212,6 +240,13 @@ func Detect(config Configuration, buildpackYMLParser BuildpackConfigParser, conf
 				})
 			}
 		}
+
+		logger.Debug.Process("Returning build plan")
+		logger.Debug.Subprocess("Requirements:")
+		for _, req := range requirements {
+			logger.Debug.Action(req.Name)
+		}
+		logger.Debug.Break()
 
 		return packit.DetectResult{
 			Plan: packit.BuildPlan{

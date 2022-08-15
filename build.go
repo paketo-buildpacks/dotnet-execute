@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -73,7 +74,10 @@ func Build(
 
 		logger.Debug.Process("Build configuration:")
 		for envVar := range es {
-			logger.Debug.Subprocess("%s: %s", envVar, es[envVar])
+			// for bug https://github.com/Netflix/go-env/issues/23
+			if !strings.Contains(envVar, "=") {
+				logger.Debug.Subprocess("%s: %s", envVar, es[envVar])
+			}
 		}
 		logger.Debug.Break()
 

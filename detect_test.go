@@ -1,6 +1,7 @@
 package dotnetexecute_test
 
 import (
+	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
 	"github.com/paketo-buildpacks/dotnet-execute/fakes"
 	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -18,11 +20,13 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		buildpackYMLParser  *fakes.BuildpackConfigParser
-		runtimeConfigParser *fakes.ConfigParser
-		projectParser       *fakes.ProjectParser
-
+		buffer     *bytes.Buffer
 		workingDir string
+
+		buildpackYMLParser  *fakes.BuildpackConfigParser
+		logger              scribe.Emitter
+		projectParser       *fakes.ProjectParser
+		runtimeConfigParser *fakes.ConfigParser
 
 		detect packit.DetectFunc
 	)
@@ -39,7 +43,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		}
 		projectParser = &fakes.ProjectParser{}
 
-		detect = dotnetexecute.Detect(dotnetexecute.Configuration{}, buildpackYMLParser, runtimeConfigParser, projectParser)
+		buffer = bytes.NewBuffer(nil)
+		logger = scribe.NewEmitter(buffer)
+
+		detect = dotnetexecute.Detect(dotnetexecute.Configuration{}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
 	})
 
 	it.After(func() {
@@ -473,7 +480,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		it.Before(func() {
 			detect = dotnetexecute.Detect(dotnetexecute.Configuration{
 				ProjectPath: "src/proj1",
-			}, buildpackYMLParser, runtimeConfigParser, projectParser)
+			}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
 		})
 
 		context("project-path directory contains a proj file", func() {
@@ -503,7 +510,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		it.Before(func() {
 			detect = dotnetexecute.Detect(dotnetexecute.Configuration{
 				LiveReloadEnabled: true,
-			}, buildpackYMLParser, runtimeConfigParser, projectParser)
+			}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
 		})
 
 		it("requires watchexec at launch", func() {
@@ -524,7 +531,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		it.Before(func() {
 			detect = dotnetexecute.Detect(dotnetexecute.Configuration{
 				DebugEnabled: true,
-			}, buildpackYMLParser, runtimeConfigParser, projectParser)
+			}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
 		})
 
 		it("requires vsdbg at launch", func() {
