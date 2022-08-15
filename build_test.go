@@ -67,8 +67,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	context("the app is a framework-dependent or self-contained executable", func() {
 		it.Before(func() {
 			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
-				AppName:    "myapp",
+				Path:       filepath.Join(workingDir, "my.app.runtimeconfig.json"),
+				AppName:    "my.app",
 				Executable: true,
 			}
 		})
@@ -115,7 +115,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(result.Launch.Processes).To(Equal([]packit.Process{
 				{
 					Type:    "myapp",
-					Command: filepath.Join(workingDir, "myapp"),
+					Command: filepath.Join(workingDir, "my.app"),
 					Default: true,
 					Direct:  true,
 				},
@@ -132,15 +132,15 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	context("the app is a framework dependent deployment", func() {
 		it.Before(func() {
 			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
-				AppName:    "myapp",
+				Path:       filepath.Join(workingDir, "my.app.runtimeconfig.json"),
+				AppName:    "my.app",
 				Executable: false,
 			}
-			Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "my.app.dll"), nil, os.ModePerm)).To(Succeed())
 		})
 
 		it.After(func() {
-			Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
+			Expect(os.RemoveAll(filepath.Join(workingDir, "my.app.dll"))).To(Succeed())
 		})
 
 		it("returns a result that builds correctly", func() {
@@ -187,7 +187,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 					Type:    "myapp",
 					Command: "dotnet",
-					Args:    []string{filepath.Join(workingDir, "myapp.dll")},
+					Args:    []string{filepath.Join(workingDir, "my.app.dll")},
 					Default: true,
 					Direct:  true,
 				},
@@ -203,10 +203,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	context("when BP_LIVE_RELOAD_ENABLED=true", func() {
 		it.Before(func() {
-			Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "my.app.dll"), nil, os.ModePerm)).To(Succeed())
 			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
-				AppName:    "myapp",
+				Path:       filepath.Join(workingDir, "my.app.runtimeconfig.json"),
+				AppName:    "my.app",
 				Executable: false,
 			}
 
@@ -216,7 +216,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it.After(func() {
-			Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
+			Expect(os.RemoveAll(filepath.Join(workingDir, "my.app.dll"))).To(Succeed())
 		})
 
 		it("wraps the start command with watchexec", func() {
@@ -268,7 +268,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 						"--shell", "none",
 						"--",
 						"dotnet",
-						filepath.Join(workingDir, "myapp.dll"),
+						filepath.Join(workingDir, "my.app.dll"),
 					},
 					Default: true,
 					Direct:  true,
@@ -276,7 +276,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				{
 					Type:    "myapp",
 					Command: "dotnet",
-					Args:    []string{filepath.Join(workingDir, "myapp.dll")},
+					Args:    []string{filepath.Join(workingDir, "my.app.dll")},
 					Direct:  true,
 				},
 			}))
@@ -291,10 +291,10 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	context("when BP_DEBUG_ENABLED=true", func() {
 		it.Before(func() {
-			Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+			Expect(os.WriteFile(filepath.Join(workingDir, "my.app.dll"), nil, os.ModePerm)).To(Succeed())
 			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
-				AppName:    "myapp",
+				Path:       filepath.Join(workingDir, "my.app.runtimeconfig.json"),
+				AppName:    "my.app",
 				Executable: false,
 			}
 
@@ -304,7 +304,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 
 		it.After(func() {
-			Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
+			Expect(os.RemoveAll(filepath.Join(workingDir, "my.app.dll"))).To(Succeed())
 		})
 
 		it("sets ASPNETCORE_ENVIRONMENT=Development at launch time", func() {
@@ -354,7 +354,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				{
 					Type:    "myapp",
 					Command: "dotnet",
-					Args:    []string{filepath.Join(workingDir, "myapp.dll")},
+					Args:    []string{filepath.Join(workingDir, "my.app.dll")},
 					Direct:  true,
 					Default: true,
 				},
@@ -372,8 +372,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		it.Before(func() {
 			buildpackYMLParser.ParseProjectPathCall.Returns.ProjectPath = "src/proj1"
 			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
-				AppName:    "myapp",
+				Path:       filepath.Join(workingDir, "my.app.runtimeconfig.json"),
+				AppName:    "my.app",
 				Executable: true,
 			}
 		})
