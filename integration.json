@@ -6,5 +6,6 @@
   "dotnet-publish": "github.com/paketo-buildpacks/dotnet-publish",
   "icu": "github.com/paketo-buildpacks/icu",
   "node-engine": "github.com/paketo-buildpacks/node-engine",
-  "watchexec": "github.com/paketo-buildpacks/watchexec"
+  "watchexec": "github.com/paketo-buildpacks/watchexec",
+  "vsdbg": "github.com/paketo-buildpacks/vsdbg"
 }

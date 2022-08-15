@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/paketo-buildpacks/packit/v2"
@@ -29,25 +28,8 @@ type ProjectParser interface {
 	NodeIsRequired(path string) (bool, error)
 }
 
-func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, projectParser ProjectParser) packit.DetectFunc {
+func Detect(config Configuration, buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, projectParser ProjectParser) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
-		var projectPath string
-		var ok bool
-		var err error
-
-		if projectPath, ok = os.LookupEnv("BP_DOTNET_PROJECT_PATH"); !ok {
-			projectPath, err = buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
-			if err != nil {
-				return packit.DetectResult{}, fmt.Errorf("failed to parse buildpack.yml: %w", err)
-			}
-		}
-
-		root := context.WorkingDir
-
-		if projectPath != "" {
-			root = filepath.Join(root, projectPath)
-		}
-
 		requirements := []packit.BuildPlanRequirement{
 			{
 				Name: "icu",
@@ -57,54 +39,70 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 			},
 		}
 
-		if reload, ok := os.LookupEnv("BP_LIVE_RELOAD_ENABLED"); ok {
-			shouldEnableReload, err := strconv.ParseBool(reload)
+		if config.LiveReloadEnabled {
+			requirements = append(requirements, packit.BuildPlanRequirement{
+				Name: "watchexec",
+				Metadata: map[string]interface{}{
+					"launch": true,
+				},
+			})
+		}
+
+		if config.DebugEnabled {
+			requirements = append(requirements, packit.BuildPlanRequirement{
+				Name: "vsdbg",
+				Metadata: map[string]interface{}{
+					"launch": true,
+				},
+			})
+		}
+
+		if config.ProjectPath == "" {
+			var err error
+			config.ProjectPath, err = buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
 			if err != nil {
-				return packit.DetectResult{}, fmt.Errorf("failed to parse BP_LIVE_RELOAD_ENABLED: %w", err)
-			}
-			if shouldEnableReload {
-				requirements = append(requirements, packit.BuildPlanRequirement{
-					Name: "watchexec",
-					Metadata: map[string]interface{}{
-						"launch": true,
-					},
-				})
+				return packit.DetectResult{}, fmt.Errorf("failed to parse buildpack.yml: %w", err)
 			}
 		}
 
-		config, err := configParser.Parse(filepath.Join(root, "*.runtimeconfig.json"))
+		root := context.WorkingDir
+		if config.ProjectPath != "" {
+			root = filepath.Join(root, config.ProjectPath)
+		}
+
+		runtimeConfig, err := configParser.Parse(filepath.Join(root, "*.runtimeconfig.json"))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return packit.DetectResult{}, err
 		}
 
 		// FDE + FDD cases
-		if config.RuntimeVersion != "" {
+		if runtimeConfig.RuntimeVersion != "" {
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-runtime",
 				Metadata: map[string]interface{}{
-					"version":        config.RuntimeVersion,
+					"version":        runtimeConfig.RuntimeVersion,
 					"version-source": "runtimeconfig.json",
 					"launch":         true,
 				},
 			})
 
 			// Only make SDK available at launch if there is no executable (FDD case only)
-			if !config.Executable {
+			if !runtimeConfig.Executable {
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					Name: "dotnet-sdk",
 					Metadata: map[string]interface{}{
-						"version":        getSDKVersion(config.RuntimeVersion),
+						"version":        getSDKVersion(runtimeConfig.RuntimeVersion),
 						"version-source": "runtimeconfig.json",
 					},
 				})
 			}
 
-			if config.ASPNETVersion != "" {
+			if runtimeConfig.ASPNETVersion != "" {
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					// When aspnet buildpack is rewritten per RFC0001, change to "dotnet-aspnet"
 					Name: "dotnet-aspnetcore",
 					Metadata: map[string]interface{}{
-						"version":        config.ASPNETVersion,
+						"version":        runtimeConfig.ASPNETVersion,
 						"version-source": "runtimeconfig.json",
 						"launch":         true,
 					},
@@ -117,7 +115,7 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 			return packit.DetectResult{}, err
 		}
 
-		if config.Path == "" && projectFile == "" {
+		if runtimeConfig.Path == "" && projectFile == "" {
 			return packit.DetectResult{}, packit.Fail.WithMessage("no *.runtimeconfig.json or project file found")
 		}
 

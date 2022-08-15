@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"os"
 
+	"github.com/Netflix/go-env"
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
 	"github.com/paketo-buildpacks/packit/v2"
 	"github.com/paketo-buildpacks/packit/v2/chronos"
@@ -17,6 +20,12 @@ func (f Generator) Generate(path string) (sbom.SBOM, error) {
 }
 
 func main() {
+	var config dotnetexecute.Configuration
+	_, err := env.UnmarshalFromEnviron(&config)
+	if err != nil {
+		log.Fatal(fmt.Errorf("failed to parse build configuration: %w", err))
+	}
+
 	logger := scribe.NewEmitter(os.Stdout)
 	buildpackYMLParser := dotnetexecute.NewBuildpackYMLParser()
 	configParser := dotnetexecute.NewRuntimeConfigParser()
@@ -24,11 +33,13 @@ func main() {
 
 	packit.Run(
 		dotnetexecute.Detect(
+			config,
 			buildpackYMLParser,
 			configParser,
 			projectParser,
 		),
 		dotnetexecute.Build(
+			config,
 			buildpackYMLParser,
 			configParser,
 			Generator{},

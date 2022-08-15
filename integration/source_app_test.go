@@ -110,6 +110,41 @@ func testSourceApp(t *testing.T, context spec.G, it spec.S) {
 
 				Eventually(container).Should(Serve(ContainSubstring("source_6_app")).OnPort(8080))
 			})
+			context("remote debugging is enabled", func() {
+				it("builds and runs successfully", func() {
+					var err error
+					source, err = occam.Source(filepath.Join("testdata", "source_6"))
+					Expect(err).NotTo(HaveOccurred())
+
+					var logs fmt.Stringer
+					image, logs, err = pack.Build.
+						WithPullPolicy("never").
+						WithBuildpacks(
+							settings.Buildpacks.ICU.Online,
+							settings.Buildpacks.Vsdbg.Online,
+							settings.Buildpacks.DotnetCoreRuntime.Online,
+							settings.Buildpacks.DotnetCoreASPNet.Online,
+							settings.Buildpacks.DotnetCoreSDK.Online,
+							settings.Buildpacks.DotnetPublish.Online,
+							settings.Buildpacks.DotnetExecute.Online,
+						).
+						WithEnv(map[string]string{
+							"BP_DEBUG_ENABLED": "true",
+						}).
+						Execute(name, source)
+					Expect(err).ToNot(HaveOccurred(), logs.String)
+
+					container, err = docker.Container.Run.
+						WithEnv(map[string]string{"PORT": "8080"}).
+						WithPublish("8080").
+						WithPublishAll().
+						Execute(image.ID)
+					Expect(err).NotTo(HaveOccurred())
+
+					Eventually(container).Should(Serve(ContainSubstring("source_6_app")).OnPort(8080))
+				})
+
+			})
 		})
 	})
 }

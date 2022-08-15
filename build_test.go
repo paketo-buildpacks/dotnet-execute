@@ -22,13 +22,14 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		layersDir          string
-		workingDir         string
-		cnbDir             string
 		buffer             *bytes.Buffer
-		configParser       *fakes.ConfigParser
 		buildpackYMLParser *fakes.BuildpackConfigParser
+		cnbDir             string
+		configParser       *fakes.ConfigParser
+		layersDir          string
+		logger             scribe.Emitter
 		sbomGenerator      *fakes.SBOMGenerator
+		workingDir         string
 
 		build packit.BuildFunc
 	)
@@ -52,9 +53,9 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		sbomGenerator.GenerateCall.Returns.SBOM = sbom.SBOM{}
 
 		buffer = bytes.NewBuffer(nil)
-		logger := scribe.NewEmitter(buffer)
+		logger = scribe.NewEmitter(buffer)
 
-		build = dotnetexecute.Build(buildpackYMLParser, configParser, sbomGenerator, logger, chronos.DefaultClock)
+		build = dotnetexecute.Build(dotnetexecute.Configuration{}, buildpackYMLParser, configParser, sbomGenerator, logger, chronos.DefaultClock)
 	})
 
 	it.After(func() {
@@ -202,17 +203,19 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 	context("when BP_LIVE_RELOAD_ENABLED=true", func() {
 		it.Before(func() {
-			Expect(os.Setenv("BP_LIVE_RELOAD_ENABLED", "true")).To(Succeed())
 			Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
 			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
 				AppName:    "myapp",
 				Executable: false,
 			}
+
+			build = dotnetexecute.Build(dotnetexecute.Configuration{
+				LiveReloadEnabled: true,
+			}, buildpackYMLParser, configParser, sbomGenerator, logger, chronos.DefaultClock)
 		})
 
 		it.After(func() {
-			Expect(os.Unsetenv("BP_LIVE_RELOAD_ENABLED")).To(Succeed())
 			Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
 		})
 
@@ -275,6 +278,85 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Command: "dotnet",
 					Args:    []string{filepath.Join(workingDir, "myapp.dll")},
 					Direct:  true,
+				},
+			}))
+
+			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
+
+			Expect(configParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
+
+			Expect(sbomGenerator.GenerateCall.Receives.Path).To(Equal(workingDir))
+		})
+	})
+
+	context("when BP_DEBUG_ENABLED=true", func() {
+		it.Before(func() {
+			Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
+			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
+				Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
+				AppName:    "myapp",
+				Executable: false,
+			}
+
+			build = dotnetexecute.Build(dotnetexecute.Configuration{
+				DebugEnabled: true,
+			}, buildpackYMLParser, configParser, sbomGenerator, logger, chronos.DefaultClock)
+		})
+
+		it.After(func() {
+			Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
+		})
+
+		it("sets ASPNETCORE_ENVIRONMENT=Development at launch time", func() {
+			result, err := build(packit.BuildContext{
+				WorkingDir: workingDir,
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				BuildpackInfo: packit.BuildpackInfo{
+					Name:        "Some Buildpack",
+					Version:     "some-version",
+					SBOMFormats: []string{sbom.CycloneDXFormat, sbom.SPDXFormat},
+				},
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{},
+				},
+				Layers: packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(result.Layers).To(HaveLen(1))
+			portLayer := result.Layers[0]
+
+			Expect(portLayer.Name).To(Equal("port-chooser"))
+			Expect(portLayer.Path).To(Equal(filepath.Join(layersDir, "port-chooser")))
+			Expect(portLayer.ExecD).To(Equal([]string{filepath.Join(cnbDir, "bin", "port-chooser")}))
+
+			Expect(portLayer.Build).To(BeFalse())
+			Expect(portLayer.Launch).To(BeTrue())
+			Expect(portLayer.Cache).To(BeFalse())
+
+			Expect(portLayer.LaunchEnv).To(Equal(packit.Environment{
+				"ASPNETCORE_ENVIRONMENT.default": "Development",
+			}))
+
+			Expect(result.Launch.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
+				{
+					Extension: sbom.Format(sbom.CycloneDXFormat).Extension(),
+					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.CycloneDXFormat),
+				},
+				{
+					Extension: sbom.Format(sbom.SPDXFormat).Extension(),
+					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.SPDXFormat),
+				},
+			}))
+
+			Expect(result.Launch.Processes).To(Equal([]packit.Process{
+				{
+					Type:    "myapp",
+					Command: "dotnet",
+					Args:    []string{filepath.Join(workingDir, "myapp.dll")},
+					Direct:  true,
+					Default: true,
 				},
 			}))
 
@@ -428,31 +510,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				Expect(err).To(MatchError(ContainSubstring("no entrypoint [myapp.dll] found")))
 			})
 
-		})
-
-		context("parsing the value of BP_LIVE_RELOAD_ENABLED fails", func() {
-			it.Before(func() {
-				Expect(os.WriteFile(filepath.Join(workingDir, "myapp.dll"), nil, os.ModePerm)).To(Succeed())
-				configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-					Path:       filepath.Join(workingDir, "myapp.runtimeconfig.json"),
-					AppName:    "myapp",
-					Executable: false,
-				}
-				Expect(os.Setenv("BP_LIVE_RELOAD_ENABLED", "%%%")).To(Succeed())
-			})
-
-			it.After(func() {
-				Expect(os.Unsetenv("BP_LIVE_RELOAD_ENABLED")).To(Succeed())
-				Expect(os.RemoveAll(filepath.Join(workingDir, "myapp.dll"))).To(Succeed())
-			})
-
-			it("fails", func() {
-				_, err := build(packit.BuildContext{
-					WorkingDir: workingDir,
-				})
-				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError(ContainSubstring("invalid syntax")))
-			})
 		})
 
 		context("when generating the SBOM returns an error", func() {
