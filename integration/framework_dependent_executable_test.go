@@ -76,13 +76,6 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 				}).Should(Equal(`Setting ASPNETCORE_URLS=http://0.0.0.0:8080
 Hello World!
 `))
-
-				Expect(logs).To(ContainLines(
-					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
-					"  Assigning launch processes:",
-					`    MyApp (default): /workspace/MyApp`,
-					"",
-				))
 			})
 		}
 
@@ -112,13 +105,6 @@ Hello World!
 				Expect(err).NotTo(HaveOccurred())
 
 				Eventually(container).Should(Serve(ContainSubstring("fde_dotnet_6")).OnPort(8080))
-
-				Expect(logs).To(ContainLines(
-					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
-					"  Assigning launch processes:",
-					`    fde_dotnet_6 (default): /workspace/fde_dotnet_6`,
-					"",
-				))
 			})
 		})
 
@@ -155,14 +141,6 @@ Hello World!
 					logs, _ := docker.Container.Logs.Execute(container.ID)
 					return logs.String()
 				}).Should(ContainSubstring(`Now listening on: http://0.0.0.0:8080`))
-
-				Expect(logs).To(ContainLines(
-					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
-					"  Assigning launch processes:",
-					`    reload-fde_dotnet_6 (default): watchexec --restart --watch /workspace --shell none -- /workspace/fde_dotnet_6`,
-					`    fde_dotnet_6:                  /workspace/fde_dotnet_6`,
-					"",
-				))
 
 				noReloadContainer, err = docker.Container.Run.WithEntrypoint("fde_dotnet_6").Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())

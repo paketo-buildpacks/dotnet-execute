@@ -131,7 +131,7 @@ func TestIntegration(t *testing.T) {
 		Execute(settings.Config.Watchexec)
 	Expect(err).ToNot(HaveOccurred())
 
-	settings.Buildpacks.Vsdbg.Online, err = libpakBuildpackStore.Get.
+	settings.Buildpacks.Vsdbg.Online, err = buildpackStore.Get.
 		Execute(settings.Config.Vsdbg)
 	Expect(err).ToNot(HaveOccurred())
 

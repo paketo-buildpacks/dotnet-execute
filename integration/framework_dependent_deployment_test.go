@@ -11,7 +11,6 @@ import (
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
-	. "github.com/paketo-buildpacks/occam/matchers"
 )
 
 func testFrameworkDependentDeployment(t *testing.T, context spec.G, it spec.S) {
@@ -77,13 +76,6 @@ func testFrameworkDependentDeployment(t *testing.T, context spec.G, it spec.S) {
 				}).Should(Equal(`Setting ASPNETCORE_URLS=http://0.0.0.0:8080
 Hello World!
 `))
-
-				Expect(logs).To(ContainLines(
-					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
-					"  Assigning launch processes:",
-					`    MyApp (default): dotnet /workspace/MyApp.dll`,
-					"",
-				))
 			})
 		})
 	}

@@ -82,13 +82,6 @@ func testFddASPNet(t *testing.T, context spec.G, it spec.S) {
 				}).Should(ContainSubstring(`Setting ASPNETCORE_URLS=http://0.0.0.0:9090`))
 
 				Eventually(container).Should(Serve(ContainSubstring("Hello World!")).OnPort(9090))
-
-				Expect(logs).To(ContainLines(
-					MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
-					"  Assigning launch processes:",
-					`    simple_aspnet_app (default): dotnet /workspace/simple_aspnet_app.dll`,
-					"",
-				))
 			})
 		})
 	}
