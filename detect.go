@@ -28,6 +28,38 @@ type ProjectParser interface {
 	NodeIsRequired(path string) (bool, error)
 }
 
+// Detect will return a packit.DetectFunc that will be invoked during the
+// detect phase of the buildpack lifecycle.
+//
+// Detection will contribute a Build Plan that requires different things
+// depending on the type of app being built. See Configuration for details
+// on how environment variable configuration influences detection.
+//
+// Source Code Apps
+//
+// The buildpack will require the .NET Core SDK at build-time and the .NET Core
+// Runtime and ASP.NET Core at launch-time. It will require ICU at launch time.
+// It will require Nodejs at launch time if the app relies on JavaScript
+// components.
+//
+// Framework-dependent Deployments
+//
+// The buildpack will require the .NET Core Runtime and ASP.NET Core at
+// launch-time to run the framework-dependent app. It will require ICU at
+// launch time. It will require the .NET Core SDK at launch-time so that the
+// dotnet CLI is available to invoke the app's entrypoint DLL. It will require
+// Nodejs if the app relies on JavaScript components.
+//
+// Framework-dependent Executables
+//
+// The buildpack will require the .NET Core Runtime and ASP.NET Core at
+// launch-time to run the framework-dependent app. It will require ICU at
+// launch time. It will require Nodejs at launch time if the app relies on JavaScript
+// components.
+//
+// Self-contained Executables
+// The buildpack will require ICU at launch time. It will require Nodejs at
+// launch time if the app relies on JavaScript components.
 func Detect(config Configuration, buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, projectParser ProjectParser) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
 		requirements := []packit.BuildPlanRequirement{

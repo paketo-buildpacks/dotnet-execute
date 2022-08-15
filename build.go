@@ -23,9 +23,11 @@ type SBOMGenerator interface {
 // Configuration enumerates the environment variable configuration options
 // that govern the buildpack's behaviour.
 type Configuration struct {
+
 	// When BP_DEBUG_ENABLED=TRUE, the buildpack will include the Visual Studio
 	// Debugger in the app launch image Remote debuggers can invoke vsdbg inside
-	// the running app container and attach to vsdbg's exposed port.
+	// the running app container and attach to vsdbg's exposed port; also, the
+	// buildpack will set ASPNETCORE_ENVIRONMENT=Development.
 	DebugEnabled bool `env:"BP_DEBUG_ENABLED"`
 
 	// When BP_LIVE_RELOAD_ENABLED=TRUE, the buildpack will make the app's entrypoint
@@ -46,6 +48,12 @@ type Configuration struct {
 	ProjectPath string `env:"BP_DOTNET_PROJECT_PATH"`
 }
 
+// Build will return a packit.BuildFunc that will be invoked during the build
+// phase of the buildpack lifecycle.
+//
+// Build generates a SBOM of the .NET app's dependencies based on its compiled
+// DLLs. It sets up the entrypoint for the app image and adds a helper that
+// will determine at launch-time which container port the app should listen on.
 func Build(
 	config Configuration,
 	buildpackYMLParser BuildpackConfigParser,
