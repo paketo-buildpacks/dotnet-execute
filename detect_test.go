@@ -1,6 +1,7 @@
 package dotnetexecute_test
 
 import (
+	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	dotnetexecute "github.com/paketo-buildpacks/dotnet-execute"
 	"github.com/paketo-buildpacks/dotnet-execute/fakes"
 	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/scribe"
 	"github.com/sclevine/spec"
 
 	. "github.com/onsi/gomega"
@@ -18,11 +20,13 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		buildpackYMLParser  *fakes.BuildpackConfigParser
-		runtimeConfigParser *fakes.ConfigParser
-		projectParser       *fakes.ProjectParser
-
+		buffer     *bytes.Buffer
 		workingDir string
+
+		buildpackYMLParser  *fakes.BuildpackConfigParser
+		logger              scribe.Emitter
+		projectParser       *fakes.ProjectParser
+		runtimeConfigParser *fakes.ConfigParser
 
 		detect packit.DetectFunc
 	)
@@ -39,7 +43,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		}
 		projectParser = &fakes.ProjectParser{}
 
-		detect = dotnetexecute.Detect(buildpackYMLParser, runtimeConfigParser, projectParser)
+		buffer = bytes.NewBuffer(nil)
+		logger = scribe.NewEmitter(buffer)
+
+		detect = dotnetexecute.Detect(dotnetexecute.Configuration{}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
 	})
 
 	it.After(func() {
@@ -471,11 +478,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	context("when BP_DOTNET_PROJECT_PATH sets a custom project-path", func() {
 		it.Before(func() {
-			Expect(os.Setenv("BP_DOTNET_PROJECT_PATH", "src/proj1")).To(Succeed())
-		})
-
-		it.After(func() {
-			Expect(os.Unsetenv("BP_DOTNET_PROJECT_PATH")).To(Succeed())
+			detect = dotnetexecute.Detect(dotnetexecute.Configuration{
+				ProjectPath: "src/proj1",
+			}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
 		})
 
 		context("project-path directory contains a proj file", func() {
@@ -503,11 +508,9 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 
 	context("when BP_LIVE_RELOAD_ENABLED is set to true", func() {
 		it.Before(func() {
-			Expect(os.Setenv("BP_LIVE_RELOAD_ENABLED", "true")).To(Succeed())
-		})
-
-		it.After(func() {
-			Expect(os.Unsetenv("BP_LIVE_RELOAD_ENABLED")).To(Succeed())
+			detect = dotnetexecute.Detect(dotnetexecute.Configuration{
+				LiveReloadEnabled: true,
+			}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
 		})
 
 		it("requires watchexec at launch", func() {
@@ -517,6 +520,27 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.Plan.Requires).To(ContainElement(packit.BuildPlanRequirement{
 				Name: "watchexec",
+				Metadata: map[string]interface{}{
+					"launch": true,
+				},
+			},
+			))
+		})
+	})
+	context("when BP_DEBUG_ENABLED is set to true", func() {
+		it.Before(func() {
+			detect = dotnetexecute.Detect(dotnetexecute.Configuration{
+				DebugEnabled: true,
+			}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
+		})
+
+		it("requires vsdbg at launch", func() {
+			result, err := detect(packit.DetectContext{
+				WorkingDir: workingDir,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.Plan.Requires).To(ContainElement(packit.BuildPlanRequirement{
+				Name: "vsdbg",
 				Metadata: map[string]interface{}{
 					"launch": true,
 				},
@@ -622,24 +646,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				})
 				Expect(err).To(HaveOccurred())
 				Expect(err).To(MatchError("some-error"))
-			})
-		})
-
-		context("parsing the value of BP_LIVE_RELOAD_ENABLED fails", func() {
-			it.Before(func() {
-				Expect(os.Setenv("BP_LIVE_RELOAD_ENABLED", "%%%")).To(Succeed())
-			})
-
-			it.After(func() {
-				Expect(os.Unsetenv("BP_LIVE_RELOAD_ENABLED")).To(Succeed())
-			})
-
-			it("fails", func() {
-				_, err := detect(packit.DetectContext{
-					WorkingDir: workingDir,
-				})
-				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError(ContainSubstring("invalid syntax")))
 			})
 		})
 	})

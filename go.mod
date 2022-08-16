@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/BurntSushi/toml v1.2.0
 	github.com/Masterminds/semver v1.5.0
+	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/gravityblast/go-jsmin v0.0.0-20141027113318-a32d741b3595
 	github.com/onsi/gomega v1.20.0
 	github.com/paketo-buildpacks/occam v0.12.1

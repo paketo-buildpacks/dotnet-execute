@@ -74,13 +74,6 @@ func testFdeASPNet(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			Eventually(container).Should(Serve(ContainSubstring("Welcome")).OnPort(8080))
-
-			Expect(logs).To(ContainLines(
-				MatchRegexp(fmt.Sprintf(`%s \d+\.\d+\.\d+`, settings.BuildpackInfo.Buildpack.Name)),
-				"  Assigning launch processes:",
-				`    fde_dotnet_6 (default): /workspace/fde_dotnet_6`,
-				"",
-			))
 		})
 	})
 }

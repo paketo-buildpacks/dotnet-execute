@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
+	"github.com/Netflix/go-env"
 	"github.com/paketo-buildpacks/packit/v2"
+	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
 
 //go:generate faux --interface BuildpackConfigParser --output fakes/buildpack_config_parser.go
@@ -29,24 +30,59 @@ type ProjectParser interface {
 	NodeIsRequired(path string) (bool, error)
 }
 
-func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser, projectParser ProjectParser) packit.DetectFunc {
+// Detect will return a packit.DetectFunc that will be invoked during the
+// detect phase of the buildpack lifecycle.
+//
+// Detection will contribute a Build Plan that requires different things
+// depending on the type of app being built. See Configuration for details
+// on how environment variable configuration influences detection.
+//
+// Source Code Apps
+//
+// The buildpack will require the .NET Core SDK at build-time and the .NET Core
+// Runtime and ASP.NET Core at launch-time. It will require ICU at launch time.
+// It will require Nodejs at launch time if the app relies on JavaScript
+// components.
+//
+// Framework-dependent Deployments
+//
+// The buildpack will require the .NET Core Runtime and ASP.NET Core at
+// launch-time to run the framework-dependent app. It will require ICU at
+// launch time. It will require the .NET Core SDK at launch-time so that the
+// dotnet CLI is available to invoke the app's entrypoint DLL. It will require
+// Nodejs if the app relies on JavaScript components.
+//
+// Framework-dependent Executables
+//
+// The buildpack will require the .NET Core Runtime and ASP.NET Core at
+// launch-time to run the framework-dependent app. It will require ICU at
+// launch time. It will require Nodejs at launch time if the app relies on JavaScript
+// components.
+//
+// Self-contained Executables
+// The buildpack will require ICU at launch time. It will require Nodejs at
+// launch time if the app relies on JavaScript components.
+func Detect(
+	config Configuration,
+	logger scribe.Emitter,
+	buildpackYMLParser BuildpackConfigParser,
+	configParser ConfigParser,
+	projectParser ProjectParser,
+) packit.DetectFunc {
 	return func(context packit.DetectContext) (packit.DetectResult, error) {
-		var projectPath string
-		var ok bool
-		var err error
-
-		if projectPath, ok = os.LookupEnv("BP_DOTNET_PROJECT_PATH"); !ok {
-			projectPath, err = buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
-			if err != nil {
-				return packit.DetectResult{}, fmt.Errorf("failed to parse buildpack.yml: %w", err)
+		logger.Debug.Process("Build configuration:")
+		es, err := env.Marshal(&config)
+		if err != nil {
+			// not tested
+			return packit.DetectResult{}, fmt.Errorf("parsing build configuration: %w", err)
+		}
+		for envVar := range es {
+			// for bug https://github.com/Netflix/go-env/issues/23
+			if !strings.Contains(envVar, "=") {
+				logger.Debug.Subprocess("%s: %s", envVar, es[envVar])
 			}
 		}
-
-		root := context.WorkingDir
-
-		if projectPath != "" {
-			root = filepath.Join(root, projectPath)
-		}
+		logger.Debug.Break()
 
 		requirements := []packit.BuildPlanRequirement{
 			{
@@ -57,54 +93,74 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 			},
 		}
 
-		if reload, ok := os.LookupEnv("BP_LIVE_RELOAD_ENABLED"); ok {
-			shouldEnableReload, err := strconv.ParseBool(reload)
+		if config.LiveReloadEnabled {
+			requirements = append(requirements, packit.BuildPlanRequirement{
+				Name: "watchexec",
+				Metadata: map[string]interface{}{
+					"launch": true,
+				},
+			})
+		}
+
+		if config.DebugEnabled {
+			requirements = append(requirements, packit.BuildPlanRequirement{
+				Name: "vsdbg",
+				Metadata: map[string]interface{}{
+					"launch": true,
+				},
+			})
+		}
+
+		if config.ProjectPath == "" {
+			var err error
+			config.ProjectPath, err = buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
 			if err != nil {
-				return packit.DetectResult{}, fmt.Errorf("failed to parse BP_LIVE_RELOAD_ENABLED: %w", err)
-			}
-			if shouldEnableReload {
-				requirements = append(requirements, packit.BuildPlanRequirement{
-					Name: "watchexec",
-					Metadata: map[string]interface{}{
-						"launch": true,
-					},
-				})
+				return packit.DetectResult{}, fmt.Errorf("failed to parse buildpack.yml: %w", err)
 			}
 		}
 
-		config, err := configParser.Parse(filepath.Join(root, "*.runtimeconfig.json"))
+		root := context.WorkingDir
+		if config.ProjectPath != "" {
+			root = filepath.Join(root, config.ProjectPath)
+		}
+
+		logger.Debug.Process("Looking for .NET project files in '%s'", root)
+
+		runtimeConfig, err := configParser.Parse(filepath.Join(root, "*.runtimeconfig.json"))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return packit.DetectResult{}, err
 		}
-
 		// FDE + FDD cases
-		if config.RuntimeVersion != "" {
+		if runtimeConfig.RuntimeVersion != "" {
+			logger.Debug.Subprocess("Detected '%s'", filepath.Join(root, fmt.Sprintf("%s.runtimeconfig.json", runtimeConfig.AppName)))
+			logger.Debug.Break()
+
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-runtime",
 				Metadata: map[string]interface{}{
-					"version":        config.RuntimeVersion,
+					"version":        runtimeConfig.RuntimeVersion,
 					"version-source": "runtimeconfig.json",
 					"launch":         true,
 				},
 			})
 
 			// Only make SDK available at launch if there is no executable (FDD case only)
-			if !config.Executable {
+			if !runtimeConfig.Executable {
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					Name: "dotnet-sdk",
 					Metadata: map[string]interface{}{
-						"version":        getSDKVersion(config.RuntimeVersion),
+						"version":        getSDKVersion(runtimeConfig.RuntimeVersion),
 						"version-source": "runtimeconfig.json",
 					},
 				})
 			}
 
-			if config.ASPNETVersion != "" {
+			if runtimeConfig.ASPNETVersion != "" {
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					// When aspnet buildpack is rewritten per RFC0001, change to "dotnet-aspnet"
 					Name: "dotnet-aspnetcore",
 					Metadata: map[string]interface{}{
-						"version":        config.ASPNETVersion,
+						"version":        runtimeConfig.ASPNETVersion,
 						"version-source": "runtimeconfig.json",
 						"launch":         true,
 					},
@@ -117,11 +173,13 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 			return packit.DetectResult{}, err
 		}
 
-		if config.Path == "" && projectFile == "" {
+		if runtimeConfig.Path == "" && projectFile == "" {
 			return packit.DetectResult{}, packit.Fail.WithMessage("no *.runtimeconfig.json or project file found")
 		}
 
 		if projectFile != "" {
+			logger.Debug.Subprocess("Detected '%s'", projectFile)
+			logger.Debug.Break()
 			version, err := projectParser.ParseVersion(projectFile)
 			if err != nil {
 				return packit.DetectResult{}, err
@@ -182,6 +240,13 @@ func Detect(buildpackYMLParser BuildpackConfigParser, configParser ConfigParser,
 				})
 			}
 		}
+
+		logger.Debug.Process("Returning build plan")
+		logger.Debug.Subprocess("Requirements:")
+		for _, req := range requirements {
+			logger.Debug.Action(req.Name)
+		}
+		logger.Debug.Break()
 
 		return packit.DetectResult{
 			Plan: packit.BuildPlan{
