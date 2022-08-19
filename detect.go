@@ -5,12 +5,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/Netflix/go-env"
 	"github.com/paketo-buildpacks/packit/v2"
 	"github.com/paketo-buildpacks/packit/v2/scribe"
 )
+
+type BuildPlanMetadata struct {
+	Version       string `toml:"version,omitempty"`
+	VersionSource string `toml:"version-source,omitempty"`
+	Launch        bool   `toml:"launch"`
+}
 
 //go:generate faux --interface BuildpackConfigParser --output fakes/buildpack_config_parser.go
 type BuildpackConfigParser interface {
@@ -84,20 +91,19 @@ func Detect(
 		}
 		logger.Debug.Break()
 
-		requirements := []packit.BuildPlanRequirement{
-			{
-				Name: "icu",
-				Metadata: map[string]interface{}{
-					"launch": true,
-				},
-			},
+		requirements := []packit.BuildPlanRequirement{}
+
+		// ICU Build Plan Requirement will be appended onto requirements once the
+		// version and version source are determined.
+		icuBuildPlanMetadata := BuildPlanMetadata{
+			Launch: true,
 		}
 
 		if config.LiveReloadEnabled {
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "watchexec",
-				Metadata: map[string]interface{}{
-					"launch": true,
+				Metadata: BuildPlanMetadata{
+					Launch: true,
 				},
 			})
 		}
@@ -105,8 +111,8 @@ func Detect(
 		if config.DebugEnabled {
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "vsdbg",
-				Metadata: map[string]interface{}{
-					"launch": true,
+				Metadata: BuildPlanMetadata{
+					Launch: true,
 				},
 			})
 		}
@@ -137,10 +143,10 @@ func Detect(
 
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-runtime",
-				Metadata: map[string]interface{}{
-					"version":        runtimeConfig.RuntimeVersion,
-					"version-source": "runtimeconfig.json",
-					"launch":         true,
+				Metadata: BuildPlanMetadata{
+					Version:       runtimeConfig.RuntimeVersion,
+					VersionSource: "runtimeconfig.json",
+					Launch:        true,
 				},
 			})
 
@@ -148,9 +154,9 @@ func Detect(
 			if !runtimeConfig.Executable {
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					Name: "dotnet-sdk",
-					Metadata: map[string]interface{}{
-						"version":        getSDKVersion(runtimeConfig.RuntimeVersion),
-						"version-source": "runtimeconfig.json",
+					Metadata: BuildPlanMetadata{
+						Version:       getSDKVersion(runtimeConfig.RuntimeVersion),
+						VersionSource: "runtimeconfig.json",
 					},
 				})
 			}
@@ -159,12 +165,23 @@ func Detect(
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					// When aspnet buildpack is rewritten per RFC0001, change to "dotnet-aspnet"
 					Name: "dotnet-aspnetcore",
-					Metadata: map[string]interface{}{
-						"version":        runtimeConfig.ASPNETVersion,
-						"version-source": "runtimeconfig.json",
-						"launch":         true,
+					Metadata: BuildPlanMetadata{
+						Version:       runtimeConfig.ASPNETVersion,
+						VersionSource: "runtimeconfig.json",
+						Launch:        true,
 					},
 				})
+			}
+
+			// If .NET Core is 3.1 version line, require ICU 70.*
+			// See https://forum.manjaro.org/t/dotnet-3-1-builds-fail-after-icu-system-package-updated-to-71-1-1/114232/9 for details
+			isDotnet31, err := checkDotnet31(runtimeConfig.RuntimeVersion)
+			if err != nil {
+				return packit.DetectResult{}, err
+			}
+			if isDotnet31 {
+				icuBuildPlanMetadata.Version = "70.*"
+				icuBuildPlanMetadata.VersionSource = "dotnet-31"
 			}
 		}
 
@@ -187,25 +204,25 @@ func Detect(
 
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-application",
-				Metadata: map[string]interface{}{
-					"launch": true,
+				Metadata: BuildPlanMetadata{
+					Launch: true,
 				},
 			})
 
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-runtime",
-				Metadata: map[string]interface{}{
-					"version":        version,
-					"version-source": filepath.Base(projectFile),
-					"launch":         true,
+				Metadata: BuildPlanMetadata{
+					Version:       version,
+					VersionSource: filepath.Base(projectFile),
+					Launch:        true,
 				},
 			})
 
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-sdk",
-				Metadata: map[string]interface{}{
-					"version":        getSDKVersion(version),
-					"version-source": filepath.Base(projectFile),
+				Metadata: BuildPlanMetadata{
+					Version:       getSDKVersion(version),
+					VersionSource: filepath.Base(projectFile),
 				},
 			})
 
@@ -217,10 +234,10 @@ func Detect(
 			if aspNetIsRequired {
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					Name: "dotnet-aspnetcore",
-					Metadata: map[string]interface{}{
-						"version":        version,
-						"version-source": filepath.Base(projectFile),
-						"launch":         true,
+					Metadata: BuildPlanMetadata{
+						Version:       version,
+						VersionSource: filepath.Base(projectFile),
+						Launch:        true,
 					},
 				})
 			}
@@ -233,13 +250,32 @@ func Detect(
 			if nodeIsRequired {
 				requirements = append(requirements, packit.BuildPlanRequirement{
 					Name: "node",
-					Metadata: map[string]interface{}{
-						"version-source": filepath.Base(projectFile),
-						"launch":         true,
+					Metadata: BuildPlanMetadata{
+						VersionSource: filepath.Base(projectFile),
+						Launch:        true,
 					},
 				})
 			}
+
+			// If .NET Core is 3.1 version line, require ICU 70.*
+			// See https://forum.manjaro.org/t/dotnet-3-1-builds-fail-after-icu-system-package-updated-to-71-1-1/114232/9 for details
+			isDotnet31, err := checkDotnet31(version)
+			if err != nil {
+				return packit.DetectResult{}, err
+			}
+			if isDotnet31 {
+				if isDotnet31 {
+					icuBuildPlanMetadata.Version = "70.*"
+					icuBuildPlanMetadata.VersionSource = "dotnet-31"
+				}
+			}
 		}
+
+		// ICU will always be append onto the build plan requirements
+		requirements = append(requirements, packit.BuildPlanRequirement{
+			Name:     "icu",
+			Metadata: icuBuildPlanMetadata,
+		})
 
 		logger.Debug.Process("Returning build plan")
 		logger.Debug.Subprocess("Requirements:")
@@ -279,4 +315,14 @@ func getSDKVersion(version string) string {
 	}
 
 	return strings.Join(parts, ".")
+}
+
+func checkDotnet31(version string) (bool, error) {
+	match, err := regexp.MatchString(`3\.1\.*`, version)
+	if err != nil {
+		// untested because regexp pattern is hardcoded
+		return false, err
+	}
+
+	return match, nil
 }
