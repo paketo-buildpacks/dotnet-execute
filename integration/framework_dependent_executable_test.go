@@ -61,7 +61,7 @@ func testFrameworkDependentExecutable(t *testing.T, context spec.G, it spec.S) {
 					WithPullPolicy("never").
 					WithBuildpacks(
 						settings.Buildpacks.ICU.Online,
-						settings.Buildpacks.DotnetCoreRuntime.Online,
+						settings.Buildpacks.DotnetCoreASPNetRuntime.Online,
 						settings.Buildpacks.DotnetExecute.Online,
 					).
 					Execute(name, source)
@@ -90,8 +90,7 @@ Hello World!
 					WithPullPolicy("never").
 					WithBuildpacks(
 						settings.Buildpacks.ICU.Online,
-						settings.Buildpacks.DotnetCoreRuntime.Online,
-						settings.Buildpacks.DotnetCoreASPNet.Online,
+						settings.Buildpacks.DotnetCoreASPNetRuntime.Online,
 						settings.Buildpacks.DotnetExecute.Online,
 					).
 					Execute(name, source)
@@ -126,8 +125,7 @@ Hello World!
 					WithBuildpacks(
 						settings.Buildpacks.ICU.Online,
 						settings.Buildpacks.Watchexec.Online,
-						settings.Buildpacks.DotnetCoreRuntime.Online,
-						settings.Buildpacks.DotnetCoreASPNet.Online,
+						settings.Buildpacks.DotnetCoreASPNetRuntime.Online,
 						settings.Buildpacks.DotnetExecute.Online,
 					).
 					WithEnv(map[string]string{"BP_LIVE_RELOAD_ENABLED": "true"}).

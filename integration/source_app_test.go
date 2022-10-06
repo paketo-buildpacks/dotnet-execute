@@ -61,10 +61,9 @@ func testSourceApp(t *testing.T, context spec.G, it spec.S) {
 					WithPullPolicy("never").
 					WithBuildpacks(
 						settings.Buildpacks.ICU.Online,
-						settings.Buildpacks.DotnetCoreRuntime.Online,
-						settings.Buildpacks.DotnetCoreASPNet.Online,
 						settings.Buildpacks.DotnetCoreSDK.Online,
 						settings.Buildpacks.DotnetPublish.Online,
+						settings.Buildpacks.DotnetCoreASPNetRuntime.Online,
 						settings.Buildpacks.DotnetExecute.Online,
 					).
 					Execute(name, source)
@@ -92,10 +91,9 @@ func testSourceApp(t *testing.T, context spec.G, it spec.S) {
 					WithPullPolicy("never").
 					WithBuildpacks(
 						settings.Buildpacks.ICU.Online,
-						settings.Buildpacks.DotnetCoreRuntime.Online,
-						settings.Buildpacks.DotnetCoreASPNet.Online,
 						settings.Buildpacks.DotnetCoreSDK.Online,
 						settings.Buildpacks.DotnetPublish.Online,
+						settings.Buildpacks.DotnetCoreASPNetRuntime.Online,
 						settings.Buildpacks.DotnetExecute.Online,
 					).
 					Execute(name, source)
@@ -127,10 +125,9 @@ func testSourceApp(t *testing.T, context spec.G, it spec.S) {
 						WithBuildpacks(
 							settings.Buildpacks.ICU.Online,
 							settings.Buildpacks.Vsdbg.Online,
-							settings.Buildpacks.DotnetCoreRuntime.Online,
-							settings.Buildpacks.DotnetCoreASPNet.Online,
 							settings.Buildpacks.DotnetCoreSDK.Online,
 							settings.Buildpacks.DotnetPublish.Online,
+							settings.Buildpacks.DotnetCoreASPNetRuntime.Online,
 							settings.Buildpacks.DotnetExecute.Online,
 						).
 						WithEnv(map[string]string{

@@ -27,26 +27,22 @@ var settings struct {
 		}
 	}
 	Config struct {
-		ICU               string `json:"icu"`
-		DotnetCoreRuntime string `json:"dotnet-core-runtime"`
-		DotnetCoreSDK     string `json:"dotnet-core-sdk"`
-		DotnetCoreASPNet  string `json:"dotnet-core-aspnet"`
-		DotnetPublish     string `json:"dotnet-publish"`
-		NodeEngine        string `json:"node-engine"`
-		Watchexec         string `json:"watchexec"`
-		Vsdbg             string `json:"vsdbg"`
+		ICU                     string `json:"icu"`
+		DotnetCoreSDK           string `json:"dotnet-core-sdk"`
+		DotnetCoreASPNetRuntime string `json:"dotnet-core-aspnet-runtime"`
+		DotnetPublish           string `json:"dotnet-publish"`
+		NodeEngine              string `json:"node-engine"`
+		Watchexec               string `json:"watchexec"`
+		Vsdbg                   string `json:"vsdbg"`
 	}
 	Buildpacks struct {
 		DotnetExecute struct {
 			Online string
 		}
-		DotnetCoreRuntime struct {
-			Online string
-		}
 		DotnetCoreSDK struct {
 			Online string
 		}
-		DotnetCoreASPNet struct {
+		DotnetCoreASPNetRuntime struct {
 			Online string
 		}
 		DotnetPublish struct {
@@ -107,16 +103,12 @@ func TestIntegration(t *testing.T) {
 		Execute(settings.Config.ICU)
 	Expect(err).ToNot(HaveOccurred())
 
-	settings.Buildpacks.DotnetCoreRuntime.Online, err = buildpackStore.Get.
-		Execute(settings.Config.DotnetCoreRuntime)
-	Expect(err).ToNot(HaveOccurred())
-
 	settings.Buildpacks.DotnetCoreSDK.Online, err = buildpackStore.Get.
 		Execute(settings.Config.DotnetCoreSDK)
 	Expect(err).ToNot(HaveOccurred())
 
-	settings.Buildpacks.DotnetCoreASPNet.Online, err = buildpackStore.Get.
-		Execute(settings.Config.DotnetCoreASPNet)
+	settings.Buildpacks.DotnetCoreASPNetRuntime.Online, err = buildpackStore.Get.
+		Execute(settings.Config.DotnetCoreASPNetRuntime)
 	Expect(err).ToNot(HaveOccurred())
 
 	settings.Buildpacks.DotnetPublish.Online, err = buildpackStore.Get.

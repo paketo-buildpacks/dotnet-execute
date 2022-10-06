@@ -67,11 +67,10 @@ func testNodeApp(t *testing.T, context spec.G, it spec.S) {
 					WithPullPolicy("never").
 					WithBuildpacks(
 						settings.Buildpacks.ICU.Online,
-						settings.Buildpacks.DotnetCoreRuntime.Online,
-						settings.Buildpacks.DotnetCoreASPNet.Online,
 						settings.Buildpacks.DotnetCoreSDK.Online,
 						settings.Buildpacks.NodeEngine.Online,
 						settings.Buildpacks.DotnetPublish.Online,
+						settings.Buildpacks.DotnetCoreASPNetRuntime.Online,
 						settings.Buildpacks.DotnetExecute.Online,
 					).
 					WithSBOMOutputDir(sbomDir).
