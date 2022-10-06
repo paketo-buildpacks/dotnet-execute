@@ -92,6 +92,7 @@ func Detect(
 		logger.Debug.Break()
 
 		requirements := []packit.BuildPlanRequirement{}
+		backwardsCompatibleRequirements := []packit.BuildPlanRequirement{}
 
 		// ICU Build Plan Requirement will be appended onto requirements once the
 		// version and version source are determined.
@@ -106,10 +107,24 @@ func Detect(
 					Launch: true,
 				},
 			})
+
+			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
+				Name: "watchexec",
+				Metadata: BuildPlanMetadata{
+					Launch: true,
+				},
+			})
 		}
 
 		if config.DebugEnabled {
 			requirements = append(requirements, packit.BuildPlanRequirement{
+				Name: "vsdbg",
+				Metadata: BuildPlanMetadata{
+					Launch: true,
+				},
+			})
+
+			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
 				Name: "vsdbg",
 				Metadata: BuildPlanMetadata{
 					Launch: true,
@@ -142,6 +157,13 @@ func Detect(
 			logger.Debug.Break()
 
 			requirements = append(requirements, packit.BuildPlanRequirement{
+				Name: "dotnet-core-aspnet-runtime",
+				Metadata: BuildPlanMetadata{
+					Launch: true,
+				},
+			})
+
+			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
 				Name: "dotnet-runtime",
 				Metadata: BuildPlanMetadata{
 					Version:       runtimeConfig.RuntimeVersion,
@@ -152,7 +174,7 @@ func Detect(
 
 			// Only make SDK available at launch if there is no executable (FDD case only)
 			if !runtimeConfig.Executable {
-				requirements = append(requirements, packit.BuildPlanRequirement{
+				backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
 					Name: "dotnet-sdk",
 					Metadata: BuildPlanMetadata{
 						Version:       getSDKVersion(runtimeConfig.RuntimeVersion),
@@ -162,8 +184,7 @@ func Detect(
 			}
 
 			if runtimeConfig.ASPNETVersion != "" {
-				requirements = append(requirements, packit.BuildPlanRequirement{
-					// When aspnet buildpack is rewritten per RFC0001, change to "dotnet-aspnet"
+				backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
 					Name: "dotnet-aspnetcore",
 					Metadata: BuildPlanMetadata{
 						Version:       runtimeConfig.ASPNETVersion,
@@ -210,6 +231,28 @@ func Detect(
 			})
 
 			requirements = append(requirements, packit.BuildPlanRequirement{
+				Name: "dotnet-core-aspnet-runtime",
+				Metadata: BuildPlanMetadata{
+					Launch: true,
+				},
+			})
+
+			requirements = append(requirements, packit.BuildPlanRequirement{
+				Name: "dotnet-sdk",
+				Metadata: BuildPlanMetadata{
+					Version:       getSDKVersion(version),
+					VersionSource: filepath.Base(projectFile),
+				},
+			})
+
+			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
+				Name: "dotnet-application",
+				Metadata: BuildPlanMetadata{
+					Launch: true,
+				},
+			})
+
+			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
 				Name: "dotnet-runtime",
 				Metadata: BuildPlanMetadata{
 					Version:       version,
@@ -218,7 +261,7 @@ func Detect(
 				},
 			})
 
-			requirements = append(requirements, packit.BuildPlanRequirement{
+			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
 				Name: "dotnet-sdk",
 				Metadata: BuildPlanMetadata{
 					Version:       getSDKVersion(version),
@@ -232,7 +275,7 @@ func Detect(
 			}
 
 			if aspNetIsRequired {
-				requirements = append(requirements, packit.BuildPlanRequirement{
+				backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
 					Name: "dotnet-aspnetcore",
 					Metadata: BuildPlanMetadata{
 						Version:       version,
@@ -249,6 +292,14 @@ func Detect(
 
 			if nodeIsRequired {
 				requirements = append(requirements, packit.BuildPlanRequirement{
+					Name: "node",
+					Metadata: BuildPlanMetadata{
+						VersionSource: filepath.Base(projectFile),
+						Launch:        true,
+					},
+				})
+
+				backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
 					Name: "node",
 					Metadata: BuildPlanMetadata{
 						VersionSource: filepath.Base(projectFile),
@@ -277,6 +328,11 @@ func Detect(
 			Metadata: icuBuildPlanMetadata,
 		})
 
+		backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
+			Name:     "icu",
+			Metadata: icuBuildPlanMetadata,
+		})
+
 		logger.Debug.Process("Returning build plan")
 		logger.Debug.Subprocess("Requirements:")
 		for _, req := range requirements {
@@ -287,6 +343,11 @@ func Detect(
 		return packit.DetectResult{
 			Plan: packit.BuildPlan{
 				Requires: requirements,
+				Or: []packit.BuildPlan{
+					{
+						Requires: backwardsCompatibleRequirements,
+					},
+				},
 			},
 		}, nil
 	}

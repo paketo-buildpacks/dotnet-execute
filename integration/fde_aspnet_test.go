@@ -59,8 +59,7 @@ func testFdeASPNet(t *testing.T, context spec.G, it spec.S) {
 				WithPullPolicy("never").
 				WithBuildpacks(
 					settings.Buildpacks.ICU.Online,
-					settings.Buildpacks.DotnetCoreRuntime.Online,
-					settings.Buildpacks.DotnetCoreASPNet.Online,
+					settings.Buildpacks.DotnetCoreASPNetRuntime.Online,
 					settings.Buildpacks.DotnetExecute.Online,
 				).
 				Execute(name, source)
