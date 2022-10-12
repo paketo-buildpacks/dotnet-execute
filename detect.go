@@ -46,18 +46,15 @@ type ProjectParser interface {
 //
 // Source Code Apps
 //
-// The buildpack will require the .NET Core SDK at build-time and the .NET Core
-// Runtime and ASP.NET Core at launch-time. It will require ICU at launch time.
-// It will require Nodejs at launch time if the app relies on JavaScript
-// components.
+// The buildpack will require .NET Core ASP.NET Runtime at launch-time. It will
+// require ICU at launch time. It will require Nodejs at launch time if the app
+// relies on JavaScript components.
 //
 // Framework-dependent Deployments
 //
-// The buildpack will require the .NET Core Runtime and ASP.NET Core at
-// launch-time to run the framework-dependent app. It will require ICU at
-// launch time. It will require the .NET Core SDK at launch-time so that the
-// dotnet CLI is available to invoke the app's entrypoint DLL. It will require
-// Nodejs if the app relies on JavaScript components.
+// The buildpack will require the .NET Core ASP.NET Runtime at launch-time to
+// run the framework-dependent app. It will require ICU at launch time. It will
+// require Nodejs if the app relies on JavaScript components.
 //
 // Framework-dependent Executables
 //
@@ -234,14 +231,6 @@ func Detect(
 				Name: "dotnet-core-aspnet-runtime",
 				Metadata: BuildPlanMetadata{
 					Launch: true,
-				},
-			})
-
-			requirements = append(requirements, packit.BuildPlanRequirement{
-				Name: "dotnet-sdk",
-				Metadata: BuildPlanMetadata{
-					Version:       getSDKVersion(version),
-					VersionSource: filepath.Base(projectFile),
 				},
 			})
 
