@@ -369,13 +369,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 					{
-						Name: "dotnet-sdk",
-						Metadata: dotnetexecute.BuildPlanMetadata{
-							Version:       "*",
-							VersionSource: "some-file.csproj",
-						},
-					},
-					{
 						Name: "icu",
 						Metadata: dotnetexecute.BuildPlanMetadata{
 							Launch: true,
@@ -433,7 +426,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			projectParser.ParseVersionCall.Returns.String = "6.0.*"
 		})
 
-		it("requires that version for dotnet-runtime and dotnet-sdk, requires a 70.* version of ICU, and detects successfully", func() {
+		it("requires that version for dotnet-core-aspnet-runtime, requires a 70.* version of ICU, and detects successfully", func() {
 			result, err := detect(packit.DetectContext{
 				WorkingDir: workingDir,
 			})
@@ -450,13 +443,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-core-aspnet-runtime",
 						Metadata: dotnetexecute.BuildPlanMetadata{
 							Launch: true,
-						},
-					},
-					{
-						Name: "dotnet-sdk",
-						Metadata: dotnetexecute.BuildPlanMetadata{
-							Version:       "6.0.*",
-							VersionSource: "some-file.csproj",
 						},
 					},
 					{
@@ -517,7 +503,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			projectParser.ParseVersionCall.Returns.String = "3.1.*"
 		})
 
-		it("requires that version for dotnet-runtime and dotnet-sdk, requires a 70.* version of ICU, and detects successfully", func() {
+		it("requires that version for dotnet-core-aspnet-runtime, requires a 70.* version of ICU, and detects successfully", func() {
 			result, err := detect(packit.DetectContext{
 				WorkingDir: workingDir,
 			})
@@ -534,13 +520,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-core-aspnet-runtime",
 						Metadata: dotnetexecute.BuildPlanMetadata{
 							Launch: true,
-						},
-					},
-					{
-						Name: "dotnet-sdk",
-						Metadata: dotnetexecute.BuildPlanMetadata{
-							Version:       "3.1.*",
-							VersionSource: "some-file.csproj",
 						},
 					},
 					{
@@ -606,7 +585,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			projectParser.ASPNetIsRequiredCall.Returns.Bool = true
 		})
 
-		it("requires that version for dotnet-runtime and dotnet-sdk and dotnet-aspnet correctly", func() {
+		it("requires that version for dotnet-core-aspnet-runtime correctly", func() {
 			result, err := detect(packit.DetectContext{
 				WorkingDir: workingDir,
 			})
@@ -623,13 +602,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-core-aspnet-runtime",
 						Metadata: dotnetexecute.BuildPlanMetadata{
 							Launch: true,
-						},
-					},
-					{
-						Name: "dotnet-sdk",
-						Metadata: dotnetexecute.BuildPlanMetadata{
-							Version:       "3.1.*",
-							VersionSource: "some-file.csproj",
 						},
 					},
 					{
@@ -703,7 +675,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			projectParser.NodeIsRequiredCall.Returns.Bool = true
 		})
 
-		it("requires that version for dotnet-runtime and dotnet-sdk and dotnet-aspnet correctly", func() {
+		it("requires that version for dotnet-core-aspnet-runtime and node", func() {
 			result, err := detect(packit.DetectContext{
 				WorkingDir: workingDir,
 			})
@@ -720,13 +692,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						Name: "dotnet-core-aspnet-runtime",
 						Metadata: dotnetexecute.BuildPlanMetadata{
 							Launch: true,
-						},
-					},
-					{
-						Name: "dotnet-sdk",
-						Metadata: dotnetexecute.BuildPlanMetadata{
-							Version:       "6.0.*",
-							VersionSource: "some-file.csproj",
 						},
 					},
 					{
