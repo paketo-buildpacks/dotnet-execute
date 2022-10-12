@@ -34,6 +34,9 @@ var settings struct {
 		NodeEngine              string `json:"node-engine"`
 		Watchexec               string `json:"watchexec"`
 		Vsdbg                   string `json:"vsdbg"`
+		// For backwards compatibility tests
+		DotnetCoreRuntime string `json:"dotnet-core-runtime"`
+		DotnetCoreASPNet  string `json:"dotnet-core-aspnet"`
 	}
 	Buildpacks struct {
 		DotnetExecute struct {
@@ -58,6 +61,13 @@ var settings struct {
 			Online string
 		}
 		Vsdbg struct {
+			Online string
+		}
+		// For backwards compatibility tests
+		DotnetCoreRuntime struct {
+			Online string
+		}
+		DotnetCoreASPNet struct {
 			Online string
 		}
 	}
@@ -127,6 +137,15 @@ func TestIntegration(t *testing.T) {
 		Execute(settings.Config.Vsdbg)
 	Expect(err).ToNot(HaveOccurred())
 
+	// For backwards compatibility test
+	settings.Buildpacks.DotnetCoreRuntime.Online, err = buildpackStore.Get.
+		Execute(settings.Config.DotnetCoreRuntime)
+	Expect(err).ToNot(HaveOccurred())
+
+	settings.Buildpacks.DotnetCoreASPNet.Online, err = buildpackStore.Get.
+		Execute(settings.Config.DotnetCoreASPNet)
+	Expect(err).ToNot(HaveOccurred())
+
 	SetDefaultEventuallyTimeout(10 * time.Second)
 
 	buf := bytes.NewBuffer(nil)
@@ -140,6 +159,7 @@ func TestIntegration(t *testing.T) {
 	Expect(json.Unmarshal(buf.Bytes(), &builder)).To(Succeed(), buf.String())
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
+	suite("BackwardsCompatibility", testBackwardsCompatibility)
 	suite("FddASPNet", testFddASPNet)
 	suite("FdeASPNet", testFdeASPNet)
 	suite("FrameworkDependentDeployment", testFrameworkDependentDeployment)
