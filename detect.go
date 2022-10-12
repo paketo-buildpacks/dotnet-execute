@@ -58,10 +58,9 @@ type ProjectParser interface {
 //
 // Framework-dependent Executables
 //
-// The buildpack will require the .NET Core Runtime and ASP.NET Core at
-// launch-time to run the framework-dependent app. It will require ICU at
-// launch time. It will require Nodejs at launch time if the app relies on JavaScript
-// components.
+// The buildpack will require the .NET Core ASP.NET Runtime at launch-time to
+// run the framework-dependent app. It will require ICU at launch time. It will
+// require Nodejs at launch time if the app relies on JavaScript components.
 //
 // Self-contained Executables
 // The buildpack will require ICU at launch time. It will require Nodejs at
