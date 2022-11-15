@@ -107,6 +107,34 @@ Hello World!
 			})
 		})
 
+		context("when the app is a .NET 7 framework dependent executable", func() {
+			it("builds and runs successfully", func() {
+				var err error
+				source, err = occam.Source(filepath.Join("testdata", "fde_dotnet_7"))
+				Expect(err).NotTo(HaveOccurred())
+
+				var logs fmt.Stringer
+				image, logs, err = pack.WithVerbose().Build.
+					WithPullPolicy("never").
+					WithBuildpacks(
+						settings.Buildpacks.ICU.Online,
+						settings.Buildpacks.DotnetCoreASPNetRuntime.Online,
+						settings.Buildpacks.DotnetExecute.Online,
+					).
+					Execute(name, source)
+				Expect(err).ToNot(HaveOccurred(), logs.String)
+
+				container, err = docker.Container.Run.
+					WithEnv(map[string]string{"PORT": "8080"}).
+					WithPublish("8080").
+					WithPublishAll().
+					Execute(image.ID)
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(container).Should(Serve(ContainSubstring("fde_dotnet_7")).OnPort(8080))
+			})
+		})
+
 		context("when BP_LIVE_RELOAD_ENABLED=true", func() {
 			var noReloadContainer occam.Container
 
