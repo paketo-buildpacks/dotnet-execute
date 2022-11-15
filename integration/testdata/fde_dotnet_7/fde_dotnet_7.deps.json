@@ -1,0 +1,24 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v7.0/ubuntu.18.04-x64",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v7.0": {},
+    ".NETCoreApp,Version=v7.0/ubuntu.18.04-x64": {
+      "fde_dotnet_7/1.0.0": {
+        "runtime": {
+          "fde_dotnet_7.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "fde_dotnet_7/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
