@@ -29,3 +29,4 @@ To specify a project subdirectory (i.e. the directory containing your
 environment variable at build time either directly (e.g. pack build my-app
 --env BP_DOTNET_PROJECT_PATH=./src/my-app) or through a project.toml file. This
 configuration does not apply to FDD, FDE or Self-Contained app deployments.
+?
