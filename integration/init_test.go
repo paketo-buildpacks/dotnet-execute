@@ -1,7 +1,6 @@
 package integration_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -11,7 +10,6 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/paketo-buildpacks/occam"
 	"github.com/paketo-buildpacks/occam/packagers"
-	"github.com/paketo-buildpacks/packit/v2/pexec"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
@@ -71,13 +69,6 @@ var settings struct {
 			Online string
 		}
 	}
-}
-var builder struct {
-	Local struct {
-		Stack struct {
-			ID string `json:"id"`
-		} `json:"stack"`
-	} `json:"local_info"`
 }
 
 func TestIntegration(t *testing.T) {
@@ -148,20 +139,8 @@ func TestIntegration(t *testing.T) {
 
 	SetDefaultEventuallyTimeout(10 * time.Second)
 
-	buf := bytes.NewBuffer(nil)
-	cmd := pexec.NewExecutable("pack")
-	Expect(cmd.Execute(pexec.Execution{
-		Args:   []string{"builder", "inspect", "--output", "json"},
-		Stdout: buf,
-		Stderr: buf,
-	})).To(Succeed(), buf.String())
-
-	Expect(json.Unmarshal(buf.Bytes(), &builder)).To(Succeed(), buf.String())
-
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("BackwardsCompatibility", testBackwardsCompatibility)
-	suite("FddASPNet", testFddASPNet)
-	suite("FdeASPNet", testFdeASPNet)
 	suite("FrameworkDependentDeployment", testFrameworkDependentDeployment)
 	suite("FrameworkDependentExecutable", testFrameworkDependentExecutable)
 	suite("Logging", testLogging)

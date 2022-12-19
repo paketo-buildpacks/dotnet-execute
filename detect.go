@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/Netflix/go-env"
@@ -89,12 +88,6 @@ func Detect(
 
 		requirements := []packit.BuildPlanRequirement{}
 		backwardsCompatibleRequirements := []packit.BuildPlanRequirement{}
-
-		// ICU Build Plan Requirement will be appended onto requirements once the
-		// version and version source are determined.
-		icuBuildPlanMetadata := BuildPlanMetadata{
-			Launch: true,
-		}
 
 		if config.LiveReloadEnabled {
 			requirements = append(requirements, packit.BuildPlanRequirement{
@@ -188,17 +181,6 @@ func Detect(
 						Launch:        true,
 					},
 				})
-			}
-
-			// If .NET Core is 3.1 version line, require ICU 70.*
-			// See https://forum.manjaro.org/t/dotnet-3-1-builds-fail-after-icu-system-package-updated-to-71-1-1/114232/9 for details
-			isDotnet31, err := checkDotnet31(runtimeConfig.RuntimeVersion)
-			if err != nil {
-				return packit.DetectResult{}, err
-			}
-			if isDotnet31 {
-				icuBuildPlanMetadata.Version = "70.*"
-				icuBuildPlanMetadata.VersionSource = "dotnet-31"
 			}
 		}
 
@@ -295,30 +277,21 @@ func Detect(
 					},
 				})
 			}
-
-			// If .NET Core is 3.1 version line, require ICU 70.*
-			// See https://forum.manjaro.org/t/dotnet-3-1-builds-fail-after-icu-system-package-updated-to-71-1-1/114232/9 for details
-			isDotnet31, err := checkDotnet31(version)
-			if err != nil {
-				return packit.DetectResult{}, err
-			}
-			if isDotnet31 {
-				if isDotnet31 {
-					icuBuildPlanMetadata.Version = "70.*"
-					icuBuildPlanMetadata.VersionSource = "dotnet-31"
-				}
-			}
 		}
 
 		// ICU will always be append onto the build plan requirements
 		requirements = append(requirements, packit.BuildPlanRequirement{
-			Name:     "icu",
-			Metadata: icuBuildPlanMetadata,
+			Name: "icu",
+			Metadata: BuildPlanMetadata{
+				Launch: true,
+			},
 		})
 
 		backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
-			Name:     "icu",
-			Metadata: icuBuildPlanMetadata,
+			Name: "icu",
+			Metadata: BuildPlanMetadata{
+				Launch: true,
+			},
 		})
 
 		logger.Debug.Process("Returning build plan")
@@ -364,14 +337,4 @@ func getSDKVersion(version string) string {
 	}
 
 	return strings.Join(parts, ".")
-}
-
-func checkDotnet31(version string) (bool, error) {
-	match, err := regexp.MatchString(`3\.1\.*`, version)
-	if err != nil {
-		// untested because regexp pattern is hardcoded
-		return false, err
-	}
-
-	return match, nil
 }

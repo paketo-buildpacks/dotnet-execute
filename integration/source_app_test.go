@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/paketo-buildpacks/occam"
@@ -49,36 +48,6 @@ func testSourceApp(t *testing.T, context spec.G, it spec.S) {
 			Expect(docker.Image.Remove.Execute(image.ID)).To(Succeed())
 			Expect(os.RemoveAll(source)).To(Succeed())
 		})
-
-		if !strings.Contains(builder.Local.Stack.ID, "jammy") {
-			it("builds and runs a .NET 3.1 app successfully", func() {
-				var err error
-				source, err = occam.Source(filepath.Join("testdata", "source_app"))
-				Expect(err).NotTo(HaveOccurred())
-
-				var logs fmt.Stringer
-				image, logs, err = pack.Build.
-					WithPullPolicy("never").
-					WithBuildpacks(
-						settings.Buildpacks.ICU.Online,
-						settings.Buildpacks.DotnetCoreSDK.Online,
-						settings.Buildpacks.DotnetPublish.Online,
-						settings.Buildpacks.DotnetCoreASPNetRuntime.Online,
-						settings.Buildpacks.DotnetExecute.Online,
-					).
-					Execute(name, source)
-				Expect(err).ToNot(HaveOccurred(), logs.String)
-
-				container, err = docker.Container.Run.
-					WithEnv(map[string]string{"PORT": "8080"}).
-					WithPublish("8080").
-					WithPublishAll().
-					Execute(image.ID)
-				Expect(err).NotTo(HaveOccurred())
-
-				Eventually(container).Should(Serve(ContainSubstring("simple_3_0_app")).OnPort(8080))
-			})
-		}
 
 		context("when 'net6.0' is specified as the TargetFramework", func() {
 			it("builds and runs successfully", func() {
