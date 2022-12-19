@@ -160,8 +160,6 @@ func TestIntegration(t *testing.T) {
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
 	suite("BackwardsCompatibility", testBackwardsCompatibility)
-	suite("FddASPNet", testFddASPNet)
-	suite("FdeASPNet", testFdeASPNet)
 	suite("FrameworkDependentDeployment", testFrameworkDependentDeployment)
 	suite("FrameworkDependentExecutable", testFrameworkDependentExecutable)
 	suite("Logging", testLogging)

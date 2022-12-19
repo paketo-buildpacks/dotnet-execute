@@ -149,67 +149,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
 			})
-
-			context("when the runtimeconfig.json specifies a runtime in the 3.1.* version line", func() {
-				it.Before(func() {
-					runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-						Path:           filepath.Join(workingDir, "some-app.runtimeconfig.json"),
-						RuntimeVersion: "3.1.0",
-						Executable:     true,
-					}
-				})
-
-				it("requires a 70.* version of ICU, and dotnet-core-aspnet-runtime", func() {
-					result, err := detect(packit.DetectContext{
-						WorkingDir: workingDir,
-					})
-					Expect(err).NotTo(HaveOccurred())
-					Expect(result.Plan).To(Equal(packit.BuildPlan{
-						Requires: []packit.BuildPlanRequirement{
-							{
-								Name: "dotnet-core-aspnet-runtime",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch: true,
-								},
-							},
-							{
-								Name: "icu",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch:        true,
-									Version:       "70.*",
-									VersionSource: "dotnet-31",
-								},
-							},
-						},
-						Or: []packit.BuildPlan{
-							{
-								Requires: []packit.BuildPlanRequirement{
-									{
-										Name: "dotnet-runtime",
-										Metadata: dotnetexecute.BuildPlanMetadata{
-											Version:       "3.1.0",
-											VersionSource: "runtimeconfig.json",
-											Launch:        true,
-										},
-									},
-									{
-										Name: "icu",
-										Metadata: dotnetexecute.BuildPlanMetadata{
-											Launch:        true,
-											Version:       "70.*",
-											VersionSource: "dotnet-31",
-										},
-									},
-								},
-							},
-						},
-					}))
-
-					Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
-					Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
-					Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
-				})
-			})
 		})
 
 		context("when there is no executable", func() {
@@ -497,91 +436,10 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("the proj file specifies a 3.1.* version of dotnet-runtime", func() {
-		it.Before(func() {
-			projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
-			projectParser.ParseVersionCall.Returns.String = "3.1.*"
-		})
-
-		it("requires that version for dotnet-core-aspnet-runtime, requires a 70.* version of ICU, and detects successfully", func() {
-			result, err := detect(packit.DetectContext{
-				WorkingDir: workingDir,
-			})
-			Expect(err).NotTo(HaveOccurred())
-			Expect(result.Plan).To(Equal(packit.BuildPlan{
-				Requires: []packit.BuildPlanRequirement{
-					{
-						Name: "dotnet-application",
-						Metadata: dotnetexecute.BuildPlanMetadata{
-							Launch: true,
-						},
-					},
-					{
-						Name: "dotnet-core-aspnet-runtime",
-						Metadata: dotnetexecute.BuildPlanMetadata{
-							Launch: true,
-						},
-					},
-					{
-						Name: "icu",
-						Metadata: dotnetexecute.BuildPlanMetadata{
-							Launch:        true,
-							Version:       "70.*",
-							VersionSource: "dotnet-31",
-						},
-					},
-				},
-				Or: []packit.BuildPlan{
-					{
-						Requires: []packit.BuildPlanRequirement{
-							{
-								Name: "dotnet-application",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch: true,
-								},
-							},
-							{
-								Name: "dotnet-runtime",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "3.1.*",
-									VersionSource: "some-file.csproj",
-									Launch:        true,
-								},
-							},
-							{
-								Name: "dotnet-sdk",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "3.1.*",
-									VersionSource: "some-file.csproj",
-								},
-							},
-							{
-								Name: "icu",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch:        true,
-									Version:       "70.*",
-									VersionSource: "dotnet-31",
-								},
-							},
-						},
-					},
-				},
-			}))
-
-			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
-			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
-
-			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
-			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
-			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
-			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
-		})
-	})
-
 	context("the proj file requires ASPNet", func() {
 		it.Before(func() {
 			projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
-			projectParser.ParseVersionCall.Returns.String = "3.1.*"
+			projectParser.ParseVersionCall.Returns.String = "6.0.*"
 			projectParser.ASPNetIsRequiredCall.Returns.Bool = true
 		})
 
@@ -607,9 +465,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					{
 						Name: "icu",
 						Metadata: dotnetexecute.BuildPlanMetadata{
-							Launch:        true,
-							Version:       "70.*",
-							VersionSource: "dotnet-31",
+							Launch: true,
 						},
 					},
 				},
@@ -625,7 +481,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							{
 								Name: "dotnet-runtime",
 								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "3.1.*",
+									Version:       "6.0.*",
 									VersionSource: "some-file.csproj",
 									Launch:        true,
 								},
@@ -633,14 +489,14 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							{
 								Name: "dotnet-sdk",
 								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "3.1.*",
+									Version:       "6.0.*",
 									VersionSource: "some-file.csproj",
 								},
 							},
 							{
 								Name: "dotnet-aspnetcore",
 								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "3.1.*",
+									Version:       "6.0.*",
 									VersionSource: "some-file.csproj",
 									Launch:        true,
 								},
@@ -648,9 +504,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							{
 								Name: "icu",
 								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "70.*",
-									VersionSource: "dotnet-31",
-									Launch:        true,
+									Launch: true,
 								},
 							},
 						},

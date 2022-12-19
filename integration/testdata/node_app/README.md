@@ -3,4 +3,4 @@ Line 38 of the `csproj` file was modified to include the `--dev` flag to install
 ```
 <Exec WorkingDirectory="$(SpaRoot)" Command="npm --dev install" />
 ```
-The version of the .NET Core CLI is 3.1.413
+The version of the .NET Core CLI is 6.0.404
