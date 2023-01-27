@@ -31,8 +31,6 @@ type ConfigParser interface {
 //go:generate faux --interface ProjectParser --output fakes/project_parser.go
 type ProjectParser interface {
 	FindProjectFile(root string) (string, error)
-	ParseVersion(path string) (string, error)
-	ASPNetIsRequired(path string) (bool, error)
 	NodeIsRequired(path string) (bool, error)
 }
 
@@ -43,19 +41,19 @@ type ProjectParser interface {
 // depending on the type of app being built. See Configuration for details
 // on how environment variable configuration influences detection.
 //
-// Source Code Apps
+// # Source Code Apps
 //
 // The buildpack will require .NET Core ASP.NET Runtime at launch-time. It will
 // require ICU at launch time. It will require Nodejs at launch time if the app
 // relies on JavaScript components.
 //
-// Framework-dependent Deployments
+// # Framework-dependent Deployments
 //
 // The buildpack will require the .NET Core ASP.NET Runtime at launch-time to
 // run the framework-dependent app. It will require ICU at launch time. It will
 // require Nodejs if the app relies on JavaScript components.
 //
-// Framework-dependent Executables
+// # Framework-dependent Executables
 //
 // The buildpack will require the .NET Core ASP.NET Runtime at launch-time to
 // run the framework-dependent app. It will require ICU at launch time. It will
@@ -87,17 +85,9 @@ func Detect(
 		logger.Debug.Break()
 
 		requirements := []packit.BuildPlanRequirement{}
-		backwardsCompatibleRequirements := []packit.BuildPlanRequirement{}
 
 		if config.LiveReloadEnabled {
 			requirements = append(requirements, packit.BuildPlanRequirement{
-				Name: "watchexec",
-				Metadata: BuildPlanMetadata{
-					Launch: true,
-				},
-			})
-
-			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
 				Name: "watchexec",
 				Metadata: BuildPlanMetadata{
 					Launch: true,
@@ -107,13 +97,6 @@ func Detect(
 
 		if config.DebugEnabled {
 			requirements = append(requirements, packit.BuildPlanRequirement{
-				Name: "vsdbg",
-				Metadata: BuildPlanMetadata{
-					Launch: true,
-				},
-			})
-
-			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
 				Name: "vsdbg",
 				Metadata: BuildPlanMetadata{
 					Launch: true,
@@ -151,37 +134,6 @@ func Detect(
 					Launch: true,
 				},
 			})
-
-			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
-				Name: "dotnet-runtime",
-				Metadata: BuildPlanMetadata{
-					Version:       runtimeConfig.RuntimeVersion,
-					VersionSource: "runtimeconfig.json",
-					Launch:        true,
-				},
-			})
-
-			// Only make SDK available at launch if there is no executable (FDD case only)
-			if !runtimeConfig.Executable {
-				backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
-					Name: "dotnet-sdk",
-					Metadata: BuildPlanMetadata{
-						Version:       getSDKVersion(runtimeConfig.RuntimeVersion),
-						VersionSource: "runtimeconfig.json",
-					},
-				})
-			}
-
-			if runtimeConfig.ASPNETVersion != "" {
-				backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
-					Name: "dotnet-aspnetcore",
-					Metadata: BuildPlanMetadata{
-						Version:       runtimeConfig.ASPNETVersion,
-						VersionSource: "runtimeconfig.json",
-						Launch:        true,
-					},
-				})
-			}
 		}
 
 		projectFile, err := projectParser.FindProjectFile(root)
@@ -196,10 +148,6 @@ func Detect(
 		if projectFile != "" {
 			logger.Debug.Subprocess("Detected '%s'", projectFile)
 			logger.Debug.Break()
-			version, err := projectParser.ParseVersion(projectFile)
-			if err != nil {
-				return packit.DetectResult{}, err
-			}
 
 			requirements = append(requirements, packit.BuildPlanRequirement{
 				Name: "dotnet-application",
@@ -215,46 +163,6 @@ func Detect(
 				},
 			})
 
-			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
-				Name: "dotnet-application",
-				Metadata: BuildPlanMetadata{
-					Launch: true,
-				},
-			})
-
-			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
-				Name: "dotnet-runtime",
-				Metadata: BuildPlanMetadata{
-					Version:       version,
-					VersionSource: filepath.Base(projectFile),
-					Launch:        true,
-				},
-			})
-
-			backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
-				Name: "dotnet-sdk",
-				Metadata: BuildPlanMetadata{
-					Version:       getSDKVersion(version),
-					VersionSource: filepath.Base(projectFile),
-				},
-			})
-
-			aspNetIsRequired, err := projectParser.ASPNetIsRequired(projectFile)
-			if err != nil {
-				return packit.DetectResult{}, err
-			}
-
-			if aspNetIsRequired {
-				backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
-					Name: "dotnet-aspnetcore",
-					Metadata: BuildPlanMetadata{
-						Version:       version,
-						VersionSource: filepath.Base(projectFile),
-						Launch:        true,
-					},
-				})
-			}
-
 			nodeIsRequired, err := projectParser.NodeIsRequired(projectFile)
 			if err != nil {
 				return packit.DetectResult{}, err
@@ -262,14 +170,6 @@ func Detect(
 
 			if nodeIsRequired {
 				requirements = append(requirements, packit.BuildPlanRequirement{
-					Name: "node",
-					Metadata: BuildPlanMetadata{
-						VersionSource: filepath.Base(projectFile),
-						Launch:        true,
-					},
-				})
-
-				backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
 					Name: "node",
 					Metadata: BuildPlanMetadata{
 						VersionSource: filepath.Base(projectFile),
@@ -287,13 +187,6 @@ func Detect(
 			},
 		})
 
-		backwardsCompatibleRequirements = append(backwardsCompatibleRequirements, packit.BuildPlanRequirement{
-			Name: "icu",
-			Metadata: BuildPlanMetadata{
-				Launch: true,
-			},
-		})
-
 		logger.Debug.Process("Returning build plan")
 		logger.Debug.Subprocess("Requirements:")
 		for _, req := range requirements {
@@ -304,37 +197,7 @@ func Detect(
 		return packit.DetectResult{
 			Plan: packit.BuildPlan{
 				Requires: requirements,
-				Or: []packit.BuildPlan{
-					{
-						Requires: backwardsCompatibleRequirements,
-					},
-				},
 			},
 		}, nil
 	}
-}
-
-func getSDKVersion(version string) string {
-	if version == "" {
-		return "*"
-	}
-	pieces := strings.SplitN(version, ".", 3)
-	if len(pieces) < 3 {
-		pieces = append(pieces, "*")
-	}
-
-	var parts []string
-	for i, part := range pieces {
-		if i+1 == len(pieces) {
-			part = "*"
-		}
-
-		parts = append(parts, part)
-
-		if part == "*" {
-			break
-		}
-	}
-
-	return strings.Join(parts, ".")
 }

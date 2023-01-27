@@ -88,9 +88,11 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pilu/miniassert v0.0.0-20140522125902-bee63581261a // indirect
+	github.com/pivotal-cf/jhanda v0.0.0-20181025233525-e6aa09a032df // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20220927061507-ef77025ab5aa // indirect
 	github.com/rivo/uniseg v0.4.2 // indirect
+	github.com/ryanmoran/faux v0.22.1 // indirect
 	github.com/sassoftware/go-rpmutils v0.2.0 // indirect
 	github.com/scylladb/go-set v1.0.3-0.20200225121959-cc7b2070d91e // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
