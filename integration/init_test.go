@@ -140,7 +140,6 @@ func TestIntegration(t *testing.T) {
 	SetDefaultEventuallyTimeout(10 * time.Second)
 
 	suite := spec.New("Integration", spec.Report(report.Terminal{}), spec.Parallel())
-	suite("BackwardsCompatibility", testBackwardsCompatibility)
 	suite("FrameworkDependentDeployment", testFrameworkDependentDeployment)
 	suite("FrameworkDependentExecutable", testFrameworkDependentExecutable)
 	suite("Logging", testLogging)

@@ -75,18 +75,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 				},
-				Or: []packit.BuildPlan{
-					{
-						Requires: []packit.BuildPlanRequirement{
-							{
-								Name: "icu",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch: true,
-								},
-							},
-						},
-					},
-				},
 			}))
 
 			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
@@ -120,26 +108,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "icu",
 							Metadata: dotnetexecute.BuildPlanMetadata{
 								Launch: true,
-							},
-						},
-					},
-					Or: []packit.BuildPlan{
-						{
-							Requires: []packit.BuildPlanRequirement{
-								{
-									Name: "dotnet-runtime",
-									Metadata: dotnetexecute.BuildPlanMetadata{
-										Version:       "2.1.0",
-										VersionSource: "runtimeconfig.json",
-										Launch:        true,
-									},
-								},
-								{
-									Name: "icu",
-									Metadata: dotnetexecute.BuildPlanMetadata{
-										Launch: true,
-									},
-								},
 							},
 						},
 					},
@@ -177,33 +145,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							Name: "icu",
 							Metadata: dotnetexecute.BuildPlanMetadata{
 								Launch: true,
-							},
-						},
-					},
-					Or: []packit.BuildPlan{
-						{
-							Requires: []packit.BuildPlanRequirement{
-								{
-									Name: "dotnet-runtime",
-									Metadata: dotnetexecute.BuildPlanMetadata{
-										Version:       "2.1.0",
-										VersionSource: "runtimeconfig.json",
-										Launch:        true,
-									},
-								},
-								{
-									Name: "dotnet-sdk",
-									Metadata: dotnetexecute.BuildPlanMetadata{
-										Version:       "2.1.*",
-										VersionSource: "runtimeconfig.json",
-									},
-								},
-								{
-									Name: "icu",
-									Metadata: dotnetexecute.BuildPlanMetadata{
-										Launch: true,
-									},
-								},
 							},
 						},
 					},
@@ -245,34 +186,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 							},
 						},
 					},
-					Or: []packit.BuildPlan{
-						{
-							Requires: []packit.BuildPlanRequirement{
-								{
-									Name: "dotnet-runtime",
-									Metadata: dotnetexecute.BuildPlanMetadata{
-										Version:       "2.1.0",
-										VersionSource: "runtimeconfig.json",
-										Launch:        true,
-									},
-								},
-								{
-									Name: "dotnet-aspnetcore",
-									Metadata: dotnetexecute.BuildPlanMetadata{
-										Version:       "2.1.0",
-										VersionSource: "runtimeconfig.json",
-										Launch:        true,
-									},
-								},
-								{
-									Name: "icu",
-									Metadata: dotnetexecute.BuildPlanMetadata{
-										Launch: true,
-									},
-								},
-							},
-						},
-					},
 				}))
 
 				Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
@@ -285,7 +198,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	context("there is a proj file present (and no .runtimeconfig.json)", func() {
 		it.Before(func() {
 			projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
-			projectParser.ParseVersionCall.Returns.String = "*"
 		})
 
 		it("detects successfully", func() {
@@ -314,47 +226,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 				},
-				Or: []packit.BuildPlan{
-					{
-						Requires: []packit.BuildPlanRequirement{
-							{
-								Name: "dotnet-application",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch: true,
-								},
-							},
-							{
-								Name: "dotnet-runtime",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "*",
-									VersionSource: "some-file.csproj",
-									Launch:        true,
-								},
-							},
-							{
-								Name: "dotnet-sdk",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "*",
-									VersionSource: "some-file.csproj",
-								},
-							},
-							{
-								Name: "icu",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch: true,
-								},
-							},
-						},
-					},
-				},
 			}))
 
 			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
-			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
-			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 		})
 	})
@@ -362,7 +239,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	context("the proj file specifies a version of dotnet-runtime", func() {
 		it.Before(func() {
 			projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
-			projectParser.ParseVersionCall.Returns.String = "6.0.*"
 		})
 
 		it("requires that version for dotnet-core-aspnet-runtime, requires a 70.* version of ICU, and detects successfully", func() {
@@ -391,47 +267,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 				},
-				Or: []packit.BuildPlan{
-					{
-						Requires: []packit.BuildPlanRequirement{
-							{
-								Name: "dotnet-application",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch: true,
-								},
-							},
-							{
-								Name: "dotnet-runtime",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "6.0.*",
-									VersionSource: "some-file.csproj",
-									Launch:        true,
-								},
-							},
-							{
-								Name: "dotnet-sdk",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "6.0.*",
-									VersionSource: "some-file.csproj",
-								},
-							},
-							{
-								Name: "icu",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch: true,
-								},
-							},
-						},
-					},
-				},
 			}))
 
 			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
-			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
-			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 		})
 	})
@@ -439,8 +280,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	context("the proj file requires ASPNet", func() {
 		it.Before(func() {
 			projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
-			projectParser.ParseVersionCall.Returns.String = "6.0.*"
-			projectParser.ASPNetIsRequiredCall.Returns.Bool = true
 		})
 
 		it("requires that version for dotnet-core-aspnet-runtime correctly", func() {
@@ -469,55 +308,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 				},
-				Or: []packit.BuildPlan{
-					{
-						Requires: []packit.BuildPlanRequirement{
-							{
-								Name: "dotnet-application",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch: true,
-								},
-							},
-							{
-								Name: "dotnet-runtime",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "6.0.*",
-									VersionSource: "some-file.csproj",
-									Launch:        true,
-								},
-							},
-							{
-								Name: "dotnet-sdk",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "6.0.*",
-									VersionSource: "some-file.csproj",
-								},
-							},
-							{
-								Name: "dotnet-aspnetcore",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "6.0.*",
-									VersionSource: "some-file.csproj",
-									Launch:        true,
-								},
-							},
-							{
-								Name: "icu",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch: true,
-								},
-							},
-						},
-					},
-				},
 			}))
 
 			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
-			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
-			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 		})
 	})
@@ -525,7 +321,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	context("the proj file requires Node", func() {
 		it.Before(func() {
 			projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
-			projectParser.ParseVersionCall.Returns.String = "6.0.*"
 			projectParser.NodeIsRequiredCall.Returns.Bool = true
 		})
 
@@ -562,54 +357,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 						},
 					},
 				},
-				Or: []packit.BuildPlan{
-					{
-						Requires: []packit.BuildPlanRequirement{
-							{
-								Name: "dotnet-application",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch: true,
-								},
-							},
-							{
-								Name: "dotnet-runtime",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "6.0.*",
-									VersionSource: "some-file.csproj",
-									Launch:        true,
-								},
-							},
-							{
-								Name: "dotnet-sdk",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Version:       "6.0.*",
-									VersionSource: "some-file.csproj",
-								},
-							},
-							{
-								Name: "node",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									VersionSource: "some-file.csproj",
-									Launch:        true,
-								},
-							},
-							{
-								Name: "icu",
-								Metadata: dotnetexecute.BuildPlanMetadata{
-									Launch: true,
-								},
-							},
-						},
-					},
-				},
 			}))
 
 			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
-			Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
-			Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 			Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 		})
 	})
@@ -622,7 +375,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		context("project-path directory contains a proj file", func() {
 			it.Before(func() {
 				projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
-				projectParser.ParseVersionCall.Returns.String = "*"
 			})
 
 			it("detects successfully", func() {
@@ -638,8 +390,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "src/proj1", "*.runtimeconfig.json")))
 
 				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(filepath.Join(workingDir, "src/proj1")))
-				Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
-				Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 				Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 			})
 		})
@@ -655,7 +405,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		context("project-path directory contains a proj file", func() {
 			it.Before(func() {
 				projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
-				projectParser.ParseVersionCall.Returns.String = "*"
 			})
 
 			it("detects successfully", func() {
@@ -668,8 +417,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "src/proj1", "*.runtimeconfig.json")))
 
 				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(filepath.Join(workingDir, "src/proj1")))
-				Expect(projectParser.ParseVersionCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
-				Expect(projectParser.ASPNetIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 				Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
 			})
 		})
@@ -762,36 +509,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		context("there is an error finding the project file", func() {
 			it.Before(func() {
 				projectParser.FindProjectFileCall.Returns.Error = errors.New("some-error")
-			})
-
-			it("fails", func() {
-				_, err := detect(packit.DetectContext{
-					WorkingDir: workingDir,
-				})
-				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError("some-error"))
-			})
-		})
-
-		context("parsing the version from the project file fails", func() {
-			it.Before(func() {
-				projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
-				projectParser.ParseVersionCall.Returns.Error = errors.New("some-error")
-			})
-
-			it("fails", func() {
-				_, err := detect(packit.DetectContext{
-					WorkingDir: workingDir,
-				})
-				Expect(err).To(HaveOccurred())
-				Expect(err).To(MatchError("some-error"))
-			})
-		})
-
-		context("parsing the aspnet requirement from the project file fails", func() {
-			it.Before(func() {
-				projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
-				projectParser.ASPNetIsRequiredCall.Returns.Error = errors.New("some-error")
 			})
 
 			it("fails", func() {
