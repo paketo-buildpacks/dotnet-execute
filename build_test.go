@@ -3,6 +3,7 @@ package dotnetexecute_test
 import (
 	"bytes"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -101,16 +102,54 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(portLayer.Launch).To(BeTrue())
 			Expect(portLayer.Cache).To(BeFalse())
 
-			Expect(result.Launch.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
+			Expect(result.Launch.SBOM.Formats()).To(HaveLen(2))
+			cdx := result.Launch.SBOM.Formats()[0]
+			spdx := result.Launch.SBOM.Formats()[1]
+
+			Expect(cdx.Extension).To(Equal("cdx.json"))
+			content, err := io.ReadAll(cdx.Content)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(content)).To(MatchJSON(`{
+			"bomFormat": "CycloneDX",
+			"components": [],
+			"metadata": {
+				"tools": [
+					{
+						"name": "syft",
+						"vendor": "anchore",
+						"version": "[not provided]"
+					}
+				]
+			},
+			"specVersion": "1.3",
+			"version": 1
+		}`))
+
+			Expect(spdx.Extension).To(Equal("spdx.json"))
+			content, err = io.ReadAll(spdx.Content)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(content)).To(MatchJSON(`{
+			"SPDXID": "SPDXRef-DOCUMENT",
+			"creationInfo": {
+				"created": "0001-01-01T00:00:00Z",
+				"creators": [
+					"Organization: Anchore, Inc",
+					"Tool: syft-"
+				],
+				"licenseListVersion": "3.16"
+			},
+			"dataLicense": "CC0-1.0",
+			"documentNamespace": "https://paketo.io/packit/unknown-source-type/unknown-88cfa225-65e0-5755-895f-c1c8f10fde76",
+			"name": "unknown",
+			"relationships": [
 				{
-					Extension: sbom.Format(sbom.CycloneDXFormat).Extension(),
-					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.CycloneDXFormat),
-				},
-				{
-					Extension: sbom.Format(sbom.SPDXFormat).Extension(),
-					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.SPDXFormat),
-				},
-			}))
+					"relatedSpdxElement": "SPDXRef-DOCUMENT",
+					"relationshipType": "DESCRIBES",
+					"spdxElementId": "SPDXRef-DOCUMENT"
+				}
+			],
+			"spdxVersion": "SPDX-2.2"
+		}`))
 
 			Expect(result.Launch.Processes).To(Equal([]packit.Process{
 				{
@@ -167,21 +206,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(portLayer.Path).To(Equal(filepath.Join(layersDir, "port-chooser")))
 			Expect(portLayer.ExecD).To(Equal([]string{filepath.Join(cnbDir, "bin", "port-chooser")}))
 
-			Expect(portLayer.Build).To(BeFalse())
-			Expect(portLayer.Launch).To(BeTrue())
-			Expect(portLayer.Cache).To(BeFalse())
-
-			Expect(result.Launch.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
-				{
-					Extension: sbom.Format(sbom.CycloneDXFormat).Extension(),
-					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.CycloneDXFormat),
-				},
-				{
-					Extension: sbom.Format(sbom.SPDXFormat).Extension(),
-					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.SPDXFormat),
-				},
-			}))
-
 			Expect(result.Launch.Processes).To(Equal([]packit.Process{
 				{
 
@@ -192,12 +216,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Direct:  true,
 				},
 			}))
-
-			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
-
-			Expect(configParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
-
-			Expect(sbomGenerator.GenerateCall.Receives.Path).To(Equal(workingDir))
 		})
 	})
 
@@ -236,28 +254,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(result.Layers).To(HaveLen(1))
-			portLayer := result.Layers[0]
-
-			Expect(portLayer.Name).To(Equal("port-chooser"))
-			Expect(portLayer.Path).To(Equal(filepath.Join(layersDir, "port-chooser")))
-			Expect(portLayer.ExecD).To(Equal([]string{filepath.Join(cnbDir, "bin", "port-chooser")}))
-
-			Expect(portLayer.Build).To(BeFalse())
-			Expect(portLayer.Launch).To(BeTrue())
-			Expect(portLayer.Cache).To(BeFalse())
-
-			Expect(result.Launch.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
-				{
-					Extension: sbom.Format(sbom.CycloneDXFormat).Extension(),
-					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.CycloneDXFormat),
-				},
-				{
-					Extension: sbom.Format(sbom.SPDXFormat).Extension(),
-					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.SPDXFormat),
-				},
-			}))
-
 			Expect(result.Launch.Processes).To(Equal([]packit.Process{
 				{
 					Type:    "reload-myapp",
@@ -280,12 +276,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Direct:  true,
 				},
 			}))
-
-			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
-
-			Expect(configParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
-
-			Expect(sbomGenerator.GenerateCall.Receives.Path).To(Equal(workingDir))
 		})
 	})
 
@@ -331,23 +321,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(portLayer.Path).To(Equal(filepath.Join(layersDir, "port-chooser")))
 			Expect(portLayer.ExecD).To(Equal([]string{filepath.Join(cnbDir, "bin", "port-chooser")}))
 
-			Expect(portLayer.Build).To(BeFalse())
-			Expect(portLayer.Launch).To(BeTrue())
-			Expect(portLayer.Cache).To(BeFalse())
-
 			Expect(portLayer.LaunchEnv).To(Equal(packit.Environment{
 				"ASPNETCORE_ENVIRONMENT.default": "Development",
-			}))
-
-			Expect(result.Launch.SBOM.Formats()).To(Equal([]packit.SBOMFormat{
-				{
-					Extension: sbom.Format(sbom.CycloneDXFormat).Extension(),
-					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.CycloneDXFormat),
-				},
-				{
-					Extension: sbom.Format(sbom.SPDXFormat).Extension(),
-					Content:   sbom.NewFormattedReader(sbom.SBOM{}, sbom.SPDXFormat),
-				},
 			}))
 
 			Expect(result.Launch.Processes).To(Equal([]packit.Process{
@@ -359,12 +334,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Default: true,
 				},
 			}))
-
-			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
-
-			Expect(configParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
-
-			Expect(sbomGenerator.GenerateCall.Receives.Path).To(Equal(workingDir))
 		})
 	})
 
