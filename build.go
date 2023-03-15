@@ -3,6 +3,7 @@ package dotnetexecute
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -138,6 +139,20 @@ func Build(
 					Args:    args,
 					Direct:  true,
 				},
+			}
+
+			err := filepath.Walk(context.WorkingDir, func(path string, info fs.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if path == context.WorkingDir {
+					return nil
+				}
+
+				return os.Chmod(path, info.Mode()|0060)
+			})
+			if err != nil {
+				return packit.BuildResult{}, err
 			}
 		}
 
