@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -222,11 +223,25 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	context("when BP_LIVE_RELOAD_ENABLED=true", func() {
 		it.Before(func() {
 			Expect(os.WriteFile(filepath.Join(workingDir, "my.app.dll"), nil, os.ModePerm)).To(Succeed())
+
 			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 				Path:       filepath.Join(workingDir, "my.app.runtimeconfig.json"),
 				AppName:    "my.app",
 				Executable: false,
 			}
+
+			err := filepath.Walk(workingDir, func(path string, info fs.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+
+				if path == workingDir {
+					return nil
+				}
+
+				return os.Chmod(path, 0600)
+			})
+			Expect(err).NotTo(HaveOccurred())
 
 			build = dotnetexecute.Build(dotnetexecute.Configuration{
 				LiveReloadEnabled: true,
@@ -276,6 +291,39 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 					Direct:  true,
 				},
 			}))
+		})
+
+		it("marks all files in the workspace as group read-writable", func() {
+			_, err := build(packit.BuildContext{
+				WorkingDir: workingDir,
+				CNBPath:    cnbDir,
+				Stack:      "some-stack",
+				BuildpackInfo: packit.BuildpackInfo{
+					Name:        "Some Buildpack",
+					Version:     "some-version",
+					SBOMFormats: []string{sbom.CycloneDXFormat, sbom.SPDXFormat},
+				},
+				Plan: packit.BuildpackPlan{
+					Entries: []packit.BuildpackPlanEntry{},
+				},
+				Layers: packit.Layers{Path: layersDir},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			var modes []fs.FileMode
+			err = filepath.Walk(workingDir, func(path string, info fs.FileInfo, _ error) error {
+				if path == workingDir {
+					return nil
+				}
+
+				modes = append(modes, info.Mode())
+
+				return nil
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(modes).To(ConsistOf(
+				fs.FileMode(0660),
+			))
 		})
 	})
 
