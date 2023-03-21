@@ -104,13 +104,9 @@ func Build(
 			args = append(args, fmt.Sprintf("%s.dll", filepath.Join(context.WorkingDir, runtimeConfig.AppName)))
 		}
 
-		// Strip '.' from app name to avoid bug in lifecycle
-		// See https://github.com/buildpacks/lifecycle/issues/895
-		processType := strings.ReplaceAll(runtimeConfig.AppName, ".", "")
-
 		processes := []packit.Process{
 			{
-				Type:    processType,
+				Type:    runtimeConfig.AppName,
 				Command: command,
 				Args:    args,
 				Default: true,
@@ -121,7 +117,7 @@ func Build(
 		if config.LiveReloadEnabled {
 			processes = []packit.Process{
 				{
-					Type:    fmt.Sprintf("reload-%s", processType),
+					Type:    fmt.Sprintf("reload-%s", runtimeConfig.AppName),
 					Command: "watchexec",
 					Args: append([]string{
 						"--restart",
@@ -134,7 +130,7 @@ func Build(
 					Direct:  true,
 				},
 				{
-					Type:    processType,
+					Type:    runtimeConfig.AppName,
 					Command: command,
 					Args:    args,
 					Direct:  true,
