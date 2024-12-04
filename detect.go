@@ -18,11 +18,6 @@ type BuildPlanMetadata struct {
 	Launch        bool   `toml:"launch"`
 }
 
-//go:generate faux --interface BuildpackConfigParser --output fakes/buildpack_config_parser.go
-type BuildpackConfigParser interface {
-	ParseProjectPath(path string) (projectPath string, err error)
-}
-
 //go:generate faux --interface ConfigParser --output fakes/config_parser.go
 type ConfigParser interface {
 	Parse(glob string) (RuntimeConfig, error)
@@ -65,7 +60,6 @@ type ProjectParser interface {
 func Detect(
 	config Configuration,
 	logger scribe.Emitter,
-	buildpackYMLParser BuildpackConfigParser,
 	configParser ConfigParser,
 	projectParser ProjectParser,
 ) packit.DetectFunc {
@@ -102,14 +96,6 @@ func Detect(
 					Launch: true,
 				},
 			})
-		}
-
-		if config.ProjectPath == "" {
-			var err error
-			config.ProjectPath, err = buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
-			if err != nil {
-				return packit.DetectResult{}, fmt.Errorf("failed to parse buildpack.yml: %w", err)
-			}
 		}
 
 		root := context.WorkingDir

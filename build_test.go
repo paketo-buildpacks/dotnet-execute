@@ -24,14 +24,13 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 
-		buffer             *bytes.Buffer
-		buildpackYMLParser *fakes.BuildpackConfigParser
-		cnbDir             string
-		configParser       *fakes.ConfigParser
-		layersDir          string
-		logger             scribe.Emitter
-		sbomGenerator      *fakes.SBOMGenerator
-		workingDir         string
+		buffer        *bytes.Buffer
+		cnbDir        string
+		configParser  *fakes.ConfigParser
+		layersDir     string
+		logger        scribe.Emitter
+		sbomGenerator *fakes.SBOMGenerator
+		workingDir    string
 
 		build packit.BuildFunc
 	)
@@ -49,15 +48,13 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		configParser = &fakes.ConfigParser{}
 
-		buildpackYMLParser = &fakes.BuildpackConfigParser{}
-
 		sbomGenerator = &fakes.SBOMGenerator{}
 		sbomGenerator.GenerateCall.Returns.SBOM = sbom.SBOM{}
 
 		buffer = bytes.NewBuffer(nil)
 		logger = scribe.NewEmitter(buffer)
 
-		build = dotnetexecute.Build(dotnetexecute.Configuration{}, buildpackYMLParser, configParser, sbomGenerator, logger, chronos.DefaultClock)
+		build = dotnetexecute.Build(dotnetexecute.Configuration{}, configParser, sbomGenerator, logger, chronos.DefaultClock)
 	})
 
 	it.After(func() {
@@ -161,8 +158,6 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
-
 			Expect(configParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(sbomGenerator.GenerateCall.Receives.Path).To(Equal(workingDir))
@@ -245,7 +240,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			build = dotnetexecute.Build(dotnetexecute.Configuration{
 				LiveReloadEnabled: true,
-			}, buildpackYMLParser, configParser, sbomGenerator, logger, chronos.DefaultClock)
+			}, configParser, sbomGenerator, logger, chronos.DefaultClock)
 		})
 
 		it.After(func() {
@@ -338,7 +333,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 			build = dotnetexecute.Build(dotnetexecute.Configuration{
 				DebugEnabled: true,
-			}, buildpackYMLParser, configParser, sbomGenerator, logger, chronos.DefaultClock)
+			}, configParser, sbomGenerator, logger, chronos.DefaultClock)
 		})
 
 		it.After(func() {
@@ -385,65 +380,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("The project path is set via buildpack.yml", func() {
-		it.Before(func() {
-			buildpackYMLParser.ParseProjectPathCall.Returns.ProjectPath = "src/proj1"
-			configParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
-				Path:       filepath.Join(workingDir, "my.app.runtimeconfig.json"),
-				AppName:    "my.app",
-				Executable: true,
-			}
-		})
-
-		it("Logs a deprecation warning to the user", func() {
-			_, err := build(packit.BuildContext{
-				WorkingDir: workingDir,
-				CNBPath:    cnbDir,
-				Stack:      "some-stack",
-				BuildpackInfo: packit.BuildpackInfo{
-					Name:    "Some Buildpack",
-					Version: "1.2.3",
-				},
-				Plan: packit.BuildpackPlan{
-					Entries: []packit.BuildpackPlanEntry{},
-				},
-				Layers: packit.Layers{Path: layersDir},
-			})
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
-
-			Expect(configParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
-
-			Expect(buffer.String()).To(ContainSubstring("WARNING: Setting the project path through buildpack.yml will be deprecated soon in .NET Execute Buildpack v2.0.0"))
-			Expect(buffer.String()).To(ContainSubstring("Please specify the project path through the $BP_DOTNET_PROJECT_PATH environment variable instead. See README.md or the documentation on paketo.io for more information."))
-		})
-	})
-
 	context("failure cases", func() {
-		context("buildpack.yml parsing fails", func() {
-			it.Before(func() {
-				buildpackYMLParser.ParseProjectPathCall.Returns.Err = errors.New("error parsing buildpack.yml")
-			})
-
-			it("logs a warning", func() {
-				_, err := build(packit.BuildContext{
-					WorkingDir: workingDir,
-					CNBPath:    cnbDir,
-					Stack:      "some-stack",
-					BuildpackInfo: packit.BuildpackInfo{
-						Name:    "Some Buildpack",
-						Version: "some-version",
-					},
-					Plan: packit.BuildpackPlan{
-						Entries: []packit.BuildpackPlanEntry{},
-					},
-					Layers: packit.Layers{Path: layersDir},
-				})
-				Expect(err).To(MatchError(ContainSubstring("error parsing buildpack.yml")))
-			})
-		})
-
 		context("runtime config parsing fails", func() {
 			it.Before(func() {
 				configParser.ParseCall.Returns.Error = errors.New("error parsing runtimeconfig.json")

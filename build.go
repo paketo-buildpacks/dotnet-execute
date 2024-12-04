@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/Netflix/go-env"
 	"github.com/paketo-buildpacks/packit/v2"
 	"github.com/paketo-buildpacks/packit/v2/chronos"
@@ -30,7 +29,6 @@ type SBOMGenerator interface {
 // will determine at launch-time which container port the app should listen on.
 func Build(
 	config Configuration,
-	buildpackYMLParser BuildpackConfigParser,
 	configParser ConfigParser,
 	sbomGenerator SBOMGenerator,
 	logger scribe.Emitter,
@@ -53,17 +51,6 @@ func Build(
 			}
 		}
 		logger.Debug.Break()
-
-		projectPath, err := buildpackYMLParser.ParseProjectPath(filepath.Join(context.WorkingDir, "buildpack.yml"))
-		if err != nil {
-			return packit.BuildResult{}, fmt.Errorf("error parsing buildpack.yml: %w", err)
-		}
-
-		if projectPath != "" {
-			nextMajorVersion := semver.MustParse(context.BuildpackInfo.Version).IncMajor()
-			logger.Subprocess("WARNING: Setting the project path through buildpack.yml will be deprecated soon in .NET Execute Buildpack v%s.", nextMajorVersion.String())
-			logger.Subprocess("Please specify the project path through the $BP_DOTNET_PROJECT_PATH environment variable instead. See README.md or the documentation on paketo.io for more information.")
-		}
 
 		runtimeConfig, err := configParser.Parse(filepath.Join(context.WorkingDir, "*.runtimeconfig.json"))
 		if err != nil {

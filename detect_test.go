@@ -23,7 +23,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		buffer     *bytes.Buffer
 		workingDir string
 
-		buildpackYMLParser  *fakes.BuildpackConfigParser
 		logger              scribe.Emitter
 		projectParser       *fakes.ProjectParser
 		runtimeConfigParser *fakes.ConfigParser
@@ -36,7 +35,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		workingDir, err = os.MkdirTemp("", "working-dir")
 		Expect(err).NotTo(HaveOccurred())
 
-		buildpackYMLParser = &fakes.BuildpackConfigParser{}
 		runtimeConfigParser = &fakes.ConfigParser{}
 		runtimeConfigParser.ParseCall.Returns.RuntimeConfig = dotnetexecute.RuntimeConfig{
 			Path: filepath.Join(workingDir, "some-app.runtimeconfig.json"),
@@ -46,7 +44,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		buffer = bytes.NewBuffer(nil)
 		logger = scribe.NewEmitter(buffer)
 
-		detect = dotnetexecute.Detect(dotnetexecute.Configuration{}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
+		detect = dotnetexecute.Detect(dotnetexecute.Configuration{}, logger, runtimeConfigParser, projectParser)
 	})
 
 	it.After(func() {
@@ -77,7 +75,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
 		})
@@ -113,7 +110,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					},
 				}))
 
-				Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
 			})
@@ -150,7 +146,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					},
 				}))
 
-				Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
 			})
@@ -188,7 +183,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					},
 				}))
 
-				Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
 			})
@@ -228,7 +222,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
@@ -269,7 +262,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
@@ -310,7 +302,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
@@ -359,7 +350,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				},
 			}))
 
-			Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
 			Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "*.runtimeconfig.json")))
 
 			Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(workingDir))
@@ -367,39 +357,11 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		})
 	})
 
-	context("there is a buildpack.yml which sets a custom project-path", func() {
-		it.Before(func() {
-			buildpackYMLParser.ParseProjectPathCall.Returns.ProjectPath = "src/proj1"
-		})
-
-		context("project-path directory contains a proj file", func() {
-			it.Before(func() {
-				projectParser.FindProjectFileCall.Returns.String = "/path/to/some-file.csproj"
-			})
-
-			it("detects successfully", func() {
-				_, err := detect(packit.DetectContext{
-					WorkingDir: workingDir,
-					BuildpackInfo: packit.BuildpackInfo{
-						Version: "0.0.1",
-					},
-				})
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(buildpackYMLParser.ParseProjectPathCall.Receives.Path).To(Equal(filepath.Join(workingDir, "buildpack.yml")))
-				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "src/proj1", "*.runtimeconfig.json")))
-
-				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(filepath.Join(workingDir, "src/proj1")))
-				Expect(projectParser.NodeIsRequiredCall.Receives.Path).To(Equal("/path/to/some-file.csproj"))
-			})
-		})
-	})
-
 	context("when BP_DOTNET_PROJECT_PATH sets a custom project-path", func() {
 		it.Before(func() {
 			detect = dotnetexecute.Detect(dotnetexecute.Configuration{
 				ProjectPath: "src/proj1",
-			}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
+			}, logger, runtimeConfigParser, projectParser)
 		})
 
 		context("project-path directory contains a proj file", func() {
@@ -413,7 +375,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 				})
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(buildpackYMLParser.ParseProjectPathCall.CallCount).To(Equal(0))
 				Expect(runtimeConfigParser.ParseCall.Receives.Glob).To(Equal(filepath.Join(workingDir, "src/proj1", "*.runtimeconfig.json")))
 
 				Expect(projectParser.FindProjectFileCall.Receives.Root).To(Equal(filepath.Join(workingDir, "src/proj1")))
@@ -426,7 +387,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		it.Before(func() {
 			detect = dotnetexecute.Detect(dotnetexecute.Configuration{
 				LiveReloadEnabled: true,
-			}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
+			}, logger, runtimeConfigParser, projectParser)
 		})
 
 		it("requires watchexec at launch", func() {
@@ -443,11 +404,12 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 			))
 		})
 	})
+
 	context("when BP_DEBUG_ENABLED is set to true", func() {
 		it.Before(func() {
 			detect = dotnetexecute.Detect(dotnetexecute.Configuration{
 				DebugEnabled: true,
-			}, logger, buildpackYMLParser, runtimeConfigParser, projectParser)
+			}, logger, runtimeConfigParser, projectParser)
 		})
 
 		it("requires vsdbg at launch", func() {
@@ -466,19 +428,6 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	context("failure cases", func() {
-		context("when the buildpack.yml parser fails", func() {
-			it.Before(func() {
-				buildpackYMLParser.ParseProjectPathCall.Returns.Err = errors.New("some-error")
-			})
-
-			it("returns an error", func() {
-				_, err := detect(packit.DetectContext{
-					WorkingDir: "/working-dir",
-				})
-				Expect(err).To(MatchError("failed to parse buildpack.yml: some-error"))
-			})
-		})
-
 		context("when the runtime config parsing fails", func() {
 			it.Before(func() {
 				runtimeConfigParser.ParseCall.Returns.Error = errors.New("failed to parse runtime config")
