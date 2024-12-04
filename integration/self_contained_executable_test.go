@@ -49,10 +49,10 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 			Expect(os.RemoveAll(source)).To(Succeed())
 		})
 
-		context("when the self-contained executable uses .NET 6", func() {
+		context("when the self-contained executable uses .NET 8", func() {
 			it("builds and runs successfully", func() {
 				var err error
-				source, err = occam.Source(filepath.Join("testdata", "self_contained_executable_6"))
+				source, err = occam.Source(filepath.Join("testdata", "self_contained_8"))
 				Expect(err).NotTo(HaveOccurred())
 
 				var logs fmt.Stringer
@@ -72,7 +72,7 @@ func testSelfContainedExecutable(t *testing.T, context spec.G, it spec.S) {
 					Execute(image.ID)
 				Expect(err).NotTo(HaveOccurred())
 
-				Eventually(container).Should(Serve(ContainSubstring("Hello, world!")).OnPort(8080))
+				Eventually(container).Should(Serve(ContainSubstring("Welcome")).OnPort(8080))
 			})
 		})
 	})

@@ -48,7 +48,7 @@ func testLogging(t *testing.T, context spec.G, it spec.S) {
 
 		it("presents the expected log output", func() {
 			var err error
-			source, err = occam.Source(filepath.Join("testdata", "self_contained_executable_6"))
+			source, err = occam.Source(filepath.Join("testdata", "self_contained_8"))
 			Expect(err).NotTo(HaveOccurred())
 
 			var logs fmt.Stringer
@@ -80,7 +80,7 @@ func testLogging(t *testing.T, context spec.G, it spec.S) {
 				"    application/vnd.syft+json",
 				"",
 				"  Assigning launch processes:",
-				`    source_6_selfcontained (default): /workspace/source_6_selfcontained`,
+				`    webapp_8 (default): /workspace/webapp_8`,
 				"",
 				"  Setting up layer 'port-chooser'",
 				"    Available at app launch: true",

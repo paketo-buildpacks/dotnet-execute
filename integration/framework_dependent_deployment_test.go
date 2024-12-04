@@ -27,7 +27,7 @@ func testFrameworkDependentDeployment(t *testing.T, context spec.G, it spec.S) {
 		docker = occam.NewDocker()
 	})
 
-	context("when building a default .NET 6 FDD app", func() {
+	context("when building a default .NET 8 FDD app", func() {
 		var (
 			image     occam.Image
 			container occam.Container
@@ -51,7 +51,7 @@ func testFrameworkDependentDeployment(t *testing.T, context spec.G, it spec.S) {
 
 		it("builds and runs successfully", func() {
 			var err error
-			source, err = occam.Source(filepath.Join("testdata", "fdd_6"))
+			source, err = occam.Source(filepath.Join("testdata", "framework_dependent_deployment_8"))
 			Expect(err).NotTo(HaveOccurred())
 
 			var logs fmt.Stringer
