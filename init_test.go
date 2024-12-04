@@ -10,7 +10,6 @@ import (
 func TestUnitDotnetExecute(t *testing.T) {
 	suite := spec.New("dotnet-execute", spec.Report(report.Terminal{}))
 	suite("Build", testBuild)
-	suite("BuildpackYMLParser", testBuildpackYMLParser)
 	suite("Detect", testDetect)
 	suite("RuntimeConfigParser", testRuntimeConfigParser)
 	suite("ProjectFileParser", testProjectFileParser)
