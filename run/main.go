@@ -27,7 +27,6 @@ func main() {
 	}
 
 	logger := scribe.NewEmitter(os.Stdout).WithLevel(config.LogLevel)
-	buildpackYMLParser := dotnetexecute.NewBuildpackYMLParser()
 	configParser := dotnetexecute.NewRuntimeConfigParser()
 	projectParser := dotnetexecute.NewProjectFileParser()
 
@@ -35,13 +34,11 @@ func main() {
 		dotnetexecute.Detect(
 			config,
 			logger,
-			buildpackYMLParser,
 			configParser,
 			projectParser,
 		),
 		dotnetexecute.Build(
 			config,
-			buildpackYMLParser,
 			configParser,
 			Generator{},
 			logger,

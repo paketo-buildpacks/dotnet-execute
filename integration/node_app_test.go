@@ -28,7 +28,7 @@ func testNodeApp(t *testing.T, context spec.G, it spec.S) {
 		docker = occam.NewDocker()
 	})
 
-	context("when building a .NET 6 + node app", func() {
+	context("when building a .NET 8 + node app", func() {
 		var (
 			image     occam.Image
 			container occam.Container

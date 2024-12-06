@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "framework_dependent_executable_9/1.0.0": {
+        "runtime": {
+          "framework_dependent_executable_9.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "framework_dependent_executable_9/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
