@@ -22,10 +22,14 @@ $ ./scripts/package.sh
 This builds the buildpack's source using GOOS=linux by default. You can supply
 another value as the first argument to package.sh.
 
-## Specifying a project path
+## Configuration
 
-To specify a project subdirectory (i.e. the directory containing your
-`.csproj`/`.fsproj`/`.vbproj` file), please use the BP_DOTNET_PROJECT_PATH
-environment variable at build time either directly (e.g. pack build my-app
---env BP_DOTNET_PROJECT_PATH=./src/my-app) or through a project.toml file. This
-configuration does not apply to FDD, FDE or Self-Contained app deployments.
+### `BP_DOTNET_PROJECT_PATH`
+To specify a project subdirectory to be used as the root of the app, please use
+the `BP_DOTNET_PROJECT_PATH` environment variable at build time either directly
+(e.g. `pack build my-app --env BP_DOTNET_PROJECT_PATH=./src/my-app`) or through a
+[`project.toml` file](https://github.com/buildpacks/spec/blob/main/extensions/project-descriptor.md).
+
+```shell
+BP_DOTNET_PROJECT_PATH=./src/my-app
+```
