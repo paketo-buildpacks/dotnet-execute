@@ -1,17 +1,15 @@
 module github.com/paketo-buildpacks/dotnet-execute
 
-go 1.23.3
+go 1.23.4
 
 require (
 	github.com/BurntSushi/toml v1.4.0
-	github.com/Masterminds/semver v1.5.0
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/gravityblast/go-jsmin v0.0.0-20141027113318-a32d741b3595
 	github.com/onsi/gomega v1.33.1
 	github.com/paketo-buildpacks/occam v0.18.7
 	github.com/paketo-buildpacks/packit/v2 v2.14.0
 	github.com/sclevine/spec v1.4.0
-	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -156,6 +154,7 @@ require (
 	google.golang.org/grpc v1.64.1 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
