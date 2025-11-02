@@ -3,8 +3,6 @@
     "index.docker.io/paketobuildpacks/builder-jammy-buildpackless-base:latest",
     "index.docker.io/paketobuildpacks/ubuntu-noble-builder-buildpackless:latest"
   ],
-  "dotnet-core-aspnet": "index.docker.io/paketobuildpacks/dotnet-core-aspnet",
-  "dotnet-core-runtime": "index.docker.io/paketobuildpacks/dotnet-core-runtime",
   "dotnet-core-aspnet-runtime": "index.docker.io/paketobuildpacks/dotnet-core-aspnet-runtime",
   "dotnet-core-sdk": "index.docker.io/paketobuildpacks/dotnet-core-sdk",
   "dotnet-publish": "index.docker.io/paketobuildpacks/dotnet-publish",
