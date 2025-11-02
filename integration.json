@@ -2,13 +2,13 @@
   "builders": [
     "paketobuildpacks/builder-jammy-buildpackless-base"
   ],
-  "dotnet-core-aspnet": "index.docker.io/dotnet-core-aspnet",
-  "dotnet-core-runtime": "index.docker.io/dotnet-core-runtime",
-  "dotnet-core-aspnet-runtime": "index.docker.io/dotnet-core-aspnet-runtime",
-  "dotnet-core-sdk": "index.docker.io/dotnet-core-sdk",
-  "dotnet-publish": "index.docker.io/dotnet-publish",
-  "icu": "index.docker.io/icu",
-  "node-engine": "index.docker.io/node-engine",
-  "watchexec": "index.docker.io/watchexec",
-  "vsdbg": "index.docker.io/vsdbg"
+  "dotnet-core-aspnet": "index.docker.io/paketo-buildpacks/dotnet-core-aspnet",
+  "dotnet-core-runtime": "index.docker.io/paketo-buildpacks/dotnet-core-runtime",
+  "dotnet-core-aspnet-runtime": "index.docker.io/paketo-buildpacks/dotnet-core-aspnet-runtime",
+  "dotnet-core-sdk": "index.docker.io/paketo-buildpacks/dotnet-core-sdk",
+  "dotnet-publish": "index.docker.io/paketo-buildpacks/dotnet-publish",
+  "icu": "index.docker.io/paketo-buildpacks/icu",
+  "node-engine": "index.docker.io/paketo-buildpacks/node-engine",
+  "watchexec": "index.docker.io/paketo-buildpacks/watchexec",
+  "vsdbg": "index.docker.io/paketo-buildpacks/vsdbg"
 }
