@@ -13,8 +13,18 @@ api = "0.8"
     uri = "https://github.com/paketo-buildpacks/dotnet-execute/blob/main/LICENSE"
 
 [metadata]
-  include-files = ["bin/build", "bin/detect", "bin/run", "bin/port-chooser", "buildpack.toml"]
-  pre-package = "./scripts/build.sh"
+  include-files = [
+    "buildpack.toml",
+    "linux/amd64/bin/build",
+    "linux/amd64/bin/detect",
+    "linux/amd64/bin/run",
+    "linux/amd64/bin/port-chooser"
+  ]
+  pre-package = "./scripts/build.sh --target linux/amd64"
 
 [[stacks]]
   id = "*"
+
+[[targets]]
+  arch = "amd64"
+  os = "linux"
