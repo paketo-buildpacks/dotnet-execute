@@ -32,9 +32,6 @@ var settings struct {
 		NodeEngine              string `json:"node-engine"`
 		Watchexec               string `json:"watchexec"`
 		Vsdbg                   string `json:"vsdbg"`
-		// For backwards compatibility tests
-		DotnetCoreRuntime string `json:"dotnet-core-runtime"`
-		DotnetCoreASPNet  string `json:"dotnet-core-aspnet"`
 	}
 	Buildpacks struct {
 		DotnetExecute struct {
@@ -59,13 +56,6 @@ var settings struct {
 			Online string
 		}
 		Vsdbg struct {
-			Online string
-		}
-		// For backwards compatibility tests
-		DotnetCoreRuntime struct {
-			Online string
-		}
-		DotnetCoreASPNet struct {
 			Online string
 		}
 	}
@@ -126,15 +116,6 @@ func TestIntegration(t *testing.T) {
 
 	settings.Buildpacks.Vsdbg.Online, err = buildpackStore.Get.
 		Execute(settings.Config.Vsdbg)
-	Expect(err).ToNot(HaveOccurred())
-
-	// For backwards compatibility test
-	settings.Buildpacks.DotnetCoreRuntime.Online, err = buildpackStore.Get.
-		Execute(settings.Config.DotnetCoreRuntime)
-	Expect(err).ToNot(HaveOccurred())
-
-	settings.Buildpacks.DotnetCoreASPNet.Online, err = buildpackStore.Get.
-		Execute(settings.Config.DotnetCoreASPNet)
 	Expect(err).ToNot(HaveOccurred())
 
 	SetDefaultEventuallyTimeout(10 * time.Second)
