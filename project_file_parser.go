@@ -62,7 +62,9 @@ func findInFile(str, path string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to open %s: %w", path, err)
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	var project struct {
 		Targets []struct {

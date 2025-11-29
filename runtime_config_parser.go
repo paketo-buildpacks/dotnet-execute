@@ -60,7 +60,9 @@ func (p RuntimeConfigParser) Parse(glob string) (RuntimeConfig, error) {
 	if err != nil {
 		return RuntimeConfig{}, err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	buffer := bytes.NewBuffer(nil)
 	err = jsmin.Min(file, buffer)
