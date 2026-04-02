@@ -318,3 +318,7 @@ require (
 
 // TO DO: Replace when syft is updated with io/fs.ReadDirFS (Pin go-diskfs to a version that includes the os.FileInfo type)
 replace github.com/diskfs/go-diskfs => github.com/diskfs/go-diskfs v1.7.0
+
+// TO DO: Replace when occam is updated for go-containerregistry v0.21+ (moby/moby/client interface)
+// Pin go-containerregistry to the version occam@v0.31.1 was built against
+replace github.com/google/go-containerregistry => github.com/google/go-containerregistry v0.20.6
