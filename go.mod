@@ -43,7 +43,7 @@ require (
 	github.com/anchore/clio v0.0.0-20260402185550-53bd6cfe83ad // indirect
 	github.com/anchore/fangs v0.0.0-20260402185546-c046201bdfdb // indirect
 	github.com/anchore/go-collections v0.0.0-20260402185600-611d7ba80116 // indirect
-	github.com/anchore/go-homedir v0.0.0-20260402182036-b2fe03473b15 // indirect
+	github.com/anchore/go-homedir v0.0.0-20260402185613-b35908c97765 // indirect
 	github.com/anchore/go-logger v0.0.0-20260402185541-19c6eec60f08 // indirect
 	github.com/anchore/go-lzo v0.1.0 // indirect
 	github.com/anchore/go-macholibre v0.0.0-20260402185605-cfb1b3effca2 // indirect
@@ -115,7 +115,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deitch/magic v0.0.0-20240306090643-c67ab88f10cb // indirect
-	github.com/diskfs/go-diskfs v1.7.0 // indirect
+	github.com/diskfs/go-diskfs v1.9.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/cli v29.3.1+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
@@ -198,8 +198,8 @@ require (
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.2.0 // indirect
 	github.com/moby/locker v1.0.1 // indirect
-	github.com/moby/moby/api v1.54.0 // indirect
-	github.com/moby/moby/client v0.3.0 // indirect
+	github.com/moby/moby/api v1.54.1 // indirect
+	github.com/moby/moby/client v0.4.0 // indirect
 	github.com/moby/patternmatcher v0.6.1 // indirect
 	github.com/moby/sys/mountinfo v0.7.2 // indirect
 	github.com/moby/sys/sequential v0.6.0 // indirect
@@ -314,12 +314,8 @@ require (
 	modernc.org/libc v1.70.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.48.0 // indirect
+	modernc.org/sqlite v1.48.1 // indirect
 )
 
 // TO DO: Replace when syft is updated with io/fs.ReadDirFS (Pin go-diskfs to a version that includes the os.FileInfo type)
 replace github.com/diskfs/go-diskfs => github.com/diskfs/go-diskfs v1.7.0
-
-// TO DO: Replace when occam is updated for go-containerregistry v0.21+ (moby/moby/client interface)
-// Pin go-containerregistry to the version occam@v0.31.1 was built against
-replace github.com/google/go-containerregistry => github.com/google/go-containerregistry v0.20.6
