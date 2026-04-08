@@ -44,7 +44,7 @@ require (
 	github.com/anchore/fangs v0.0.0-20260402185546-c046201bdfdb // indirect
 	github.com/anchore/go-collections v0.0.0-20260402185600-611d7ba80116 // indirect
 	github.com/anchore/go-homedir v0.0.0-20260402185613-b35908c97765 // indirect
-	github.com/anchore/go-logger v0.0.0-20260402185541-19c6eec60f08 // indirect
+	github.com/anchore/go-logger v0.1.0 // indirect
 	github.com/anchore/go-lzo v0.1.0 // indirect
 	github.com/anchore/go-macholibre v0.0.0-20260402185605-cfb1b3effca2 // indirect
 	github.com/anchore/go-rpmdb v0.0.0-20260402185617-485fb0f5e362 // indirect
@@ -71,7 +71,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.21 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.21 // indirect
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.98.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.99.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.30.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.19 // indirect
@@ -302,7 +302,7 @@ require (
 	golang.org/x/tools v0.43.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
-	google.golang.org/api v0.274.0 // indirect
+	google.golang.org/api v0.275.0 // indirect
 	google.golang.org/genproto v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260406210006-6f92a3bedf2d // indirect
