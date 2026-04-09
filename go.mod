@@ -33,27 +33,27 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/Microsoft/hcsshim v0.14.0 // indirect
+	github.com/Microsoft/hcsshim v0.14.1 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
 	github.com/STARRY-S/zip v0.2.3 // indirect
 	github.com/acobaugh/osrelease v0.1.0 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
-	github.com/anchore/clio v0.0.0-20260402185550-53bd6cfe83ad // indirect
-	github.com/anchore/fangs v0.0.0-20260402185546-c046201bdfdb // indirect
-	github.com/anchore/go-collections v0.0.0-20260402185600-611d7ba80116 // indirect
-	github.com/anchore/go-homedir v0.0.0-20260402185613-b35908c97765 // indirect
+	github.com/anchore/clio v0.1.0 // indirect
+	github.com/anchore/fangs v0.1.0 // indirect
+	github.com/anchore/go-collections v0.1.0 // indirect
+	github.com/anchore/go-homedir v0.1.0 // indirect
 	github.com/anchore/go-logger v0.1.0 // indirect
 	github.com/anchore/go-lzo v0.1.0 // indirect
-	github.com/anchore/go-macholibre v0.0.0-20260402185605-cfb1b3effca2 // indirect
-	github.com/anchore/go-rpmdb v0.0.0-20260402185617-485fb0f5e362 // indirect
+	github.com/anchore/go-macholibre v0.1.0 // indirect
+	github.com/anchore/go-rpmdb v0.1.0 // indirect
 	github.com/anchore/go-struct-converter v0.1.0 // indirect
-	github.com/anchore/go-sync v0.0.0-20260402185622-3f368c4ba644 // indirect
+	github.com/anchore/go-sync v0.1.0 // indirect
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b // indirect
-	github.com/anchore/packageurl-go v0.1.1-0.20250220190351-d62adb6e1115 // indirect
+	github.com/anchore/packageurl-go v0.2.0 // indirect
 	github.com/anchore/stereoscope v0.1.22 // indirect
-	github.com/anchore/syft v1.42.3 // indirect
+	github.com/anchore/syft v1.42.4 // indirect
 	github.com/andybalholm/brotli v1.2.1 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aquasecurity/go-pep440-version v0.0.1 // indirect
@@ -184,8 +184,8 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.22 // indirect
+	github.com/mattn/go-isatty v0.0.21 // indirect
+	github.com/mattn/go-runewidth v0.0.23 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mholt/archives v0.1.5 // indirect
 	github.com/mikelolasagasti/xz v1.0.1 // indirect
@@ -295,7 +295,7 @@ require (
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/term v0.41.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
