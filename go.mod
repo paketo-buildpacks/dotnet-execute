@@ -105,7 +105,6 @@ require (
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v1.0.0-rc.4 // indirect
 	github.com/containerd/plugin v1.1.0 // indirect
-	github.com/containerd/stargz-snapshotter/estargz v0.18.2 // indirect
 	github.com/containerd/ttrpc v1.2.8 // indirect
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
@@ -147,7 +146,7 @@ require (
 	github.com/gohugoio/hashstructure v0.6.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/go-containerregistry v0.21.5 // indirect
+	github.com/google/go-containerregistry v0.21.6 // indirect
 	github.com/google/licensecheck v0.3.1 // indirect
 	github.com/google/pprof v0.0.0-20260402051712-545e8a4df936 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
@@ -262,7 +261,6 @@ require (
 	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/vbatts/go-mtree v0.7.0 // indirect
-	github.com/vbatts/tar-split v0.12.3 // indirect
 	github.com/vifraa/gopom v1.0.0 // indirect
 	github.com/wagoodman/go-partybus v0.0.0-20230516145632-8ccac152c651 // indirect
 	github.com/wagoodman/go-progress v0.0.0-20260303201901-10176f79b2c0 // indirect
@@ -296,10 +294,10 @@ require (
 	golang.org/x/tools v0.45.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
-	google.golang.org/api v0.279.0 // indirect
+	google.golang.org/api v0.280.0 // indirect
 	google.golang.org/genproto v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260427160629-7cedc36a6bc4 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260511170946-3700d4141b60 // indirect
 	google.golang.org/grpc v1.81.1 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
